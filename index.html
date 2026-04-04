@@ -95,41 +95,57 @@ function renderChannels() {
   document.getElementById("channelList").innerHTML = html;
 }
 
-function addChannel() {
+async function addChannel() {
   let input = document.getElementById("channelId").value.trim();
 
   if (!input) return;
 
   let channelId = "";
 
-  // Case 1: Full channel URL
-  if (input.includes("youtube.com/channel/")) {
-    channelId = input.split("channel/")[1];
+  try {
+    if (input.startsWith("UC")) {
+      channelId = input;
+    }
+
+    else if (input.includes("/channel/")) {
+      channelId = input.split("/channel/")[1];
+    }
+
+    else if (input.includes("@")) {
+      let res = await fetch(input);
+      let text = await res.text();
+
+      let match = text.match(/"channelId":"(UC[\w-]+)"/);
+
+      if (match && match[1]) {
+        channelId = match[1];
+      } else {
+        alert("❌ Could not fetch channel ID");
+        return;
+      }
+    }
+
+    else {
+      alert("❌ Invalid input");
+      return;
+    }
+
+    let playlistId = "UU" + channelId.substring(2);
+
+    if (channels.includes(playlistId)) {
+      alert("Already added!");
+      return;
+    }
+
+    channels.push(playlistId);
+    saveChannels();
+    renderChannels();
+
+    document.getElementById("channelId").value = "";
+
+  } catch (e) {
+    alert("❌ Error fetching channel");
   }
-
-  // Case 2: Username or @handle (simple fallback)
-  else if (input.includes("@")) {
-    alert("⚠️ Handle links not supported yet. Use channel link (with UC...)");
-    return;
-  }
-
-  // Case 3: Direct Channel ID
-  else if (input.startsWith("UC")) {
-    channelId = input;
-  }
-
-  else {
-    alert("❌ Invalid channel link or ID");
-    return;
-  }
-
-  const playlistId = channelId.replace("UC", "UU");
-
-  channels.push(playlistId);
-  saveChannels();
-  renderChannels();
-
-  document.getElementById("channelId").value = "";
 }
 
 function playChannel(playlistId) {
