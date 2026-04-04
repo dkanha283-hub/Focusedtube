@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FocusTube</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      display: flex;
+      background: #0f0f0f;
+      color: white;
+    }
+
+    .sidebar {
+      width: 230px;
+      background: #181818;
+      height: 100vh;
+      padding: 15px;
+      box-sizing: border-box;
+    }
+
+    .channel {
+      padding: 10px;
+      margin: 5px 0;
+      cursor: pointer;
+      border-radius: 6px;
+      background: #222;
+    }
+
+    .channel:hover {
+      background: #333;
+    }
+
+    .main {
+      flex: 1;
+      padding: 20px;
+    }
+
+    iframe {
+      border-radius: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <h3>My Channels</h3>
+
+  <div id="channelList"></div>
+
+  <input id="channelId" placeholder="Paste Channel ID (UC...)" />
+  <button onclick="addChannel()">Add Channel</button>
+</div>
+
+<div class="main">
+  <h2>Focus Mode 🎯</h2>
+  <div id="player">Select a channel</div>
+</div>
+
+<script>
+let channels = JSON.parse(localStorage.getItem("channels")) || [];
+
+function saveChannels() {
+  localStorage.setItem("channels", JSON.stringify(channels));
+}
+
+function renderChannels() {
+  let html = "";
+  channels.forEach((ch, index) => {
+    html += `
+      <div class="channel" onclick="playChannel('${ch}')">
+        Channel ${index + 1}
+      </div>
+    `;
+  });
+  document.getElementById("channelList").innerHTML = html;
+}
+
+function addChannel() {
+  const id = document.getElementById("channelId").value;
+  if (!id) return;
+
+  const playlistId = id.replace("UC", "UU");
+  channels.push(playlistId);
+  saveChannels();
+  renderChannels();
+}
+
+function playChannel(playlistId) {
+  document.getElementById("player").innerHTML = `
+    <iframe width="100%" height="400"
+    src="https://www.youtube.com/embed/videoseries?list=${playlistId}&modestbranding=1&rel=0">
+    </iframe>
+  `;
+}
+
+renderChannels();
+</script>
+
+</body>
+</html>
