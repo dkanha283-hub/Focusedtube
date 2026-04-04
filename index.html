@@ -96,13 +96,40 @@ function renderChannels() {
 }
 
 function addChannel() {
-  const id = document.getElementById("channelId").value;
-  if (!id) return;
+  let input = document.getElementById("channelId").value.trim();
 
-  const playlistId = id.replace("UC", "UU");
+  if (!input) return;
+
+  let channelId = "";
+
+  // Case 1: Full channel URL
+  if (input.includes("youtube.com/channel/")) {
+    channelId = input.split("channel/")[1];
+  }
+
+  // Case 2: Username or @handle (simple fallback)
+  else if (input.includes("@")) {
+    alert("⚠️ Handle links not supported yet. Use channel link (with UC...)");
+    return;
+  }
+
+  // Case 3: Direct Channel ID
+  else if (input.startsWith("UC")) {
+    channelId = input;
+  }
+
+  else {
+    alert("❌ Invalid channel link or ID");
+    return;
+  }
+
+  const playlistId = channelId.replace("UC", "UU");
+
   channels.push(playlistId);
   saveChannels();
   renderChannels();
+
+  document.getElementById("channelId").value = "";
 }
 
 function playChannel(playlistId) {
