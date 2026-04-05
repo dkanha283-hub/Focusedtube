@@ -30,7 +30,6 @@
       border-radius:8px;
       background:red;
       color:white;
-      cursor:pointer;
     }
 
     .navbar {
@@ -43,7 +42,6 @@
 
     .container {
       display:flex;
-      width:100%;
       height:calc(100vh - 50px);
     }
 
@@ -69,22 +67,22 @@
     }
 
     .item {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
       background:#282828;
       padding:8px;
-      margin-bottom:8px;
       border-radius:8px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+      margin-bottom:8px;
     }
 
-    .channel-info {
+    .info {
       display:flex;
       align-items:center;
       gap:10px;
     }
 
-    .channel-logo {
+    img {
       width:30px;
       height:30px;
       border-radius:50%;
@@ -94,29 +92,25 @@
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginPage" class="login">
-  <h2>FocusTube 🎯</h2>
+  <h2>FocusTube</h2>
   <input id="username" placeholder="Username">
   <input id="password" type="password" placeholder="Password">
-  <button onclick="handleLogin()">Login</button>
+  <button onclick="login()">Login</button>
 </div>
 
-<!-- APP -->
 <div id="app" class="app">
 
   <div class="navbar">
     <b>FocusTube</b>
-    <button onclick="handleLogout()">Logout</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
   <div class="container">
 
     <div class="sidebar">
-      <input id="linkInput" placeholder="Paste channel or @link">
-      <button onclick="addItem()">Add</button>
-
-      <h3>Channels</h3>
+      <input id="input" placeholder="Paste channel or @link">
+      <button onclick="add()">Add</button>
       <div id="list"></div>
     </div>
 
@@ -128,161 +122,105 @@
 
 <script>
 
-// ===== INIT =====
-document.addEventListener("DOMContentLoaded", init);
-
-function init(){
-  if(localStorage.getItem("focusUser")==="true"){
+document.addEventListener("DOMContentLoaded", ()=>{
+  if(localStorage.getItem("login")){
     showApp();
-  } else {
-    showLogin();
   }
+});
+
+function login(){
+  if(!username.value || !password.value) return alert("Enter details");
+  localStorage.setItem("login","true");
+  showApp();
 }
 
-// ===== UI =====
-function showLogin(){
-  loginPage.style.display="flex";
-  app.style.display="none";
+function logout(){
+  localStorage.removeItem("login");
+  location.reload();
 }
 
 function showApp(){
   loginPage.style.display="none";
   app.style.display="block";
-  loadData();
+  load();
 }
 
-// ===== LOGIN =====
-function handleLogin(){
-  if(!username.value || !password.value){
-    alert("Enter details");
-    return;
-  }
-  localStorage.setItem("focusUser","true");
-  showApp();
+let data=[];
+
+function load(){
+  data = JSON.parse(localStorage.getItem("channels")||"[]");
+  render();
+  videosLoad();
 }
 
-function handleLogout(){
-  localStorage.removeItem("focusUser");
-  showLogin();
-}
+async function add(){
 
-// ===== DATA =====
-let items=[];
+  let link = input.value.trim();
+  let api = "https://restless-brook-50e4.dkanha283.workers.dev/";
 
-function loadData(){
-  items = JSON.parse(localStorage.getItem("channels") || "[]");
-  renderList();
-  loadVideos();
-}
-
-// ===== FETCH CHANNEL INFO =====
-async function getChannelInfo(id){
-
-  try{
-    let res = await fetch(`https://www.youtube.com/channel/${id}`);
-    let text = await res.text();
-
-    let nameMatch = text.match(/"title":"(.*?)"/);
-    let logoMatch = text.match(/"avatar":{"thumbnails":\[{"url":"(.*?)"/);
-
-    return {
-      name: nameMatch ? nameMatch[1] : "Channel",
-      logo: logoMatch ? logoMatch[1] : ""
-    };
-
-  }catch{
-    return { name:"Channel", logo:"" };
-  }
-}
-
-// ===== ADD CHANNEL =====
-async function addItem(){
-
-  let link = linkInput.value.trim();
-  let channelId = null;
-
-  if(link.includes("channel/")){
-    channelId = link.split("channel/")[1];
-  }
+  let res;
 
   if(link.includes("@")){
     let handle = link.split("@")[1].split("?")[0];
-
-    try{
-      let res = await fetch("https://restless-brook-50e4.dkanha283.workers.dev/?handle=" + handle);
-      let data = await res.json();
-      channelId = data.channelId;
-    }catch{
-      alert("Backend error");
-      return;
-    }
-  }
-
-  if(!channelId){
+    res = await fetch(api + "?handle=" + handle);
+  } else if(link.includes("channel/")){
+    let id = link.split("channel/")[1];
+    res = await fetch(api + "?id=" + id);
+  } else {
     alert("Invalid link");
     return;
   }
 
-  channelId = channelId.trim();
+  let info = await res.json();
 
-  if(items.some(c => c.id === channelId)){
+  if(!info.channelId) return alert("Error fetching");
+
+  if(data.some(c => c.id === info.channelId)){
     alert("Already added");
     return;
   }
 
-  let info = await getChannelInfo(channelId);
+  data.push(info);
+  localStorage.setItem("channels", JSON.stringify(data));
 
-  items.push({
-    id: channelId,
-    name: info.name,
-    logo: info.logo
-  });
-
-  localStorage.setItem("channels", JSON.stringify(items));
-
-  renderList();
-  loadVideos();
+  render();
+  videosLoad();
 }
 
-// ===== LIST =====
-function renderList(){
+function render(){
   list.innerHTML="";
 
-  items.forEach((c,i)=>{
-
+  data.forEach((c,i)=>{
     let div=document.createElement("div");
     div.className="item";
 
-    div.innerHTML = `
-      <div class="channel-info">
-        <img src="${c.logo}" class="channel-logo">
+    div.innerHTML=`
+      <div class="info">
+        <img src="${c.logo}">
         <span>${c.name}</span>
       </div>
-      <span onclick="deleteItem(${i})">❌</span>
+      <span onclick="del(${i})">❌</span>
     `;
 
     list.appendChild(div);
   });
 }
 
-function deleteItem(i){
-  items.splice(i,1);
-  localStorage.setItem("channels", JSON.stringify(items));
-  renderList();
-  loadVideos();
+function del(i){
+  data.splice(i,1);
+  localStorage.setItem("channels", JSON.stringify(data));
+  render();
+  videosLoad();
 }
 
-// ===== LOAD VIDEOS =====
-function loadVideos(){
-
+function videosLoad(){
   videos.innerHTML="";
 
-  items.forEach(c=>{
+  data.forEach(c=>{
+    let playlist = "UU" + c.channelId.substring(2);
 
-    let playlistId = "UU" + c.id.substring(2);
-
-    let iframe = document.createElement("iframe");
-    iframe.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
+    let iframe=document.createElement("iframe");
+    iframe.src=`https://www.youtube.com/embed/videoseries?list=${playlist}`;
 
     videos.appendChild(iframe);
   });
