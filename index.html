@@ -1,1191 +1,305 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta charset="UTF-8">
-  <title>FocusedTube</title>
-  <style>
-    :root{
-      --bg:#0f0f0f;
-      --panel:#181818;
-      --panel2:#1f1f1f;
-      --card:#262626;
-      --card2:#2d2d2d;
-      --text:#ffffff;
-      --muted:#a8a8a8;
-      --border:#333333;
-      --accent:#ff2d2d;
-      --shadow:0 18px 40px rgba(0,0,0,.45);
-    }
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FocusedTube</title>
 
-    body.light{
-      --bg:#f5f5f5;
-      --panel:#ffffff;
-      --panel2:#f0f0f0;
-      --card:#ffffff;
-      --card2:#fafafa;
-      --text:#111111;
-      --muted:#666666;
-      --border:#dddddd;
-      --accent:#ff2d2d;
-      --shadow:0 18px 40px rgba(0,0,0,.12);
-    }
+<style>
+:root{
+  --bg:#0f0f0f;
+  --panel:#181818;
+  --card:#242424;
+  --text:#fff;
+  --muted:#aaa;
+  --accent:#ff0000;
+  --border:#2e2e2e;
+}
 
-    *{box-sizing:border-box}
-    html,body{margin:0;height:100%}
-    body{
-      background:var(--bg);
-      color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      overflow:hidden;
-    }
+body{margin:0;background:var(--bg);color:var(--text);font-family:sans-serif}
+*{box-sizing:border-box}
 
-    .hidden{display:none !important;}
+/* LOGIN */
+.auth{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+gap:10px;
+}
 
-    button,input{
-      font:inherit;
-    }
+.auth input,.auth button{
+width:260px;
+padding:12px;
+border-radius:10px;
+border:none;
+}
 
-    .field{
-      width:100%;
-      background:var(--panel2);
-      color:var(--text);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:12px 14px;
-      outline:none;
-      margin-bottom:10px;
-    }
+.auth button{
+background:var(--accent);
+color:#fff;
+font-weight:bold;
+cursor:pointer;
+}
 
-    .primary-btn{
-      width:100%;
-      padding:12px 14px;
-      border:none;
-      border-radius:12px;
-      background:var(--accent);
-      color:#fff;
-      font-weight:700;
-      cursor:pointer;
-    }
+/* APP */
+.app{display:none;height:100vh;overflow:hidden}
 
-    .ghost-btn{
-      width:100%;
-      padding:12px 14px;
-      border:none;
-      border-radius:12px;
-      background:var(--panel2);
-      color:var(--text);
-      font-weight:700;
-      cursor:pointer;
-      border:1px solid var(--border);
-    }
+/* TOPBAR */
+.topbar{
+display:flex;
+justify-content:space-between;
+padding:10px;
+background:var(--panel);
+border-bottom:1px solid var(--border);
+}
 
-    .login-screen{
-      height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-    }
+.icon{padding:8px;background:#222;border-radius:10px;cursor:pointer}
 
-    .login-card{
-      width:min(420px,100%);
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:20px;
-      box-shadow:var(--shadow);
-      padding:22px;
-      text-align:center;
-    }
+/* CONTENT */
+.content{
+height:calc(100vh - 50px);
+overflow:auto;
+padding:12px;
+}
 
-    .brand-mark{
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      gap:8px;
-      font-size:32px;
-      font-weight:800;
-      margin-bottom:6px;
-    }
+/* GRID */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+gap:12px;
+}
 
-    .brand-mark .tube{color:var(--accent)}
-    .subtitle{
-      color:var(--muted);
-      margin-bottom:18px;
-      font-size:14px;
-    }
+/* CARD */
+.card{
+background:var(--card);
+border-radius:10px;
+overflow:hidden;
+cursor:pointer;
+}
 
-    .auth-switch{
-      display:flex;
-      gap:10px;
-      margin-bottom:16px;
-    }
+.thumb{width:100%;aspect-ratio:16/9}
+.title{padding:8px;font-size:14px}
 
-    .auth-switch button{
-      flex:1;
-    }
+/* PANEL */
+.panel{
+position:fixed;
+top:60px;
+right:10px;
+width:300px;
+background:var(--panel);
+padding:10px;
+border-radius:10px;
+display:none;
+}
+.panel.open{display:block}
 
-    .small-text{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:10px;
-      line-height:1.45;
-    }
-
-    .app{
-      height:100vh;
-      display:flex;
-      flex-direction:column;
-    }
-
-    .topbar{
-      height:56px;
-      flex:0 0 56px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:8px 10px;
-      background:var(--panel);
-      border-bottom:1px solid var(--border);
-      position:relative;
-      z-index:20;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-weight:800;
-      white-space:nowrap;
-      cursor:pointer;
-      user-select:none;
-      padding:0 8px;
-    }
-
-    .brand .tube{color:var(--accent)}
-
-    .top-actions{
-      display:flex;
-      align-items:center;
-      gap:6px;
-    }
-
-    .icon-btn{
-      width:38px;
-      height:38px;
-      border-radius:12px;
-      display:grid;
-      place-items:center;
-      cursor:pointer;
-      user-select:none;
-      background:var(--panel2);
-      border:1px solid var(--border);
-      color:var(--text);
-    }
-
-    .icon-btn:hover{
-      background:var(--card2);
-    }
-
-    .content{
-      flex:1;
-      overflow:auto;
-      padding:14px;
-      scroll-behavior:smooth;
-    }
-
-    .page-header{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:12px;
-      flex-wrap:wrap;
-    }
-
-    .title-wrap{
-      min-width:0;
-    }
-
-    .page-title{
-      font-size:24px;
-      font-weight:900;
-      margin:0;
-      line-height:1.2;
-    }
-
-    .page-sub{
-      color:var(--muted);
-      margin-top:4px;
-      font-size:13px;
-    }
-
-    .back-btn{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:8px 12px;
-      border-radius:12px;
-      background:var(--panel2);
-      border:1px solid var(--border);
-      cursor:pointer;
-      user-select:none;
-      white-space:nowrap;
-    }
-
-    .panel{
-      position:fixed;
-      top:60px;
-      right:10px;
-      width:min(360px,calc(100vw - 20px));
-      max-height:74vh;
-      overflow:auto;
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:16px;
-      box-shadow:var(--shadow);
-      padding:10px;
-      z-index:60;
-      transform:translateY(-12px);
-      opacity:0;
-      pointer-events:none;
-      transition:.2s ease;
-    }
-
-    .panel.open{
-      transform:translateY(0);
-      opacity:1;
-      pointer-events:auto;
-    }
-
-    .panel h3{
-      margin:10px 0 8px;
-      font-size:14px;
-    }
-
-    .panel-note{
-      font-size:12px;
-      color:var(--muted);
-      margin:6px 0 10px;
-      line-height:1.4;
-    }
-
-    .search-box{
-      position:fixed;
-      top:60px;
-      left:10px;
-      right:10px;
-      z-index:70;
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:16px;
-      box-shadow:var(--shadow);
-      padding:10px;
-      transform:translateY(-12px);
-      opacity:0;
-      pointer-events:none;
-      transition:.2s ease;
-    }
-
-    .search-box.open{
-      transform:translateY(0);
-      opacity:1;
-      pointer-events:auto;
-    }
-
-    .search-results{
-      margin-top:10px;
-      display:grid;
-      gap:10px;
-    }
-
-    .search-row{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px;
-      border-radius:14px;
-      background:var(--card);
-      border:1px solid var(--border);
-      cursor:pointer;
-    }
-
-    .search-row img{
-      width:92px;
-      height:52px;
-      border-radius:10px;
-      object-fit:cover;
-      background:#000;
-      flex-shrink:0;
-    }
-
-    .search-row .sr-txt{min-width:0}
-    .search-row .sr-title{
-      font-size:14px;
-      font-weight:700;
-      line-height:1.35;
-      margin-bottom:4px;
-    }
-    .search-row .sr-meta{
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    .channel-item,.history-item,.playlist-item{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      background:var(--card);
-      border:1px solid var(--border);
-      padding:10px;
-      border-radius:14px;
-      margin-bottom:8px;
-      cursor:pointer;
-    }
-
-    .left-row{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:0;
-    }
-
-    .left-row span{
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .avatar{
-      width:32px;
-      height:32px;
-      border-radius:50%;
-      object-fit:cover;
-      background:#333;
-      flex-shrink:0;
-    }
-
-    .danger{
-      color:#ff7a7a;
-      cursor:pointer;
-      flex-shrink:0;
-      font-size:14px;
-    }
-
-    .section-block{
-      margin-bottom:24px;
-    }
-
-    .section-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin:0 0 12px;
-    }
-
-    .section-title{
-      margin:0;
-      font-size:18px;
-      font-weight:800;
-    }
-
-    .section-count{
-      color:var(--muted);
-      font-size:12px;
-      white-space:nowrap;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-      gap:14px;
-    }
-
-    .card{
-      background:var(--panel);
-      border:1px solid var(--border);
-      border-radius:16px;
-      overflow:hidden;
-      cursor:pointer;
-      transition:transform .16s ease, background .16s ease;
-    }
-
-    .card:hover{
-      transform:translateY(-2px);
-      background:var(--card2);
-    }
-
-    .thumb{
-      width:100%;
-      aspect-ratio:16/9;
-      object-fit:cover;
-      display:block;
-      background:#000;
-    }
-
-    .card-body{
-      padding:10px;
-    }
-
-    .video-title{
-      font-size:14px;
-      line-height:1.4;
-      min-height:40px;
-      margin-bottom:8px;
-      font-weight:700;
-    }
-
-    .meta{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      color:var(--muted);
-      font-size:12px;
-    }
-
-    .logo{
-      width:20px;
-      height:20px;
-      border-radius:50%;
-      object-fit:cover;
-      background:#333;
-      flex-shrink:0;
-    }
-
-    .empty{
-      color:var(--muted);
-      padding:18px 8px;
-      text-align:center;
-      font-size:14px;
-    }
-
-    .page{
-      display:none;
-    }
-
-    .page.active{
-      display:block;
-    }
-
-    .resume-card{
-      background:linear-gradient(135deg,#232323,#171717);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:14px;
-      cursor:pointer;
-      margin-bottom:16px;
-    }
-
-    .resume-label{
-      color:var(--muted);
-      font-size:12px;
-      margin-bottom:6px;
-    }
-
-    .resume-title{
-      font-size:16px;
-      font-weight:800;
-      margin-bottom:10px;
-      line-height:1.4;
-    }
-
-    .theme-inline{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:8px;
-    }
-
-    @media (max-width: 720px){
-      .page-title{font-size:20px}
-      .grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
-      .icon-btn{width:36px;height:36px}
-    }
-  </style>
+</style>
 </head>
+
 <body>
 
-<div id="loginPage" class="login-screen">
-  <div class="login-card">
-    <div class="brand-mark">
-      <span>Focused</span><span class="tube">Tube</span>
-    </div>
-    <div class="subtitle">A distraction-free YouTube study experience</div>
-
-    <div class="auth-switch">
-      <button class="primary-btn" onclick="showAuthMode('login')" style="width:50%">Login</button>
-      <button class="ghost-btn" onclick="showAuthMode('create')" style="width:50%">Create</button>
-    </div>
-
-    <div id="loginForm">
-      <input id="loginUser" class="field" placeholder="Username" autocomplete="username">
-      <input id="loginPass" class="field" type="password" placeholder="Password" autocomplete="current-password">
-      <button class="primary-btn" onclick="login()">Login</button>
-    </div>
-
-    <div id="createForm" class="hidden">
-      <input id="createUser" class="field" placeholder="Username" autocomplete="username">
-      <input id="createPass" class="field" type="password" placeholder="Password" autocomplete="new-password">
-      <input id="createPass2" class="field" type="password" placeholder="Confirm password" autocomplete="new-password">
-      <button class="primary-btn" onclick="createAccount()">Create account</button>
-      <button class="ghost-btn" onclick="showAuthMode('login')">Back to login</button>
-    </div>
-
-    <div class="theme-inline">Theme is saved on this device.</div>
-  </div>
+<!-- LOGIN -->
+<div id="authPage" class="auth">
+<h2>FocusedTube</h2>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+<button onclick="register()">Create Account</button>
 </div>
 
-<div id="app" class="app hidden">
-  <div class="topbar">
-    <div class="brand" onclick="showHome()">
-      <span>Focused</span><span class="tube">Tube</span>
-    </div>
+<!-- APP -->
+<div id="app" class="app">
 
-    <div class="top-actions">
-      <div class="icon-btn" onclick="showHome()" title="Home">🏠</div>
-      <div class="icon-btn" onclick="toggleSearch()" title="Search">🔎</div>
-      <div class="icon-btn" onclick="toggleSubs()" title="Subscriptions">📺</div>
-      <div class="icon-btn" onclick="showHistory()" title="History">⏱️</div>
-      <div class="icon-btn" onclick="toggleTheme()" title="Theme">🌙</div>
-      <div class="icon-btn" onclick="logout()" title="Profile">👤</div>
-    </div>
-  </div>
+<div class="topbar">
+<div>📌 FocusedTube</div>
+<div>
+<span class="icon" onclick="showHome()">🏠</span>
+<span class="icon" onclick="toggleSubs()">📺</span>
+<span class="icon" onclick="showHistory()">⏱️</span>
+<span class="icon" onclick="toggleSearch()">🔎</span>
+<span class="icon" onclick="logout()">👤</span>
+</div>
+</div>
 
-  <div id="subsPanel" class="panel">
-    <input id="channelInput" class="field" placeholder="@handle or channel link">
-    <button class="primary-btn" onclick="addChannel()">Add Channel</button>
-    <div class="panel-note">
-      Add a channel by pasting a YouTube handle like <b>@mrbeast</b> or a channel link.
-    </div>
-    <h3>Subscriptions</h3>
-    <div id="subsList"></div>
-  </div>
+<div id="subsPanel" class="panel"></div>
+<div id="searchPanel" class="panel"></div>
 
-  <div id="searchBox" class="search-box">
-    <input id="searchInput" class="field" placeholder="Search videos on YouTube">
-    <button class="primary-btn" onclick="runSearch()">Search</button>
-    <div id="searchResults" class="search-results"></div>
-  </div>
+<div id="content" class="content"></div>
 
-  <div id="content" class="content">
-    <div id="homePage" class="page active">
-      <div id="homeHeader" class="page-header"></div>
-      <div id="resumeBox"></div>
-      <div id="homeGrid"></div>
-    </div>
-
-    <div id="channelPage" class="page">
-      <div id="channelHeader" class="page-header"></div>
-      <div id="channelSections"></div>
-    </div>
-
-    <div id="historyPage" class="page">
-      <div id="historyHeader" class="page-header"></div>
-      <div id="historyGrid" class="grid"></div>
-    </div>
-  </div>
 </div>
 
 <script>
-  const WORKER_URL = "https://restless-brook-50e4.dkanha283.workers.dev";
-  const PLAYER_URL = "https://dkanha283-hub.github.io/Player/";
-
-  const $ = (id) => document.getElementById(id);
-
-  let channels = [];
-  let historyData = [];
-  let lastVideo = null;
-  let homeItems = [];
-  let channelData = null;
-  let currentSearchResults = [];
-  let currentView = "home";
-  let currentChannel = null;
-  let visibleCount = 12;
-  let theme = localStorage.getItem("focusTheme") || "dark";
-  let viewToken = 0;
-  let channelCache = {};
-
-  document.addEventListener("DOMContentLoaded", init);
-
-  function init() {
-    applyTheme(theme);
-    loadState();
-
-    if (localStorage.getItem("focusLogin") === "1") {
-      showApp();
-      renderSubscriptions();
-      showHome();
-    } else {
-      showLogin();
-      showAuthMode("login");
-    }
-
-    $("content").addEventListener("scroll", onScroll);
-    document.addEventListener("click", closePanelsOnOutside);
-  }
-
-  function showLogin() {
-    $("loginPage").classList.remove("hidden");
-    $("app").classList.add("hidden");
-  }
-
-  function showApp() {
-    $("loginPage").classList.add("hidden");
-    $("app").classList.remove("hidden");
-  }
-
-  function showAuthMode(mode) {
-    $("loginForm").classList.toggle("hidden", mode !== "login");
-    $("createForm").classList.toggle("hidden", mode !== "create");
-  }
-
-  function loadState() {
-    channels = JSON.parse(localStorage.getItem("channels") || "[]");
-    historyData = JSON.parse(localStorage.getItem("history") || "[]");
-    lastVideo = JSON.parse(localStorage.getItem("lastVideo") || "null");
-  }
-
-  function saveState() {
-    localStorage.setItem("channels", JSON.stringify(channels));
-    localStorage.setItem("history", JSON.stringify(historyData));
-    localStorage.setItem("lastVideo", JSON.stringify(lastVideo));
-  }
-
-  function applyTheme(value) {
-    theme = value === "light" ? "light" : "dark";
-    document.body.classList.toggle("light", theme === "light");
-    localStorage.setItem("focusTheme", theme);
-  }
-
-  function toggleTheme() {
-    applyTheme(theme === "dark" ? "light" : "dark");
-  }
-
-  function getAccounts() {
-    return JSON.parse(localStorage.getItem("focusAccounts") || "{}");
-  }
-
-  function setAccounts(accounts) {
-    localStorage.setItem("focusAccounts", JSON.stringify(accounts));
-  }
-
-  function createAccount() {
-    const u = $("createUser").value.trim();
-    const p = $("createPass").value.trim();
-    const p2 = $("createPass2").value.trim();
-
-    if (!u || !p || !p2) {
-      alert("Fill all fields");
-      return;
-    }
-
-    if (p !== p2) {
-      alert("Passwords do not match");
-      return;
-    }
-
-    const accounts = getAccounts();
-
-    if (accounts[u]) {
-      alert("Username already exists");
-      return;
-    }
-
-    accounts[u] = p;
-    setAccounts(accounts);
-
-    localStorage.setItem("focusLogin", "1");
-    showApp();
-    renderSubscriptions();
-    showHome();
-  }
-
-  function login() {
-    const u = $("loginUser").value.trim();
-    const p = $("loginPass").value.trim();
-    const accounts = getAccounts();
-
-    if (!u || !p) {
-      alert("Enter username and password");
-      return;
-    }
-
-    if (!accounts[u]) {
-      alert("No account found. Create one first.");
-      return;
-    }
-
-    if (accounts[u] !== p) {
-      alert("Invalid username or password");
-      return;
-    }
-
-    localStorage.setItem("focusLogin", "1");
-    showApp();
-    renderSubscriptions();
-    showHome();
-  }
-
-  function logout() {
-    localStorage.removeItem("focusLogin");
-    showLogin();
-    showAuthMode("login");
-  }
-
-  function closePanelsOnOutside(e) {
-    const panels = ["subsPanel", "searchBox"];
-    for (const id of panels) {
-      const el = $(id);
-      if (!el.classList.contains("open")) continue;
-      if (el.contains(e.target)) return;
-      if (e.target.closest(".icon-btn")) return;
-      el.classList.remove("open");
-    }
-  }
-
-  function toggleSubs() {
-    $("subsPanel").classList.toggle("open");
-    $("searchBox").classList.remove("open");
-  }
-
-  function toggleSearch() {
-    $("searchBox").classList.toggle("open");
-    $("subsPanel").classList.remove("open");
-    $("searchInput").focus();
-  }
-
-  function showPage(page) {
-    ["homePage","channelPage","historyPage"].forEach(id => $(id).classList.remove("active"));
-    $(page).classList.add("active");
-    $("content").scrollTop = 0;
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  }
-
-  function normalizeChannel(item) {
-    return {
-      channelId: item.channelId || item.id || "",
-      name: item.name || item.title || "Channel",
-      logo: item.logo || ""
-    };
-  }
-
-  function normalizeVideo(v, channel = {}) {
-    return {
-      id: v.id || "",
-      title: v.title || "Video",
-      date: v.date || "",
-      thumb: v.thumb || (v.id ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : ""),
-      type: v.type || "video",
-      channelId: v.channelId || channel.channelId || "",
-      channelName: v.channelName || channel.name || "",
-      channelLogo: v.channelLogo || channel.logo || ""
-    };
-  }
-
-  function saveHistory(item) {
-    const v = normalizeVideo(item);
-    if (!v.id) return;
-    historyData = [v, ...historyData.filter(x => x.id !== v.id)].slice(0, 50);
-    lastVideo = v;
-    saveState();
-  }
-
-  function renderHeader(el, title, subtitle = "", backFn = "") {
-    el.innerHTML = `
-      <div class="title-wrap">
-        <h1 class="page-title">${escapeHtml(title)}</h1>
-        <div class="page-sub">${escapeHtml(subtitle)}</div>
-      </div>
-      ${backFn ? `<div class="back-btn" onclick="${backFn}">⬅ Back</div>` : ""}
-    `;
-  }
-
-  function renderSubscriptions() {
-    const list = $("subsList");
-    list.innerHTML = "";
-
-    if (!channels.length) {
-      list.innerHTML = `<div class="empty">No channels added yet</div>`;
-      return;
-    }
-
-    channels.forEach((c, i) => {
-      const row = document.createElement("div");
-      row.className = "channel-item";
-      row.innerHTML = `
-        <div class="left-row">
-          <img class="avatar" src="${c.logo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
-          <span>${escapeHtml(c.name)}</span>
-        </div>
-        <span class="danger" onclick="event.stopPropagation(); removeChannel(${i})">❌</span>
-      `;
-      row.onclick = () => openChannel(i);
-      list.appendChild(row);
-    });
-  }
-
-  async function addChannel() {
-    const raw = $("channelInput").value.trim();
-    if (!raw) return;
-
-    let endpoint = "";
-    if (raw.includes("@")) {
-      const handle = raw.split("@")[1].split("?")[0].split("/")[0];
-      endpoint = `${WORKER_URL}?handle=${encodeURIComponent(handle)}`;
-    } else if (raw.includes("channel/")) {
-      const id = raw.split("channel/")[1].split("?")[0].split("/")[0];
-      endpoint = `${WORKER_URL}?id=${encodeURIComponent(id)}`;
-    } else if (raw.startsWith("UC")) {
-      endpoint = `${WORKER_URL}?id=${encodeURIComponent(raw)}`;
-    } else {
-      alert("Invalid link");
-      return;
-    }
-
-    try {
-      const res = await fetch(endpoint);
-      const data = await res.json();
-      if (!data.channelId) {
-        alert("Could not load channel");
-        return;
-      }
-
-      const ch = normalizeChannel(data);
-      if (channels.some(x => x.channelId === ch.channelId)) {
-        alert("Already added");
-        return;
-      }
-
-      channels.unshift(ch);
-      channelCache = {};
-      saveState();
-      $("channelInput").value = "";
-      renderSubscriptions();
-      showHome();
-    } catch {
-      alert("Failed to fetch channel");
-    }
-  }
-
-  function removeChannel(index) {
-    channels.splice(index, 1);
-    channelCache = {};
-    saveState();
-    renderSubscriptions();
-    showHome();
-  }
-
-  async function fetchChannelSections(ch) {
-    if (channelCache[ch.channelId]) return channelCache[ch.channelId];
-
-    const res = await fetch(`${WORKER_URL}?sections=1&channelId=${encodeURIComponent(ch.channelId)}`);
-    const data = await res.json();
-
-    const normalized = {
-      videos: (data.videos || []).map(v => normalizeVideo(v, ch)),
-      shorts: (data.shorts || []).map(v => normalizeVideo(v, ch)),
-      playlists: (data.playlists || []).map(v => ({
-        id: v.id || "",
-        title: v.title || "Playlist",
-        date: v.date || "",
-        thumb: v.thumb || "",
-        type: "playlist",
-        channelId: ch.channelId,
-        channelName: ch.name,
-        channelLogo: ch.logo
-      })),
-      counts: data.counts || {
-        videos: (data.videos || []).length,
-        shorts: (data.shorts || []).length,
-        playlists: (data.playlists || []).length
-      }
-    };
-
-    channelCache[ch.channelId] = normalized;
-    return normalized;
-  }
-
-  async function showHome() {
-    currentView = "home";
-    currentChannel = null;
-    currentSearchResults = [];
-    visibleCount = 12;
-
-    showPage("homePage");
-    renderHeader($("homeHeader"), "Home Feed", "Recommended from subscribed channels");
-    $("channelSections").innerHTML = "";
-    $("historyGrid").innerHTML = "";
-    $("resumeBox").innerHTML = "";
-
-    if (lastVideo) {
-      const box = document.createElement("div");
-      box.className = "resume-card";
-      box.innerHTML = `
-        <div class="resume-label">Continue watching</div>
-        <div class="resume-title">${escapeHtml(lastVideo.title)}</div>
-        <div class="primary-btn" style="display:inline-block;width:auto;padding:10px 14px;margin-top:4px;">Resume</div>
-      `;
-      box.onclick = () => openPlayer(lastVideo);
-      $("resumeBox").appendChild(box);
-    }
-
-    if (!channels.length) {
-      $("homeGrid").innerHTML = `<div class="empty">Add channels from the subscriptions panel</div>`;
-      return;
-    }
-
-    $("homeGrid").innerHTML = `<div class="empty">Loading home feed...</div>`;
-    const token = ++viewToken;
-
-    const all = [];
-    for (const ch of channels) {
-      const sec = await fetchChannelSections(ch);
-      all.push(...sec.videos, ...sec.shorts);
-    }
-
-    if (token !== viewToken || currentView !== "home") return;
-
-    all.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-    const seen = new Set();
-    homeItems = all.filter(v => {
-      if (!v.id || seen.has(v.id)) return false;
-      seen.add(v.id);
-      return true;
-    });
-
-    renderHomeFeed();
-  }
-
-  function renderCard(v) {
-    const item = normalizeVideo(v);
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <img class="thumb" src="${item.thumb}" alt="">
-      <div class="card-body">
-        <div class="video-title">${escapeHtml(item.title)}</div>
-        <div class="meta">
-          <img class="logo" src="${item.channelLogo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
-          <span>${escapeHtml(item.channelName || "")}${item.type === "short" ? " • Short" : item.type === "playlist" ? " • Playlist" : ""}</span>
-        </div>
-      </div>
-    `;
-    card.onclick = () => openPlayer(item);
-    return card;
-  }
-
-  function renderHomeFeed() {
-    const grid = $("homeGrid");
-    grid.innerHTML = "";
-    const slice = homeItems.slice(0, visibleCount);
-
-    if (!slice.length) {
-      grid.innerHTML = `<div class="empty">No videos found yet</div>`;
-      return;
-    }
-
-    slice.forEach(v => grid.appendChild(renderCard(v)));
-  }
-
-  async function openChannel(index) {
-    currentView = "channel";
-    currentChannel = channels[index];
-    visibleCount = 12;
-
-    showPage("channelPage");
-    renderHeader($("channelHeader"), currentChannel.name, "Videos · Shorts · Playlists", "showHome()");
-
-    $("channelSections").innerHTML = `<div class="empty">Loading channel...</div>`;
-    const sec = await fetchChannelSections(currentChannel);
-    channelData = sec;
-    renderChannelPage();
-  }
-
-  function renderChannelPage() {
-    const container = $("channelSections");
-    container.innerHTML = "";
-
-    if (!channelData) {
-      container.innerHTML = `<div class="empty">No channel data</div>`;
-      return;
-    }
-
-    const sections = [
-      { title: "Videos", total: channelData.counts?.videos || 0, items: channelData.videos || [] },
-      { title: "Shorts", total: channelData.counts?.shorts || 0, items: channelData.shorts || [] },
-      { title: "Playlists", total: channelData.counts?.playlists || 0, items: channelData.playlists || [] }
-    ];
-
-    sections.forEach(section => {
-      const block = document.createElement("div");
-      block.className = "section-block";
-
-      const shown = section.items.slice(0, visibleCount);
-
-      block.innerHTML = `
-        <div class="section-head">
-          <h2 class="section-title">${section.title} (${section.total || shown.length})</h2>
-          <div class="section-count">${shown.length} shown</div>
-        </div>
-      `;
-
-      if (!shown.length) {
-        block.innerHTML += `<div class="empty">No ${section.title.toLowerCase()} found</div>`;
-        container.appendChild(block);
-        return;
-      }
-
-      const grid = document.createElement("div");
-      grid.className = "grid";
-      shown.forEach(v => grid.appendChild(renderCard(v)));
-      block.appendChild(grid);
-      container.appendChild(block);
-    });
-  }
-
-  function showHistory() {
-    currentView = "history";
-    visibleCount = 12;
-    showPage("historyPage");
-    renderHeader($("historyHeader"), "Watch History", "Recently watched videos");
-    renderHistoryPage();
-  }
-
-  function renderHistoryPage() {
-    const grid = $("historyGrid");
-    grid.innerHTML = "";
-    const slice = historyData.slice(0, visibleCount);
-
-    if (!slice.length) {
-      grid.innerHTML = `<div class="empty">No watch history yet</div>`;
-      return;
-    }
-
-    slice.forEach(v => {
-      const row = document.createElement("div");
-      row.className = "history-item";
-      row.innerHTML = `
-        <div class="left-row">
-          <img class="avatar" style="border-radius:8px;width:88px;height:50px" src="${v.thumb || ''}" onerror="this.src='https://img.youtube.com/vi/default/hqdefault.jpg'">
-          <span>${escapeHtml(v.title || "Video")}</span>
-        </div>
-        <span class="danger">▶</span>
-      `;
-      row.onclick = () => openPlayer(normalizeVideo(v));
-      grid.appendChild(row);
-    });
-  }
-
-  function onScroll() {
-    const el = $("content");
-    const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 180;
-    if (!nearBottom) return;
-
-    if (currentView === "home" && visibleCount < homeItems.length) {
-      visibleCount += 12;
-      renderHomeFeed();
-    } else if (currentView === "channel" && channelData) {
-      const total = [
-        ...(channelData.videos || []),
-        ...(channelData.shorts || []),
-        ...(channelData.playlists || [])
-      ].length;
-      if (visibleCount < total) {
-        visibleCount += 12;
-        renderChannelPage();
-      }
-    } else if (currentView === "history" && visibleCount < historyData.length) {
-      visibleCount += 12;
-      renderHistoryPage();
-    } else if (currentView === "search" && visibleCount < currentSearchResults.length) {
-      visibleCount += 12;
-      renderSearchResults();
-    }
-  }
-
-  async function runSearch() {
-    const q = $("searchInput").value.trim();
-    if (!q) return;
-
-    currentView = "search";
-    visibleCount = 12;
-    showPage("homePage");
-    renderHeader($("homeHeader"), `Search: ${q}`, "YouTube results");
-    $("resumeBox").innerHTML = "";
-    $("homeGrid").innerHTML = `<div class="empty">Searching...</div>`;
-
-    const res = await fetch(`${WORKER_URL}?search=1&q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    currentSearchResults = (data || []).map(v => normalizeVideo(v));
-
-    renderSearchResults();
-    $("searchBox").classList.remove("open");
-  }
-
-  function renderSearchResults() {
-    const grid = $("homeGrid");
-    grid.innerHTML = "";
-    const slice = currentSearchResults.slice(0, visibleCount);
-
-    if (!slice.length) {
-      grid.innerHTML = `<div class="empty">No results found</div>`;
-      return;
-    }
-
-    slice.forEach(v => grid.appendChild(renderCard(v)));
-  }
-
-  function openPlayer(v) {
-  function openPlayer(v) {
-  const item = normalizeVideo(v);
-  saveHistory(item);
-
-  const params = new URLSearchParams();
-
-  if (item.id) params.set("videoId", item.id);
-  if (item.title) params.set("title", item.title);
-  if (item.channelId) params.set("channelId", item.channelId);
-  if (item.channelName) params.set("channelName", item.channelName);
-
-  if (item.type === "playlist") {
-    params.set("playlistId", item.id);
-  }
-
-  // ✅ NEW FIXED URL (NO 404 EVER)
-  const PLAYER_URL = "https://dkanha283-hub.github.io/Player/";
-
-  window.location.href = PLAYER_URL + "?" + params.toString();
+const WORKER="https://restless-brook-50e4.dkanha283.workers.dev";
+
+/* AUTH SYSTEM */
+function register(){
+const u=username.value.trim();
+const p=password.value.trim();
+if(!u||!p)return alert("Enter details");
+
+let users=JSON.parse(localStorage.getItem("users")||"{}");
+if(users[u]) return alert("User exists");
+
+users[u]=p;
+localStorage.setItem("users",JSON.stringify(users));
+alert("Account created");
+}
+
+function login(){
+const u=username.value.trim();
+const p=password.value.trim();
+
+let users=JSON.parse(localStorage.getItem("users")||"{}");
+
+if(users[u]===p){
+localStorage.setItem("login","1");
+init();
+}else{
+alert("Invalid login");
 }
 }
-  }
 
-  window.login = login;
-  window.logout = logout;
-  window.toggleTheme = toggleTheme;
-  window.toggleSubs = toggleSubs;
-  window.toggleSearch = toggleSearch;
-  window.showHome = showHome;
-  window.showHistory = showHistory;
-  window.addChannel = addChannel;
-  window.runSearch = runSearch;
-  window.createAccount = createAccount;
-  window.showAuthMode = showAuthMode;
-  window.removeChannel = removeChannel;
-  window.openChannel = openChannel;
-  window.openPlayer = openPlayer;
-  window.openCreateAccount = () => {};
-  window.closeCreateAccount = () => {};
+function logout(){
+localStorage.removeItem("login");
+location.reload();
+}
+
+/* STATE */
+let channels=JSON.parse(localStorage.getItem("channels")||"[]");
+let historyData=JSON.parse(localStorage.getItem("history")||"[]");
+
+let homeData=[],visible=12,currentPage="home";
+
+/* INIT */
+function init(){
+if(localStorage.getItem("login")){
+authPage.style.display="none";
+app.style.display="block";
+showHome();
+}else{
+authPage.style.display="flex";
+app.style.display="none";
+}
+}
+
+/* CARD */
+function card(v){
+const d=document.createElement("div");
+d.className="card";
+d.innerHTML=`
+<img class="thumb" src="${v.thumb}">
+<div class="title">${v.title}</div>`;
+d.onclick=()=>openPlayer(v);
+return d;
+}
+
+/* PLAYER */
+function openPlayer(v){
+historyData=[v,...historyData.filter(x=>x.id!==v.id)].slice(0,50);
+localStorage.setItem("history",JSON.stringify(historyData));
+
+const p=new URLSearchParams();
+p.set("videoId",v.id);
+p.set("title",v.title);
+p.set("channelId",v.channelId);
+p.set("channelName",v.channelName);
+
+location.href=`https://dkanha283-hub.github.io/Player/?${p}`;
+}
+
+/* HOME */
+async function showHome(){
+content.innerHTML="Loading...";
+let all=[];
+
+for(const ch of channels){
+const r=await fetch(`${WORKER}?sections=1&channelId=${ch.channelId}`);
+const d=await r.json();
+
+all.push(...(d.videos||[]).slice(0,200));
+all.push(...(d.shorts||[]).slice(0,80));
+}
+
+homeData=all;
+renderHome();
+}
+
+function renderHome(){
+content.innerHTML="";
+const g=document.createElement("div");
+g.className="grid";
+
+homeData.slice(0,visible).forEach(v=>g.appendChild(card(v)));
+content.appendChild(g);
+}
+
+/* HISTORY */
+function showHistory(){
+content.innerHTML="";
+const g=document.createElement("div");
+g.className="grid";
+historyData.forEach(v=>g.appendChild(card(v)));
+content.appendChild(g);
+}
+
+/* SUBS */
+function toggleSubs(){
+subsPanel.classList.toggle("open");
+subsPanel.innerHTML=`
+<input id="ch" placeholder="Channel ID or @handle">
+<button onclick="addChannel()">Add</button>
+${channels.map((c,i)=>`<div onclick="removeChannel(${i})">${c.name} ❌</div>`).join("")}
+`;
+}
+
+async function addChannel(){
+const val=ch.value;
+let url=val.includes("@")?`${WORKER}?handle=${val.replace("@","")}`:`${WORKER}?id=${val}`;
+
+const r=await fetch(url);
+const d=await r.json();
+
+channels.unshift({channelId:d.channelId,name:d.name});
+localStorage.setItem("channels",JSON.stringify(channels));
+toggleSubs();
+}
+
+function removeChannel(i){
+channels.splice(i,1);
+localStorage.setItem("channels",JSON.stringify(channels));
+toggleSubs();
+}
+
+/* SEARCH */
+function toggleSearch(){
+searchPanel.classList.toggle("open");
+searchPanel.innerHTML=`
+<input id="q">
+<button onclick="search()">Search</button>
+<div id="res"></div>`;
+}
+
+async function search(){
+const q=document.getElementById("q").value;
+const r=await fetch(`${WORKER}?search=1&q=${q}`);
+const d=await r.json();
+
+const box=document.getElementById("res");
+box.innerHTML="";
+d.forEach(v=>box.appendChild(card(v)));
+}
+
+/* SCROLL */
+content.addEventListener("scroll",()=>{
+if(content.scrollTop+content.clientHeight>=content.scrollHeight-100){
+visible+=12;
+renderHome();
+}
+});
+
+init();
 </script>
+
 </body>
 </html>
