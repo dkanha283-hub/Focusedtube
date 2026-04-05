@@ -7,157 +7,86 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      background: #f5f5f5;
-    }
+    body { margin:0; font-family:Arial; background:#f5f5f5; }
 
     .login-screen {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
+      height:100vh; display:flex;
+      justify-content:center; align-items:center;
+      flex-direction:column;
     }
 
-    .logo {
-      font-size: 48px;
-      margin-bottom: 20px;
-    }
+    .logo { font-size:40px; margin-bottom:20px; }
 
-    .logo span {
-      color: red;
-      border: 2px solid red;
-      padding: 5px 12px;
-      border-radius: 6px;
-    }
-
-    .login-btn {
-      padding: 12px 20px;
-      border: 2px solid #2196f3;
-      background: transparent;
-      color: #2196f3;
-      cursor: pointer;
-    }
-
-    .app { display: none; }
+    .app { display:none; }
 
     .navbar {
-      height: 60px;
-      background: white;
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      border-bottom: 1px solid #ddd;
+      height:60px; background:white;
+      display:flex; align-items:center;
+      padding:0 20px;
+      border-bottom:1px solid #ddd;
     }
 
     .nav-icons {
-      margin-left: auto;
-      display: flex;
-      gap: 20px;
-      font-size: 22px;
-      cursor: pointer;
-      align-items: center;
-    }
-
-    .profile {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-
-    #logoutBtn {
-      display: none;
-      position: absolute;
-      top: 60px;
-      right: 20px;
-      background: white;
-      border: 1px solid #ddd;
-      padding: 10px;
-      cursor: pointer;
+      margin-left:auto;
+      display:flex;
+      gap:20px;
+      cursor:pointer;
     }
 
     #subsPanel {
-      position: fixed;
-      top: 70px;
-      right: 20px;
-      width: 300px;
-      height: 400px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-      display: none;
-      overflow-y: auto;
-      padding: 10px;
-      z-index: 1000;
+      position:fixed;
+      top:70px; right:20px;
+      width:280px; height:350px;
+      background:white;
+      border-radius:10px;
+      box-shadow:0 5px 15px rgba(0,0,0,0.2);
+      display:none;
+      overflow:auto;
+      padding:10px;
     }
 
     .channel-item {
-      display: flex;
-      gap: 10px;
-      padding: 8px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
+      display:flex; gap:10px;
+      padding:8px;
+      cursor:pointer;
     }
 
     .channel-item img {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
+      width:30px; height:30px;
+      border-radius:50%;
     }
 
-    .main {
-      padding: 15px;
-    }
-
-    .player {
-      width: 100%;
-      height: 300px;
-      border-radius: 10px;
-      border: none;
-      margin-bottom: 15px;
-    }
+    .main { padding:15px; }
 
     .videos {
-      height: 70vh;
-      overflow-y: auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 15px;
+      height:70vh;
+      overflow-y:auto;
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+      gap:15px;
     }
 
     .video {
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: 0.3s;
+      background:white;
+      border-radius:10px;
+      overflow:hidden;
+      cursor:pointer;
     }
 
-    .video:hover {
-      transform: scale(1.05);
-    }
+    .video img { width:100%; }
 
-    .video img {
-      width: 100%;
-    }
-
-    .video-title {
-      padding: 8px;
-      font-size: 14px;
-    }
   </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginScreen" class="login-screen">
-  <div class="logo">Focused <span>Tube</span></div>
-  <button class="login-btn" onclick="login()">Sign in with Google</button>
+  <div class="logo">FocusedTube</div>
+  <button onclick="login()">Login</button>
 </div>
 
+<!-- APP -->
 <div id="app" class="app">
 
   <div class="navbar">
@@ -166,11 +95,8 @@
     <div class="nav-icons">
       <span onclick="goHome()">🏠</span>
       <span onclick="toggleSubs()">📺</span>
-      <img id="profilePic" class="profile" onclick="toggleLogout()">
     </div>
   </div>
-
-  <div id="logoutBtn" onclick="logout()">Logout</div>
 
   <div id="subsPanel">
     <h3>Subscriptions</h3>
@@ -178,7 +104,6 @@
   </div>
 
   <div class="main">
-    <iframe id="player" class="player"></iframe>
     <div id="videos" class="videos"></div>
   </div>
 
@@ -186,61 +111,27 @@
 
 <script>
 
-let accessToken = localStorage.getItem("token") || "";
-let currentChannels = [];
-let channelIndex = 0;
-
-// AUTO LOGIN
-window.onload = () => {
-  if (accessToken) {
-    showApp();
-    loadProfile();
-    loadSubscriptions();
-  }
-};
+let accessToken = "";
+let channels = [];
+let index = 0;
 
 // LOGIN
 function login() {
   google.accounts.oauth2.initTokenClient({
     client_id: "901526621368-k63bfsq7aomg2e2k6u0625bub9291dhs.apps.googleusercontent.com",
-    scope: "https://www.googleapis.com/auth/youtube.readonly openid profile",
+    scope: "https://www.googleapis.com/auth/youtube.readonly",
     callback: (res) => {
       accessToken = res.access_token;
-      localStorage.setItem("token", accessToken);
 
-      showApp();
-      loadProfile();
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("app").style.display = "block";
+
       loadSubscriptions();
     }
-  }).requestAccessToken({ prompt: "" });
+  }).requestAccessToken();
 }
 
-function showApp() {
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("app").style.display = "block";
-}
-
-// PROFILE
-async function loadProfile() {
-  let res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-    headers: { Authorization: "Bearer " + accessToken }
-  });
-
-  let data = await res.json();
-  document.getElementById("profilePic").src = data.picture;
-}
-
-function toggleLogout() {
-  let btn = document.getElementById("logoutBtn");
-  btn.style.display = btn.style.display === "block" ? "none" : "block";
-}
-
-function logout() {
-  localStorage.clear();
-  location.reload();
-}
-
-// SUB PANEL
+// TOGGLE PANEL
 function toggleSubs() {
   let panel = document.getElementById("subsPanel");
   panel.style.display = panel.style.display === "block" ? "none" : "block";
@@ -248,6 +139,7 @@ function toggleSubs() {
 
 // LOAD SUBSCRIPTIONS
 async function loadSubscriptions() {
+
   let res = await fetch(
     "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=20",
     { headers: { Authorization: "Bearer " + accessToken } }
@@ -255,8 +147,10 @@ async function loadSubscriptions() {
 
   let data = await res.json();
 
-  currentChannels = data.items.map(i => i.snippet.resourceId.channelId);
-  channelIndex = 0;
+  console.log("Subscriptions:", data);
+
+  channels = data.items.map(i => i.snippet.resourceId.channelId);
+  index = 0;
 
   let list = document.getElementById("channelList");
   list.innerHTML = "";
@@ -270,27 +164,27 @@ async function loadSubscriptions() {
       <span>${item.snippet.title}</span>
     `;
 
-    div.onclick = () => {
-      toggleSubs();
-      loadChannelVideos(item.snippet.resourceId.channelId);
-    };
+    div.onclick = () => loadChannelVideos(item.snippet.resourceId.channelId);
 
     list.appendChild(div);
   });
 
-  loadMoreVideos();
+  loadMoreVideos(); // 🔥 THIS WAS MISSING
 }
 
-// INFINITE LOAD
+// LOAD MORE VIDEOS
 async function loadMoreVideos() {
+
   let container = document.getElementById("videos");
 
   for (let i = 0; i < 3; i++) {
-    if (channelIndex >= currentChannels.length) return;
 
-    let channelId = currentChannels[channelIndex++];
+    if (index >= channels.length) return;
+
+    let channelId = channels[index++];
+
     let res = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=4&type=video`,
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=3&type=video`,
       { headers: { Authorization: "Bearer " + accessToken } }
     );
 
@@ -298,20 +192,15 @@ async function loadMoreVideos() {
 
     data.items.forEach(video => {
       let vid = video.id.videoId;
-      let title = video.snippet.title;
       let thumb = video.snippet.thumbnails.medium.url;
 
       let div = document.createElement("div");
       div.className = "video";
 
-      div.innerHTML = `
-        <img src="${thumb}">
-        <div class="video-title">${title}</div>
-      `;
+      div.innerHTML = `<img src="${thumb}">`;
 
       div.onclick = () => {
-        document.getElementById("player").src =
-          `https://www.youtube.com/embed/${vid}`;
+        window.open(`https://www.youtube.com/watch?v=${vid}`, "_blank");
       };
 
       container.appendChild(div);
@@ -323,6 +212,7 @@ async function loadMoreVideos() {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("videos").addEventListener("scroll", (e) => {
     let el = e.target;
+
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
       loadMoreVideos();
     }
@@ -331,12 +221,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // CHANNEL VIDEOS
 async function loadChannelVideos(channelId) {
+
   let res = await fetch(
     `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video`,
     { headers: { Authorization: "Bearer " + accessToken } }
   );
 
   let data = await res.json();
+
   let container = document.getElementById("videos");
   container.innerHTML = "";
 
@@ -348,11 +240,6 @@ async function loadChannelVideos(channelId) {
     div.className = "video";
     div.innerHTML = `<img src="${thumb}">`;
 
-    div.onclick = () => {
-      document.getElementById("player").src =
-        `https://www.youtube.com/embed/${vid}`;
-    };
-
     container.appendChild(div);
   });
 }
@@ -360,7 +247,7 @@ async function loadChannelVideos(channelId) {
 // HOME
 function goHome() {
   document.getElementById("videos").innerHTML = "";
-  channelIndex = 0;
+  index = 0;
   loadMoreVideos();
 }
 
