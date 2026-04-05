@@ -120,8 +120,19 @@
 
 <script>
 
-let accessToken = "";
+let accessToken = localStorage.getItem("token") || "";
 let watchHistory = JSON.parse(localStorage.getItem("watchHistory")) || [];
+
+// AUTO LOGIN ON REFRESH
+window.onload = () => {
+  if (accessToken) {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+
+    loadSubscriptions();
+    loadHomeFeed();
+  }
+};
 
 // LOGIN
 function login() {
@@ -131,13 +142,22 @@ function login() {
     callback: (res) => {
       accessToken = res.access_token;
 
+      // 🔥 SAVE TOKEN
+      localStorage.setItem("token", accessToken);
+
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("app").style.display = "block";
 
       loadSubscriptions();
-      loadHomeFeed();   // 🔥 HOME FEED LOAD
+      loadHomeFeed();
     }
   }).requestAccessToken();
+}
+
+// LOGOUT (OPTIONAL)
+function logout() {
+  localStorage.removeItem("token");
+  location.reload();
 }
 
 // TOGGLE PANEL
@@ -176,7 +196,7 @@ async function loadSubscriptions() {
   });
 }
 
-// 🔥 HOME FEED (ALL SUBSCRIBED VIDEOS)
+// HOME FEED
 async function loadHomeFeed() {
 
   let res = await fetch(
@@ -255,7 +275,7 @@ async function loadVideos(channelId) {
   });
 }
 
-// PLAY + SAVE HABIT
+// PLAY VIDEO
 function playVideo(id, title) {
   document.getElementById("player").src =
     `https://www.youtube.com/embed/${id}`;
