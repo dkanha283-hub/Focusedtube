@@ -187,20 +187,43 @@ function loadData() {
 }
 
 // ===== ADD LINK =====
-function addItem() {
+async function addItem(){
+
   let link = document.getElementById("linkInput").value.trim();
 
-  if (!(link.includes("youtube.com") || link.includes("youtu.be"))) {
-    alert("Paste valid YouTube link");
+  let channelId = null;
+
+  // normal channel link
+  if(link.includes("channel/")){
+    channelId = link.split("channel/")[1];
+  }
+
+  // 🔥 @username support (YOUR BACKEND)
+  if(link.includes("@")){
+    let handle = link.split("@")[1].split("?")[0];
+
+    try {
+      let res = await fetch("https://restless-brook-50e4.dkanha283.workers.dev/?handle=" + handle);
+      let data = await res.json();
+
+      channelId = data.channelId;
+    } catch (e) {
+      alert("Failed to fetch channel");
+      return;
+    }
+  }
+
+  if(!channelId){
+    alert("Invalid link");
     return;
   }
 
-  if (items.includes(link)) {
+  if(items.includes(channelId)){
     alert("Already added");
     return;
   }
 
-  items.push(link);
+  items.push(channelId);
   localStorage.setItem("items", JSON.stringify(items));
 
   renderList();
