@@ -8,7 +8,6 @@
     :root {
       --bg: #0f0f0f;
       --panel: #181818;
-      --panel2: #202020;
       --card: #282828;
       --text: #ffffff;
       --muted: #b3b3b3;
@@ -218,6 +217,27 @@
       align-items: start;
     }
 
+    .section {
+      margin-bottom: 22px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 4px 0 12px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .section-count {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     .card {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -424,13 +444,13 @@
   let currentChannelIndex = -1;
 
   let mixedHomeVideos = [];
-  let currentChannelVideos = [];
+  let currentChannelData = null;
 
   let homeVisibleCount = 12;
   let channelVisibleCount = 12;
   let historyVisibleCount = 12;
 
-  let channelCache = {};
+  let sectionCache = {};
   let viewToken = 0;
 
   document.addEventListener("DOMContentLoaded", init);
@@ -472,6 +492,7 @@
     if (typeof item === "string") {
       return {
         id: item,
+        type: "video",
         title: "Video",
         channelId: "",
         channelName: "",
@@ -483,6 +504,7 @@
 
     return {
       id: item.id || "",
+      type: item.type || "video",
       title: item.title || "Video",
       channelId: item.channelId || "",
       channelName: item.channelName || "",
@@ -599,6 +621,7 @@
       }
 
       channels.unshift(ch);
+      sectionCache = {};
       saveState();
       $("input").value = "";
       renderChannels();
@@ -636,6 +659,7 @@
 
   function del(i) {
     channels.splice(i, 1);
+    sectionCache = {};
     saveState();
     renderChannels();
     home();
@@ -689,26 +713,35 @@
       <button class="resume-btn">Resume</button>
     `;
 
-    card.onclick = () => playVideo(lastVideo);
+    card.onclick = () => playItem(lastVideo);
     box.appendChild(card);
   }
 
-  function playVideo(v) {
-    const video = normalizeHistory(v);
-    if (!video || !video.id) return;
+  function playItem(v) {
+    const item = normalizeHistory(v);
+    if (!item || !item.id) return;
 
-    $("player").innerHTML = `
-      <iframe
-        src="https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen>
-      </iframe>
-    `;
+    if (item.type === "playlist") {
+      $("player").innerHTML = `
+        <iframe
+          src="https://www.youtube.com/embed/videoseries?list=${item.id}&autoplay=1&rel=0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      `;
+    } else {
+      $("player").innerHTML = `
+        <iframe
+          src="https://www.youtube.com/embed/${item.id}?autoplay=1&rel=0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      `;
+    }
 
-    historyData = [video, ...historyData.filter(x => x.id !== video.id)];
+    historyData = [item, ...historyData.filter(x => x.id !== item.id)];
     historyData = historyData.slice(0, 50);
-
-    lastVideo = video;
+    lastVideo = item;
     saveState();
     showResume();
     $("content").scrollTo({ top: 0, behavior: "smooth" });
@@ -724,29 +757,52 @@
     });
   }
 
-  async function fetchChannelVideos(ch) {
-    if (channelCache[ch.channelId]) {
-      return channelCache[ch.channelId];
+  async function fetchChannelSections(ch) {
+    if (sectionCache[ch.channelId]) {
+      return sectionCache[ch.channelId];
     }
 
     try {
-      const res = await fetch(`${WORKER_URL}?videos=1&channelId=${encodeURIComponent(ch.channelId)}`);
+      const res = await fetch(`${WORKER_URL}?sections=1&channelId=${encodeURIComponent(ch.channelId)}`);
       const data = await res.json();
 
-      const videos = Array.isArray(data.videos) ? data.videos.map(v => ({
-        id: v.id || "",
-        title: v.title || "Video",
-        date: v.date || "",
-        thumb: v.thumb || (v.id ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : ""),
-        channelId: ch.channelId,
-        channelName: ch.name,
-        channelLogo: ch.logo
-      })).filter(v => v.id) : [];
+      const normalized = {
+        videos: Array.isArray(data.videos) ? data.videos.map(v => ({
+          id: v.id || "",
+          type: v.type || "video",
+          title: v.title || "Video",
+          date: v.date || "",
+          thumb: v.thumb || (v.id ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : ""),
+          channelId: ch.channelId,
+          channelName: ch.name,
+          channelLogo: ch.logo
+        })).filter(v => v.id) : [],
+        shorts: Array.isArray(data.shorts) ? data.shorts.map(v => ({
+          id: v.id || "",
+          type: v.type || "short",
+          title: v.title || "Short",
+          date: v.date || "",
+          thumb: v.thumb || (v.id ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : ""),
+          channelId: ch.channelId,
+          channelName: ch.name,
+          channelLogo: ch.logo
+        })).filter(v => v.id) : [],
+        playlists: Array.isArray(data.playlists) ? data.playlists.map(v => ({
+          id: v.id || "",
+          type: "playlist",
+          title: v.title || "Playlist",
+          date: v.date || "",
+          thumb: v.thumb || ch.logo || "",
+          channelId: ch.channelId,
+          channelName: ch.name,
+          channelLogo: ch.logo
+        })).filter(v => v.id) : []
+      };
 
-      channelCache[ch.channelId] = videos;
-      return videos;
+      sectionCache[ch.channelId] = normalized;
+      return normalized;
     } catch (e) {
-      return [];
+      return { videos: [], shorts: [], playlists: [] };
     }
   }
 
@@ -769,7 +825,7 @@
     const results = await Promise.all(
       channels.map(async ch => ({
         channel: ch,
-        videos: await fetchChannelVideos(ch)
+        sections: await fetchChannelSections(ch)
       }))
     );
 
@@ -782,20 +838,19 @@
       return a.channel.name.localeCompare(b.channel.name);
     });
 
-    let maxLen = 0;
-    for (const r of results) {
-      maxLen = Math.max(maxLen, r.videos.length);
-    }
+    const all = [];
+    results.forEach(r => {
+      const merged = [...(r.sections.videos || []), ...(r.sections.shorts || [])];
+      merged.forEach(v => all.push(v));
+    });
 
-    for (let round = 0; round < maxLen; round++) {
-      for (const r of results) {
-        if (r.videos[round]) {
-          mixedHomeVideos.push(r.videos[round]);
-        }
-      }
-    }
+    all.sort((a, b) => {
+      const da = Date.parse(a.date || "") || 0;
+      const db = Date.parse(b.date || "") || 0;
+      return db - da;
+    });
 
-    mixedHomeVideos = dedupeById(mixedHomeVideos);
+    mixedHomeVideos = dedupeById(all);
   }
 
   function createCard(v) {
@@ -807,11 +862,11 @@
         <div class="video-title">${escapeHtml(v.title)}</div>
         <div class="video-meta">
           <img class="mini-logo" src="${v.channelLogo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
-          <span>${escapeHtml(v.channelName || "")}</span>
+          <span>${escapeHtml(v.channelName || "")}${v.type === 'playlist' ? ' • Playlist' : v.type === 'short' ? ' • Short' : ''}</span>
         </div>
       </div>
     `;
-    card.onclick = () => playVideo(v);
+    card.onclick = () => playItem(v);
     return card;
   }
 
@@ -828,15 +883,52 @@
   }
 
   function renderChannel() {
-    const slice = currentChannelVideos.slice(0, channelVisibleCount);
     $("feedGrid").innerHTML = "";
 
-    if (!slice.length) {
+    if (!currentChannelData) {
+      $("feedGrid").innerHTML = `<div class="empty">No channel selected</div>`;
+      return;
+    }
+
+    const sections = [
+      { title: "Videos", items: (currentChannelData.videos || []).slice(0, channelVisibleCount) },
+      { title: "Shorts", items: (currentChannelData.shorts || []).slice(0, channelVisibleCount) },
+      { title: "Playlists", items: (currentChannelData.playlists || []).slice(0, channelVisibleCount) }
+    ];
+
+    const hasAny = sections.some(s => s.items.length);
+
+    if (!hasAny) {
       $("feedGrid").innerHTML = `<div class="empty">No videos found for this channel</div>`;
       return;
     }
 
-    slice.forEach(v => $("feedGrid").appendChild(createCard(v)));
+    sections.forEach(section => {
+      const block = document.createElement("div");
+      block.className = "section";
+
+      block.innerHTML = `
+        <div class="section-head">
+          <div class="section-title">${section.title}</div>
+          <div class="section-count">${section.items.length} shown</div>
+        </div>
+      `;
+
+      const grid = document.createElement("div");
+      grid.className = "grid";
+
+      if (!section.items.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = `No ${section.title.toLowerCase()} found`;
+        block.appendChild(empty);
+      } else {
+        section.items.forEach(v => grid.appendChild(createCard(v)));
+        block.appendChild(grid);
+      }
+
+      $("feedGrid").appendChild(block);
+    });
   }
 
   function renderHistory() {
@@ -854,12 +946,12 @@
   async function home() {
     currentPage = "home";
     currentChannelIndex = -1;
+    currentChannelData = null;
     const token = ++viewToken;
 
     closeDropdown();
     $("content").scrollTop = 0;
     homeVisibleCount = 12;
-    currentChannelVideos = [];
 
     setPageHeader("Home", "Smart mixed feed");
     $("resumeBox").innerHTML = "";
@@ -883,17 +975,16 @@
     closeDropdown();
     $("content").scrollTop = 0;
     channelVisibleCount = 12;
-    currentChannelVideos = [];
 
-    setPageHeader(ch.name, "All videos from this channel", true);
+    setPageHeader(ch.name, "Videos, Shorts, and Playlists", true);
     $("resumeBox").innerHTML = "";
     clearPlayer();
-    setLoadingState(`Loading ${ch.name} videos...`);
+    setLoadingState(`Loading ${ch.name} channel page...`);
 
-    const videos = await fetchChannelVideos(ch);
+    const sections = await fetchChannelSections(ch);
     if (token !== viewToken || currentPage !== "channel") return;
 
-    currentChannelVideos = videos;
+    currentChannelData = sections;
     $("feedGrid").innerHTML = "";
     renderChannel();
   }
@@ -901,12 +992,12 @@
   function showHistory() {
     currentPage = "history";
     currentChannelIndex = -1;
+    currentChannelData = null;
     ++viewToken;
 
     closeDropdown();
     $("content").scrollTop = 0;
     historyVisibleCount = 12;
-    currentChannelVideos = [];
 
     setPageHeader("History", "Recently watched videos", false);
     $("resumeBox").innerHTML = "";
@@ -922,9 +1013,12 @@
     if (currentPage === "home" && homeVisibleCount < mixedHomeVideos.length) {
       homeVisibleCount += 12;
       renderHome();
-    } else if (currentPage === "channel" && channelVisibleCount < currentChannelVideos.length) {
-      channelVisibleCount += 12;
-      renderChannel();
+    } else if (currentPage === "channel" && currentChannelData) {
+      const total = (currentChannelData.videos || []).length + (currentChannelData.shorts || []).length + (currentChannelData.playlists || []).length;
+      if (channelVisibleCount < total) {
+        channelVisibleCount += 12;
+        renderChannel();
+      }
     } else if (currentPage === "history" && historyVisibleCount < historyData.length) {
       historyVisibleCount += 12;
       renderHistory();
@@ -933,4 +1027,3 @@
 </script>
 </body>
 </html>
-
