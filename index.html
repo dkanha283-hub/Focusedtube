@@ -641,7 +641,7 @@
 
 <script>
   const WORKER_URL = "https://restless-brook-50e4.dkanha283.workers.dev";
-  const PLAYER_URL = "player.html";
+  const PLAYER_URL = "https://dkanha283-hub.github.io/Player/";
 
   const $ = (id) => document.getElementById(id);
 
@@ -651,7 +651,7 @@
   let homeItems = [];
   let channelData = null;
   let currentSearchResults = [];
-  let currentView = "home"; // home | channel | history | search
+  let currentView = "home";
   let currentChannel = null;
   let visibleCount = 12;
   let theme = localStorage.getItem("focusTheme") || "dark";
@@ -739,8 +739,12 @@
 
     accounts[u] = p;
     localStorage.setItem("focusAccounts", JSON.stringify(accounts));
+    localStorage.setItem("focusLogin", "1");
+
     closeCreateAccount();
-    alert("Account created. Now login.");
+    showApp();
+    renderSubscriptions();
+    showHome();
   }
 
   function login() {
@@ -753,7 +757,12 @@
       return;
     }
 
-    if (!accounts[u] || accounts[u] !== p) {
+    if (!accounts[u]) {
+      alert("No account found. Create one first.");
+      return;
+    }
+
+    if (accounts[u] !== p) {
       alert("Invalid username or password");
       return;
     }
@@ -777,13 +786,6 @@
       if (el.contains(e.target)) return;
       if (e.target.closest(".icon-btn")) return;
       el.classList.remove("open");
-    }
-
-    if ($( "createModal").style.display === "flex") {
-      const modal = $("createModal").querySelector(".modal");
-      if (!modal.contains(e.target) && !e.target.closest(".ghost-btn")) {
-        // keep open until action; no close on outside
-      }
     }
   }
 
@@ -964,9 +966,7 @@
     $("historyGrid").innerHTML = "";
     $("resumeBox").innerHTML = "";
 
-    if (!lastVideo) {
-      $("resumeBox").innerHTML = "";
-    } else {
+    if (lastVideo) {
       const box = document.createElement("div");
       box.className = "resume-card";
       box.innerHTML = `
@@ -1153,10 +1153,6 @@
     }
   }
 
-  function toggleThemeAndSave() {
-    toggleTheme();
-  }
-
   async function runSearch() {
     const q = $("searchInput").value.trim();
     if (!q) return;
@@ -1203,14 +1199,9 @@
     window.location.href = `${PLAYER_URL}?${params.toString()}`;
   }
 
-  function openVideoFromHistory(v) {
-    openPlayer(v);
-  }
-
-  // expose to inline handlers
   window.login = login;
   window.logout = logout;
-  window.toggleTheme = toggleThemeAndSave;
+  window.toggleTheme = toggleTheme;
   window.toggleSubs = toggleSubs;
   window.toggleSearch = toggleSearch;
   window.showHome = showHome;
@@ -1220,8 +1211,6 @@
   window.createAccount = createAccount;
   window.openCreateAccount = openCreateAccount;
   window.closeCreateAccount = closeCreateAccount;
-
-  window.renderSearchResults = renderSearchResults;
   window.removeChannel = removeChannel;
   window.openChannel = openChannel;
   window.openPlayer = openPlayer;
