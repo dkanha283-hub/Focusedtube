@@ -59,6 +59,21 @@
       font-size:14px;
     }
 
+    /* PLAYER */
+    .player {
+      width:100%;
+      height:220px;
+      margin-bottom:15px;
+    }
+
+    iframe {
+      width:100%;
+      height:100%;
+      border:none;
+      border-radius:10px;
+    }
+
+    /* DROPDOWN */
     .dropdown {
       position:absolute;
       top:50px;
@@ -74,12 +89,18 @@
 
     .channel {
       display:flex;
-      justify-content:space-between;
+      align-items:center;
+      gap:10px;
       padding:8px;
       background:#282828;
       border-radius:8px;
       margin-bottom:8px;
-      cursor:pointer;
+    }
+
+    .channel img {
+      width:30px;
+      height:30px;
+      border-radius:50%;
     }
 
   </style>
@@ -112,7 +133,13 @@
   </div>
 
   <div class="main">
+
+    <!-- PLAYER -->
+    <div id="player" class="player"></div>
+
+    <!-- FEED -->
     <div id="feed" class="grid"></div>
+
   </div>
 
 </div>
@@ -180,15 +207,20 @@ async function add(){
   home();
 }
 
-// RENDER LIST
+// RENDER CHANNEL LIST (LOGO FIX)
 function render(){
   list.innerHTML="";
 
   channels.forEach((c,i)=>{
     let div=document.createElement("div");
     div.className="channel";
-    div.innerHTML=`${c.name} ❌`;
-    div.onclick=()=>del(i);
+
+    div.innerHTML=`
+      <img src="${c.logo}">
+      <span>${c.name}</span>
+      <span onclick="event.stopPropagation(); del(${i})">❌</span>
+    `;
+
     list.appendChild(div);
   });
 }
@@ -201,7 +233,14 @@ function del(i){
   home();
 }
 
-// HOME FEED (MULTIPLE VIDEOS)
+// PLAY VIDEO INSIDE APP
+function playVideo(videoId){
+  player.innerHTML = `
+    <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1"></iframe>
+  `;
+}
+
+// HOME FEED
 async function home(){
 
   feed.innerHTML="";
@@ -231,9 +270,7 @@ async function home(){
         <div class="title">${title}</div>
       `;
 
-      div.onclick=()=>{
-        window.open(link,"_blank");
-      };
+      div.onclick=()=>playVideo(id);
 
       feed.appendChild(div);
 
