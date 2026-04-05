@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FocusedTube</title>
+<title>FocusedTube Ultimate</title>
 
 <style>
 :root{
@@ -24,38 +24,62 @@ body.light{
 --border:#ddd;
 }
 
-body{margin:0;background:var(--bg);color:var(--text);font-family:sans-serif}
+body{
+margin:0;
+background:var(--bg);
+color:var(--text);
+font-family:sans-serif;
+}
+
 *{box-sizing:border-box}
 
 /* LOGIN */
 .auth{
 height:100vh;
 display:flex;
+flex-direction:column;
 justify-content:center;
 align-items:center;
-flex-direction:column;
 gap:10px;
 }
+
 .auth input,.auth button{
-width:260px;padding:12px;border-radius:10px;border:none;
+width:260px;
+padding:12px;
+border-radius:10px;
+border:none;
 }
-.auth button{background:var(--accent);color:#fff;font-weight:bold}
+
+.auth button{
+background:var(--accent);
+color:#fff;
+font-weight:bold;
+}
 
 /* APP */
 .app{display:none;height:100vh;overflow:hidden}
 
 /* TOPBAR */
 .topbar{
-display:flex;justify-content:space-between;
-padding:10px;background:var(--panel);
+display:flex;
+justify-content:space-between;
+padding:10px;
+background:var(--panel);
 border-bottom:1px solid var(--border);
 }
-.icon{padding:8px;background:#222;border-radius:10px;cursor:pointer}
+
+.icon{
+padding:8px;
+background:#222;
+border-radius:10px;
+cursor:pointer;
+}
 
 /* CONTENT */
 .content{
 height:calc(100vh - 50px);
-overflow:auto;padding:12px;
+overflow:auto;
+padding:12px;
 }
 
 /* GRID */
@@ -74,20 +98,37 @@ cursor:pointer;
 transition:.2s;
 }
 .card:hover{transform:scale(1.03)}
-.thumb{width:100%;aspect-ratio:16/9}
-.title{padding:8px;font-size:14px}
+
+.thumb{
+width:100%;
+aspect-ratio:16/9;
+object-fit:cover;
+}
+
+.title{
+padding:8px;
+font-size:14px;
+}
 
 /* PANEL */
 .panel{
-position:fixed;top:60px;right:10px;
-width:300px;background:var(--panel);
-padding:10px;border-radius:10px;
+position:fixed;
+top:60px;
+right:10px;
+width:300px;
+background:var(--panel);
+padding:10px;
+border-radius:10px;
 display:none;
+z-index:10;
 }
 .panel.open{display:block}
 
-.empty{text-align:center;color:#aaa;margin-top:20px}
-
+.empty{
+text-align:center;
+color:var(--muted);
+margin-top:20px;
+}
 </style>
 </head>
 
@@ -112,24 +153,36 @@ display:none;
 <span class="icon" onclick="toggleSubs()">📺</span>
 <span class="icon" onclick="showHistory()">⏱</span>
 <span class="icon" onclick="toggleTheme()">🌗</span>
+<span class="icon" onclick="toggleSearch()">🔍</span>
 <span class="icon" onclick="logout()">👤</span>
 </div>
 </div>
 
 <div id="subs" class="panel"></div>
+<div id="searchPanel" class="panel"></div>
 
 <div id="content" class="content"></div>
 
 </div>
 
 <script>
+
+/* =========================
+   GLOBAL STATE
+========================= */
 const API="https://restless-brook-50e4.dkanha283.workers.dev";
 const PLAYER="https://dkanha283-hub.github.io/Player/";
 
-let channels=[],historyData=[],homeData=[];
-let visible=20,page="home";
+let channels=[];
+let historyData=[];
+let homeData=[];
+let searchData=[];
+let visible=20;
+let page="home";
 
-/* INIT */
+/* =========================
+   INIT
+========================= */
 function init(){
 channels=JSON.parse(localStorage.getItem("channels")||"[]");
 historyData=JSON.parse(localStorage.getItem("history")||"[]");
@@ -149,45 +202,58 @@ app.style.display="none";
 }
 init();
 
-/* AUTH */
+/* =========================
+   AUTH SYSTEM
+========================= */
 function register(){
 let users=JSON.parse(localStorage.getItem("users")||"{}");
 if(users[u.value]) return alert("User exists");
 users[u.value]=p.value;
 localStorage.setItem("users",JSON.stringify(users));
-alert("Created");
+alert("Account created");
 }
+
 function login(){
 let users=JSON.parse(localStorage.getItem("users")||"{}");
 if(users[u.value]===p.value){
 localStorage.setItem("login","1");
 init();
-}else alert("Invalid");
+}else alert("Invalid login");
 }
+
 function logout(){
 localStorage.removeItem("login");
 location.reload();
 }
 
-/* THEME */
+/* =========================
+   THEME
+========================= */
 function toggleTheme(){
 document.body.classList.toggle("light");
 localStorage.setItem("theme",
 document.body.classList.contains("light")?"light":"dark");
 }
 
-/* CARD */
+/* =========================
+   CARD RENDER
+========================= */
 function card(v){
 let d=document.createElement("div");
 d.className="card";
+
 d.innerHTML=`
 <img class="thumb" src="${v.thumb}">
-<div class="title">${v.title}</div>`;
+<div class="title">${v.title}</div>
+`;
+
 d.onclick=()=>openPlayer(v);
 return d;
 }
 
-/* PLAYER */
+/* =========================
+   PLAYER
+========================= */
 function openPlayer(v){
 historyData=[v,...historyData.filter(x=>x.id!==v.id)].slice(0,50);
 localStorage.setItem("history",JSON.stringify(historyData));
@@ -195,20 +261,28 @@ localStorage.setItem("history",JSON.stringify(historyData));
 location.href=`${PLAYER}?videoId=${v.id}&title=${encodeURIComponent(v.title)}&channelId=${v.channelId}`;
 }
 
-/* HOME */
+/* =========================
+   HOME FEED
+========================= */
 async function showHome(){
-page="home";content.innerHTML="Loading...";
+page="home";
+content.innerHTML="Loading...";
+
 let all=[];
 
 for(let ch of channels){
+try{
 let r=await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
 let d=await r.json();
 
 all.push(...(d.videos||[]).slice(0,200));
 all.push(...(d.shorts||[]).slice(0,100));
+
+}catch{}
 }
 
 all.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
 homeData=all;
 renderHome();
 }
@@ -220,28 +294,78 @@ g.className="grid";
 
 homeData.slice(0,visible).forEach(v=>g.appendChild(card(v)));
 
-if(!homeData.length) content.innerHTML="<div class='empty'>No videos</div>";
-else content.appendChild(g);
+if(!homeData.length){
+content.innerHTML="<div class='empty'>No videos found</div>";
+}else{
+content.appendChild(g);
+}
 }
 
-/* HISTORY */
+/* =========================
+   HISTORY
+========================= */
 function showHistory(){
 page="history";
 content.innerHTML="";
+
 let g=document.createElement("div");
 g.className="grid";
+
 historyData.forEach(v=>g.appendChild(card(v)));
+
 content.appendChild(g);
 }
 
-/* SUBS */
+/* =========================
+   SEARCH SYSTEM
+========================= */
+function toggleSearch(){
+searchPanel.classList.toggle("open");
+
+searchPanel.innerHTML=`
+<input id="searchInput" placeholder="Search YouTube">
+<button onclick="runSearch()">Search</button>
+<div id="searchResults"></div>
+`;
+}
+
+async function runSearch(){
+let q=searchInput.value.trim();
+if(!q) return;
+
+let res=await fetch(`${API}?search=1&q=${encodeURIComponent(q)}`);
+let data=await res.json();
+
+searchData=data;
+renderSearch();
+}
+
+function renderSearch(){
+let box=document.getElementById("searchResults");
+box.innerHTML="";
+
+searchData.forEach(v=>{
+let div=document.createElement("div");
+div.className="card";
+div.innerHTML=`<img class="thumb" src="${v.thumb}"><div class="title">${v.title}</div>`;
+div.onclick=()=>openPlayer(v);
+box.appendChild(div);
+});
+}
+
+/* =========================
+   CHANNELS SYSTEM
+========================= */
 function toggleSubs(){
 subs.classList.toggle("open");
 
 subs.innerHTML=`
 <input id="ch" placeholder="@handle or channelId">
 <button onclick="addChannel()">Add</button>
-${channels.map((c,i)=>`<div onclick="removeCh(${i})">${c.name} ❌</div>`).join("")}
+${channels.map((c,i)=>`
+<div onclick="openChannel(${i})">${c.name}</div>
+<div onclick="removeCh(${i})">❌</div>
+`).join("")}
 `;
 }
 
@@ -265,19 +389,82 @@ localStorage.setItem("channels",JSON.stringify(channels));
 toggleSubs();
 }
 
+/* =========================
+   CHANNEL PAGE
+========================= */
+async function openChannel(i){
+page="channel";
+let ch=channels[i];
+
+content.innerHTML="Loading channel...";
+
+let r=await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
+let d=await r.json();
+
+let vids=[...(d.videos||[]).slice(0,200)];
+let shorts=[...(d.shorts||[]).slice(0,100)];
+
+content.innerHTML=`<h3>${ch.name}</h3>`;
+
+let g=document.createElement("div");
+g.className="grid";
+
+[...vids,...shorts].forEach(v=>g.appendChild(card(v)));
+
+content.appendChild(g);
+}
+
+/* =========================
+   REMOVE CHANNEL
+========================= */
 function removeCh(i){
 channels.splice(i,1);
 localStorage.setItem("channels",JSON.stringify(channels));
 toggleSubs();
 }
 
-/* SCROLL */
+/* =========================
+   INFINITE SCROLL
+========================= */
 content.addEventListener("scroll",()=>{
 if(content.scrollTop+content.clientHeight>=content.scrollHeight-100){
 visible+=20;
+
 if(page==="home") renderHome();
 }
 });
+
+/* =========================
+   EXTRA FEATURES
+========================= */
+
+/* Resume system */
+function resumeVideo(){
+let last=JSON.parse(localStorage.getItem("history")||"[]")[0];
+if(last) openPlayer(last);
+}
+
+/* Duplicate filter */
+function uniqueVideos(arr){
+let seen=new Set();
+return arr.filter(v=>{
+if(seen.has(v.id)) return false;
+seen.add(v.id);
+return true;
+});
+}
+
+/* Auto clean history */
+function cleanHistory(){
+historyData=historyData.slice(0,50);
+localStorage.setItem("history",JSON.stringify(historyData));
+}
+
+/* Debug log */
+function log(msg){
+console.log("FocusedTube:",msg);
+}
+
 </script>
 
 </body>
