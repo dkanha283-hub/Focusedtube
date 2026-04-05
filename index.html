@@ -74,7 +74,20 @@
       margin-bottom:8px;
       border-radius:8px;
       display:flex;
+      align-items:center;
       justify-content:space-between;
+    }
+
+    .channel-info {
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .channel-logo {
+      width:30px;
+      height:30px;
+      border-radius:50%;
     }
   </style>
 </head>
@@ -140,14 +153,10 @@ function showApp(){
 
 // ===== LOGIN =====
 function handleLogin(){
-  let u=username.value.trim();
-  let p=password.value.trim();
-
-  if(!u || !p){
+  if(!username.value || !password.value){
     alert("Enter details");
     return;
   }
-
   localStorage.setItem("focusUser","true");
   showApp();
 }
@@ -166,18 +175,36 @@ function loadData(){
   loadVideos();
 }
 
+// ===== FETCH CHANNEL INFO =====
+async function getChannelInfo(id){
+
+  try{
+    let res = await fetch(`https://www.youtube.com/channel/${id}`);
+    let text = await res.text();
+
+    let nameMatch = text.match(/"title":"(.*?)"/);
+    let logoMatch = text.match(/"avatar":{"thumbnails":\[{"url":"(.*?)"/);
+
+    return {
+      name: nameMatch ? nameMatch[1] : "Channel",
+      logo: logoMatch ? logoMatch[1] : ""
+    };
+
+  }catch{
+    return { name:"Channel", logo:"" };
+  }
+}
+
 // ===== ADD CHANNEL =====
 async function addItem(){
 
   let link = linkInput.value.trim();
   let channelId = null;
 
-  // normal channel
   if(link.includes("channel/")){
     channelId = link.split("channel/")[1];
   }
 
-  // @link (backend)
   if(link.includes("@")){
     let handle = link.split("@")[1].split("?")[0];
 
@@ -198,12 +225,19 @@ async function addItem(){
 
   channelId = channelId.trim();
 
-  if(items.includes(channelId)){
+  if(items.some(c => c.id === channelId)){
     alert("Already added");
     return;
   }
 
-  items.push(channelId);
+  let info = await getChannelInfo(channelId);
+
+  items.push({
+    id: channelId,
+    name: info.name,
+    logo: info.logo
+  });
+
   localStorage.setItem("channels", JSON.stringify(items));
 
   renderList();
@@ -215,11 +249,15 @@ function renderList(){
   list.innerHTML="";
 
   items.forEach((c,i)=>{
+
     let div=document.createElement("div");
     div.className="item";
 
     div.innerHTML = `
-      ${c}
+      <div class="channel-info">
+        <img src="${c.logo}" class="channel-logo">
+        <span>${c.name}</span>
+      </div>
       <span onclick="deleteItem(${i})">❌</span>
     `;
 
@@ -239,10 +277,9 @@ function loadVideos(){
 
   videos.innerHTML="";
 
-  items.forEach(id=>{
+  items.forEach(c=>{
 
-    // UC → UU
-    let playlistId = "UU" + id.substring(2);
+    let playlistId = "UU" + c.id.substring(2);
 
     let iframe = document.createElement("iframe");
     iframe.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
