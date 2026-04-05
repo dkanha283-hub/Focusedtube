@@ -9,72 +9,99 @@
   <style>
     body {
       margin: 0;
-      font-family: Arial;
-      background: #0f0f0f;
-      color: white;
+      font-family: -apple-system, Arial;
+      background: #f5f5f5;
+      color: #222;
     }
 
     /* LOGIN SCREEN */
     .login-screen {
       height: 100vh;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
     }
 
-    .logo-big {
-      font-size: 40px;
+    .logo {
+      font-size: 48px;
+      font-weight: bold;
       margin-bottom: 20px;
+    }
+
+    .logo span {
+      color: red;
+      border: 2px solid red;
+      padding: 5px 12px;
+      border-radius: 6px;
     }
 
     .login-btn {
       padding: 12px 20px;
-      background: #4285F4;
-      border: none;
-      color: white;
-      font-size: 16px;
+      border: 2px solid #2196f3;
+      background: transparent;
+      color: #2196f3;
+      font-size: 18px;
       border-radius: 6px;
       cursor: pointer;
     }
 
-    /* MAIN APP */
+    .login-btn:hover {
+      background: #2196f3;
+      color: white;
+    }
+
+    /* APP */
     .app {
       display: none;
     }
 
+    /* NAVBAR */
     .navbar {
       height: 60px;
-      background: #181818;
+      background: white;
       display: flex;
       align-items: center;
-      padding: 0 15px;
-      border-bottom: 1px solid #333;
+      padding: 0 20px;
+      border-bottom: 1px solid #ddd;
     }
 
+    .nav-logo {
+      font-weight: bold;
+      margin-right: 20px;
+    }
+
+    .nav-icons {
+      margin-left: auto;
+      display: flex;
+      gap: 20px;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    /* LAYOUT */
     .container {
       display: flex;
       height: calc(100vh - 60px);
     }
 
     .sidebar {
-      width: 250px;
-      background: #181818;
+      width: 230px;
+      background: #fff;
+      border-right: 1px solid #ddd;
       padding: 10px;
-      border-right: 1px solid #333;
       overflow-y: auto;
     }
 
     .channel {
       padding: 10px;
-      background: #222;
-      margin-bottom: 5px;
-      border-radius: 5px;
+      border-radius: 6px;
+      margin-bottom: 6px;
       cursor: pointer;
     }
 
     .channel:hover {
-      background: #333;
+      background: #eee;
     }
 
     .main {
@@ -101,26 +128,48 @@
       width: 100%;
       border-radius: 10px;
     }
+
+    .video-title {
+      font-size: 14px;
+      margin-top: 5px;
+    }
   </style>
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN SCREEN -->
 <div id="loginScreen" class="login-screen">
-  <div class="logo-big">Focused <span style="color:red;">Tube</span></div>
-  <button class="login-btn" onclick="login()">Sign in with Google</button>
+  <div class="logo">
+    Focused <span>Tube</span>
+  </div>
+
+  <button class="login-btn" onclick="login()">
+    Sign in with Google
+  </button>
 </div>
 
-<!-- MAIN APP -->
+<!-- APP -->
 <div id="app" class="app">
 
-  <div class="navbar">FocusTube 🎯</div>
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div class="nav-logo">FocusedTube</div>
+
+    <div class="nav-icons">
+      🏠
+      🔍
+      📺
+      ⏱
+    </div>
+  </div>
 
   <div class="container">
 
+    <!-- SIDEBAR -->
     <div class="sidebar" id="channelList"></div>
 
+    <!-- MAIN -->
     <div class="main">
       <iframe id="player" class="player"></iframe>
       <div id="videos" class="videos"></div>
@@ -142,7 +191,6 @@ function login() {
     callback: (res) => {
       accessToken = res.access_token;
 
-      // SWITCH UI
       document.getElementById("loginScreen").style.display = "none";
       document.getElementById("app").style.display = "block";
 
@@ -193,11 +241,16 @@ async function loadVideos(channelId) {
 
   data.items.forEach((video, index) => {
     let vid = video.id.videoId;
+    let title = video.snippet.title;
     let thumb = video.snippet.thumbnails.medium.url;
 
     let div = document.createElement("div");
+    div.className = "video";
 
-    div.innerHTML = `<img src="${thumb}">`;
+    div.innerHTML = `
+      <img src="${thumb}">
+      <div class="video-title">${title}</div>
+    `;
 
     div.onclick = () => {
       document.getElementById("player").src =
