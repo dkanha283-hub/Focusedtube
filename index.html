@@ -1,29 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FocusTube</title>
+  <title>FocusTube Advanced</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
   <style>
     body {
       margin: 0;
       font-family: Arial;
-      display: flex;
       background: #0f0f0f;
       color: white;
+      display: flex;
+      height: 100vh;
     }
 
     .sidebar {
-      width: 230px;
+      width: 260px;
       background: #181818;
-      height: 100vh;
       padding: 15px;
+      border-right: 1px solid #333;
+      overflow-y: auto;
+    }
+
+    .logo {
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .login-btn {
+      padding: 10px;
+      width: 100%;
+      background: #333;
+      border: none;
+      color: white;
+      margin-bottom: 15px;
+      cursor: pointer;
     }
 
     .channel {
       padding: 10px;
-      margin: 5px 0;
       background: #222;
-      border-radius: 6px;
+      margin-bottom: 5px;
       cursor: pointer;
+      border-radius: 5px;
     }
 
     .channel:hover {
@@ -36,20 +57,14 @@
     }
 
     iframe {
+      width: 100%;
+      height: 80vh;
+      border: none;
       border-radius: 10px;
     }
 
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
-      border: none;
-    }
-
-    button {
-      background: #444;
-      color: white;
+    .empty {
+      color: gray;
     }
   </style>
 </head>
@@ -57,62 +72,71 @@
 <body>
 
 <div class="sidebar">
-  <h3>My Channels</h3>
-  <div id="channelList"></div>
+  <div class="logo">FocusTube 🎯</div>
 
-  <input id="channelId" placeholder="Paste channel ID (UC...)" />
-  <button onclick="addChannel()">Add Channel</button>
+  <button class="login-btn" onclick="login()">
+    Sign in with Google
+  </button>
+
+  <div id="channelList"></div>
 </div>
 
 <div class="main">
-  <h2>Focus Mode 🎯</h2>
-  <div id="player">Select a channel</div>
+  <iframe id="player"></iframe>
+  <div id="emptyText" class="empty">Login to load subscriptions</div>
 </div>
 
 <script>
-let channels = JSON.parse(localStorage.getItem("channels")) || [];
 
-function saveChannels() {
-  localStorage.setItem("channels", JSON.stringify(channels));
+let accessToken = "";
+
+function login() {
+  google.accounts.oauth2.initTokenClient({
+    client_id: "901526621368-k63bfsq7aomg2e2k6u0625bub9291dhs.apps.googleusercontent.com",
+    scope: "https://www.googleapis.com/auth/youtube.readonly",
+    callback: (response) => {
+      accessToken = response.access_token;
+      loadSubscriptions();
+    }
+  }).requestAccessToken();
 }
 
-function renderChannels() {
-  let html = "";
-  channels.forEach((ch, i) => {
-    html += `<div class="channel" onclick="playChannel('${ch}')">Channel ${i+1}</div>`;
+async function loadSubscriptions() {
+  let res = await fetch(
+    "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50",
+    {
+      headers: {
+        Authorization: "Bearer " + accessToken
+      }
+    }
+  );
+
+  let data = await res.json();
+
+  let list = document.getElementById("channelList");
+  list.innerHTML = "";
+
+  data.items.forEach(item => {
+    let name = item.snippet.title;
+    let channelId = item.snippet.resourceId.channelId;
+
+    let div = document.createElement("div");
+    div.className = "channel";
+    div.innerText = name;
+
+    div.onclick = () => {
+      let playlist = "UU" + channelId.substring(2);
+
+      document.getElementById("player").src =
+        "https://www.youtube.com/embed/videoseries?list=" + playlist;
+
+      document.getElementById("emptyText").style.display = "none";
+    };
+
+    list.appendChild(div);
   });
-  document.getElementById("channelList").innerHTML = html;
 }
 
-function addChannel() {
-  let input = document.getElementById("channelId").value.trim();
-
-  if (!input.startsWith("UC")) {
-    alert("❌ Paste correct Channel ID (starts with UC...)");
-    return;
-  }
-
-  let playlistId = "UU" + input.substring(2);
-
-  if (channels.includes(playlistId)) {
-    alert("Already added!");
-    return;
-  }
-
-  channels.push(playlistId);
-  saveChannels();
-  renderChannels();
-
-  document.getElementById("channelId").value = "";
-}
-
-function playChannel(id) {
-  document.getElementById("player").innerHTML =
-    `<iframe width="100%" height="400"
-    src="https://www.youtube.com/embed/videoseries?list=${id}&rel=0"></iframe>`;
-}
-
-renderChannels();
 </script>
 
 </body>
