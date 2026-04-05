@@ -145,9 +145,9 @@ function loadData(){
 // ADD ITEM (SUPER SIMPLE)
 function addItem(){
 
-  let link=linkInput.value.trim();
+  let link = linkInput.value.trim();
 
-  if(!link.includes("youtube.com")){
+  if(!(link.includes("youtube.com") || link.includes("youtu.be"))){
     alert("Paste valid YouTube link");
     return;
   }
@@ -163,7 +163,6 @@ function addItem(){
   renderList();
   loadVideos();
 }
-
 // LIST
 function renderList(){
   list.innerHTML="";
@@ -190,22 +189,32 @@ function deleteItem(i){
 // LOAD VIDEOS (WORKS ALWAYS)
 function loadVideos(){
 
-  videos.innerHTML="";
+  videos.innerHTML = "";
 
-  items.forEach(link=>{
+  items.forEach(link => {
 
-    let videoId=null;
+    let videoId = null;
 
+    // normal youtube link
     if(link.includes("watch?v=")){
-      videoId=link.split("watch?v=")[1].split("&")[0];
+      videoId = link.split("watch?v=")[1].split("&")[0];
+    }
+
+    // 🔥 youtu.be link (your case)
+    if(link.includes("youtu.be/")){
+      videoId = link.split("youtu.be/")[1].split("?")[0];
     }
 
     if(videoId){
-      let iframe=document.createElement("iframe");
-      iframe.src=`https://www.youtube.com/embed/${videoId}`;
+      let iframe = document.createElement("iframe");
+      iframe.src = `https://www.youtube.com/embed/${videoId}`;
       videos.appendChild(iframe);
+    } else {
+      console.log("Invalid link:", link);
     }
 
+  });
+}
   });
 }
 
