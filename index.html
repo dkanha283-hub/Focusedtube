@@ -133,33 +133,54 @@ let channels = JSON.parse(localStorage.getItem("channels") || "[]");
 let history = JSON.parse(localStorage.getItem("history") || "[]");
 
 // LOGIN
-function login() {
-  let u = username.value;
-  let p = password.value;
+// 🔐 CHECK SESSION ON LOAD
+window.onload = () => {
+  let user = localStorage.getItem("user");
 
-  if (!u || !p) return alert("Enter details");
+  if (user) {
+    showApp();
+  } else {
+    showLogin();
+  }
+};
 
-  localStorage.setItem("user", JSON.stringify({u,p}));
-  startApp();
+// SHOW LOGIN
+function showLogin() {
+  document.getElementById("loginPage").style.display = "flex";
+  document.getElementById("app").style.display = "none";
 }
 
-function logout() {
-  localStorage.clear();
-  location.reload();
-}
-
-function startApp() {
-  login.style.display = "none";
-  app.style.display = "block";
+// SHOW APP
+function showApp() {
+  document.getElementById("loginPage").style.display = "none";
+  document.getElementById("app").style.display = "block";
 
   renderChannels();
   loadFeed();
 }
 
-window.onload = () => {
-  if (localStorage.getItem("user")) startApp();
-};
+// LOGIN
+function login() {
+  let u = document.getElementById("username").value;
+  let p = document.getElementById("password").value;
 
+  if (!u || !p) {
+    alert("Enter username & password");
+    return;
+  }
+
+  let userData = { username: u, password: p };
+
+  localStorage.setItem("user", JSON.stringify(userData));
+
+  showApp();
+}
+
+// LOGOUT
+function logout() {
+  localStorage.removeItem("user"); // ✅ only remove user
+  showLogin();
+}
 // AUTO EXTRACT CHANNEL
 async function extractChannel(url) {
 
