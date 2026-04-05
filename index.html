@@ -80,7 +80,6 @@
       border:1px solid var(--border);
     }
 
-    /* AUTH */
     .login-screen{
       height:100vh;
       display:flex;
@@ -133,7 +132,6 @@
       line-height:1.45;
     }
 
-    /* APP */
     .app{
       height:100vh;
       display:flex;
@@ -197,7 +195,6 @@
       scroll-behavior:smooth;
     }
 
-    /* HEADER */
     .page-header{
       display:flex;
       align-items:flex-start;
@@ -237,7 +234,6 @@
       white-space:nowrap;
     }
 
-    /* FLOATING PANELS */
     .panel{
       position:fixed;
       top:60px;
@@ -336,7 +332,6 @@
       color:var(--muted);
     }
 
-    /* LIST ITEMS */
     .channel-item,.history-item,.playlist-item{
       display:flex;
       align-items:center;
@@ -379,7 +374,6 @@
       font-size:14px;
     }
 
-    /* FEED */
     .section-block{
       margin-bottom:24px;
     }
@@ -513,7 +507,6 @@
 </head>
 <body>
 
-<!-- LOGIN PAGE -->
 <div id="loginPage" class="login-screen">
   <div class="login-card">
     <div class="brand-mark">
@@ -540,13 +533,10 @@
       <button class="ghost-btn" onclick="showAuthMode('login')">Back to login</button>
     </div>
 
-    <div class="theme-inline">
-      Theme is saved on this device.
-    </div>
+    <div class="theme-inline">Theme is saved on this device.</div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="app hidden">
   <div class="topbar">
     <div class="brand" onclick="showHome()">
@@ -563,7 +553,6 @@
     </div>
   </div>
 
-  <!-- SUBSCRIPTIONS PANEL -->
   <div id="subsPanel" class="panel">
     <input id="channelInput" class="field" placeholder="@handle or channel link">
     <button class="primary-btn" onclick="addChannel()">Add Channel</button>
@@ -574,7 +563,6 @@
     <div id="subsList"></div>
   </div>
 
-  <!-- SEARCH PANEL -->
   <div id="searchBox" class="search-box">
     <input id="searchInput" class="field" placeholder="Search videos on YouTube">
     <button class="primary-btn" onclick="runSearch()">Search</button>
@@ -582,20 +570,17 @@
   </div>
 
   <div id="content" class="content">
-    <!-- HOME -->
     <div id="homePage" class="page active">
       <div id="homeHeader" class="page-header"></div>
       <div id="resumeBox"></div>
       <div id="homeGrid"></div>
     </div>
 
-    <!-- CHANNEL -->
     <div id="channelPage" class="page">
       <div id="channelHeader" class="page-header"></div>
       <div id="channelSections"></div>
     </div>
 
-    <!-- HISTORY -->
     <div id="historyPage" class="page">
       <div id="historyHeader" class="page-header"></div>
       <div id="historyGrid" class="grid"></div>
@@ -918,7 +903,12 @@
         channelId: ch.channelId,
         channelName: ch.name,
         channelLogo: ch.logo
-      }))
+      })),
+      counts: data.counts || {
+        videos: (data.videos || []).length,
+        shorts: (data.shorts || []).length,
+        playlists: (data.playlists || []).length
+      }
     };
 
     channelCache[ch.channelId] = normalized;
@@ -1032,9 +1022,9 @@
     }
 
     const sections = [
-      { title: "Videos", items: channelData.videos || [] },
-      { title: "Shorts", items: channelData.shorts || [] },
-      { title: "Playlists", items: channelData.playlists || [] }
+      { title: "Videos", total: channelData.counts?.videos || 0, items: channelData.videos || [] },
+      { title: "Shorts", total: channelData.counts?.shorts || 0, items: channelData.shorts || [] },
+      { title: "Playlists", total: channelData.counts?.playlists || 0, items: channelData.playlists || [] }
     ];
 
     sections.forEach(section => {
@@ -1045,7 +1035,7 @@
 
       block.innerHTML = `
         <div class="section-head">
-          <h2 class="section-title">${section.title}</h2>
+          <h2 class="section-title">${section.title} (${section.total || shown.length})</h2>
           <div class="section-count">${shown.length} shown</div>
         </div>
       `;
@@ -1180,12 +1170,12 @@
   window.addChannel = addChannel;
   window.runSearch = runSearch;
   window.createAccount = createAccount;
-  window.openCreateAccount = openCreateAccount;
-  window.closeCreateAccount = closeCreateAccount;
+  window.showAuthMode = showAuthMode;
   window.removeChannel = removeChannel;
   window.openChannel = openChannel;
   window.openPlayer = openPlayer;
-  window.showAuthMode = showAuthMode;
+  window.openCreateAccount = () => {};
+  window.closeCreateAccount = () => {};
 </script>
 </body>
 </html>
