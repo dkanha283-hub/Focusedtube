@@ -5,58 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body {
-      margin:0;
-      font-family:Arial;
-      background:#0f0f0f;
-      color:white;
-    }
+    body { margin:0; font-family:Arial; background:#0f0f0f; color:white; }
 
-    /* LOGIN */
     .login {
       height:100vh;
       display:flex;
-      flex-direction:column;
       justify-content:center;
       align-items:center;
+      flex-direction:column;
     }
 
-    input {
+    input, button {
       padding:10px;
       margin:5px;
-      border:none;
       border-radius:8px;
-      width:200px;
+      border:none;
     }
 
-    button {
-      padding:10px;
-      border:none;
-      border-radius:8px;
-      background:red;
-      color:white;
-      cursor:pointer;
-    }
+    button { background:red; color:white; }
 
-    /* TOP BAR */
     .topbar {
       display:flex;
       justify-content:space-between;
-      align-items:center;
       padding:10px;
       background:#181818;
     }
 
-    .icons span {
-      margin-left:10px;
-      cursor:pointer;
-      font-size:18px;
-    }
+    .icons span { margin-left:10px; cursor:pointer; }
 
-    /* MAIN */
-    .main {
-      padding:15px;
-    }
+    .main { padding:15px; }
 
     .grid {
       display:grid;
@@ -64,60 +41,45 @@
       gap:15px;
     }
 
-    iframe {
-      width:100%;
-      height:160px;
-      border:none;
+    .card {
+      background:#181818;
       border-radius:10px;
+      overflow:hidden;
+      cursor:pointer;
     }
 
-    /* DROPDOWN PANEL */
+    .card img {
+      width:100%;
+      height:140px;
+      object-fit:cover;
+    }
+
+    .title {
+      padding:8px;
+      font-size:14px;
+    }
+
     .dropdown {
       position:absolute;
       top:50px;
       right:10px;
       width:280px;
-      max-height:400px;
       background:#181818;
-      border-radius:10px;
       padding:10px;
-      overflow:auto;
-
-      transform:translateY(-20px);
-      opacity:0;
-      pointer-events:none;
-      transition:0.3s;
-      z-index:1000;
+      border-radius:10px;
+      display:none;
     }
 
-    .dropdown.open {
-      transform:translateY(0);
-      opacity:1;
-      pointer-events:auto;
-    }
+    .dropdown.open { display:block; }
 
-    /* CHANNEL ITEM */
     .channel {
       display:flex;
       justify-content:space-between;
-      align-items:center;
-      background:#282828;
       padding:8px;
+      background:#282828;
       border-radius:8px;
       margin-bottom:8px;
       cursor:pointer;
-    }
-
-    .left {
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    img {
-      width:30px;
-      height:30px;
-      border-radius:50%;
     }
 
   </style>
@@ -125,44 +87,32 @@
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginPage" class="login">
   <h2>FocusedTube</h2>
   <input id="u" placeholder="Username">
-  <input id="p" type="password" placeholder="Password">
+  <input id="p" type="password">
   <button onclick="login()">Login</button>
 </div>
 
-<!-- APP -->
 <div id="app" style="display:none">
 
-  <!-- TOPBAR -->
   <div class="topbar">
     <b>FocusedTube</b>
-
     <div class="icons">
       <span onclick="home()">🏠</span>
       <span onclick="toggleDropdown()">📺</span>
-      <span onclick="showHistory()">⏱️</span>
       <span onclick="logout()">👤</span>
     </div>
   </div>
 
-  <!-- DROPDOWN -->
   <div id="dropdown" class="dropdown">
-
     <input id="input" placeholder="@channel or link">
-    <button onclick="add()">Add Channel</button>
-
-    <h3>Subscriptions</h3>
+    <button onclick="add()">Add</button>
     <div id="list"></div>
-
   </div>
 
-  <!-- MAIN -->
   <div class="main">
-    <div id="homeView" class="grid"></div>
-    <div id="channelView" style="display:none"></div>
+    <div id="feed" class="grid"></div>
   </div>
 
 </div>
@@ -171,17 +121,10 @@
 
 let channels=[];
 
-// INIT
-document.addEventListener("DOMContentLoaded", ()=>{
-  if(localStorage.getItem("login")){
-    startApp();
-  }
-});
-
+// LOGIN
 function login(){
-  if(!u.value || !p.value) return alert("Enter details");
   localStorage.setItem("login","1");
-  startApp();
+  start();
 }
 
 function logout(){
@@ -189,11 +132,13 @@ function logout(){
   location.reload();
 }
 
-function startApp(){
+function start(){
   loginPage.style.display="none";
   app.style.display="block";
   load();
 }
+
+if(localStorage.getItem("login")) start();
 
 // LOAD
 function load(){
@@ -217,13 +162,11 @@ async function add(){
     let id=link.split("channel/")[1];
     res=await fetch(api+"?id="+id);
   } else {
-    alert("Invalid link");
+    alert("Invalid");
     return;
   }
 
   let data=await res.json();
-
-  if(!data.channelId) return alert("Error");
 
   if(channels.some(c=>c.channelId===data.channelId)){
     alert("Already added");
@@ -239,24 +182,13 @@ async function add(){
 
 // RENDER LIST
 function render(){
-
   list.innerHTML="";
 
   channels.forEach((c,i)=>{
-
     let div=document.createElement("div");
     div.className="channel";
-
-    div.innerHTML=`
-      <div class="left">
-        <img src="${c.logo}">
-        <span>${c.name}</span>
-      </div>
-      <span onclick="event.stopPropagation(); del(${i})">❌</span>
-    `;
-
-    div.onclick=()=>openChannel(i);
-
+    div.innerHTML=`${c.name} ❌`;
+    div.onclick=()=>del(i);
     list.appendChild(div);
   });
 }
@@ -269,63 +201,51 @@ function del(i){
   home();
 }
 
-// HOME FEED
-function home(){
+// HOME FEED (MULTIPLE VIDEOS)
+async function home(){
 
-  dropdown.classList.remove("open");
+  feed.innerHTML="";
 
-  channelView.style.display="none";
-  homeView.style.display="grid";
+  for(let c of channels){
 
-  homeView.innerHTML="";
+    let res = await fetch(`https://corsproxy.io/?https://www.youtube.com/feeds/videos.xml?channel_id=${c.channelId}`);
+    let text = await res.text();
 
-  channels.forEach(c=>{
-    let p="UU"+c.channelId.substring(2);
+    let parser = new DOMParser();
+    let xml = parser.parseFromString(text,"text/xml");
 
-    let iframe=document.createElement("iframe");
-    iframe.src=`https://www.youtube.com/embed/videoseries?list=${p}`;
+    let videos = xml.querySelectorAll("entry");
 
-    homeView.appendChild(iframe);
-  });
-}
+    videos.forEach(v=>{
 
-// CHANNEL PAGE
-function openChannel(i){
+      let title = v.querySelector("title").textContent;
+      let link = v.querySelector("link").getAttribute("href");
+      let id = link.split("v=")[1];
+      let thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
 
-  dropdown.classList.remove("open");
+      let div=document.createElement("div");
+      div.className="card";
 
-  let c=channels[i];
+      div.innerHTML=`
+        <img src="${thumb}">
+        <div class="title">${title}</div>
+      `;
 
-  homeView.style.display="none";
-  channelView.style.display="block";
+      div.onclick=()=>{
+        window.open(link,"_blank");
+      };
 
-  let p="UU"+c.channelId.substring(2);
+      feed.appendChild(div);
 
-  channelView.innerHTML=`
-    <h2>${c.name}</h2>
-    <div class="grid">
-      <iframe src="https://www.youtube.com/embed/videoseries?list=${p}"></iframe>
-    </div>
-  `;
+    });
+
+  }
+
 }
 
 // DROPDOWN
 function toggleDropdown(){
   dropdown.classList.toggle("open");
-}
-
-// CLOSE WHEN CLICK OUTSIDE
-document.addEventListener("click",(e)=>{
-  if(dropdown.classList.contains("open")){
-    if(!dropdown.contains(e.target) && !e.target.innerText.includes("📺")){
-      dropdown.classList.remove("open");
-    }
-  }
-});
-
-// HISTORY (placeholder)
-function showHistory(){
-  alert("History coming next");
 }
 
 </script>
