@@ -26,11 +26,36 @@
       border-bottom:1px solid #ddd;
     }
 
-    .main {
+    .container {
+      display:flex;
+      width:100%;
+      height:calc(100vh - 50px);
+    }
+
+    .sidebar {
+      width:250px;
+      background:white;
+      border-right:1px solid #ddd;
+      overflow:auto;
+    }
+
+    .channel {
+      display:flex;
+      justify-content:space-between;
       padding:10px;
+      border-bottom:1px solid #eee;
+      cursor:pointer;
+    }
+
+    .main {
+      flex:1;
+      padding:10px;
+      overflow:hidden;
     }
 
     .videos {
+      height:100%;
+      overflow-y:auto;
       display:grid;
       grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
       gap:10px;
@@ -45,10 +70,6 @@
 
     .video img { width:100%; }
 
-    #addBox {
-      margin:10px 0;
-    }
-
   </style>
 </head>
 
@@ -59,7 +80,7 @@
   <h2>FocusTube</h2>
   <input id="username" placeholder="Username"><br><br>
   <input id="password" type="password" placeholder="Password"><br><br>
-  <button onclick="login()">Login / Signup</button>
+  <button onclick="login()">Login</button>
 </div>
 
 <!-- APP -->
@@ -70,14 +91,22 @@
     <button onclick="logout()">Logout</button>
   </div>
 
-  <div class="main">
+  <div class="container">
 
-    <div id="addBox">
-      <input id="channelInput" placeholder="Paste YouTube channel link">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <input id="channelInput" placeholder="Paste channel link">
       <button onclick="addChannel()">Add</button>
+
+      <div id="channelList"></div>
+
     </div>
 
-    <div id="videos" class="videos"></div>
+    <!-- MAIN -->
+    <div class="main">
+      <div id="videos" class="videos"></div>
+    </div>
 
   </div>
 
@@ -86,32 +115,36 @@
 <script>
 
 let channels = JSON.parse(localStorage.getItem("channels") || "[]");
+let history = JSON.parse(localStorage.getItem("history") || "[]");
+let pageIndex = 0;
 
-// LOGIN SYSTEM
+// LOGIN
 function login() {
-  let user = document.getElementById("username").value;
-  let pass = document.getElementById("password").value;
+  let u = username.value;
+  let p = password.value;
 
-  if (!user || !pass) return alert("Enter details");
+  if (!u || !p) return alert("Enter details");
 
-  localStorage.setItem("user", JSON.stringify({user, pass}));
-
+  localStorage.setItem("user", JSON.stringify({u,p}));
   startApp();
 }
 
 function logout() {
-  localStorage.removeItem("user");
+  localStorage.clear();
   location.reload();
 }
 
 function startApp() {
-  document.getElementById("login").style.display = "none";
-  document.getElementById("app").style.display = "block";
+  loginDiv = document.getElementById("login");
+  appDiv = document.getElementById("app");
 
+  loginDiv.style.display = "none";
+  appDiv.style.display = "block";
+
+  renderChannels();
   loadFeed();
 }
 
-// AUTO LOGIN
 window.onload = () => {
   if (localStorage.getItem("user")) startApp();
 };
@@ -120,40 +153,82 @@ window.onload = () => {
 function addChannel() {
   let input = document.getElementById("channelInput").value;
 
-  let id = extractChannelId(input);
+  let id = extractChannel(input);
 
   if (!id) return alert("Invalid link");
 
   channels.push(id);
   localStorage.setItem("channels", JSON.stringify(channels));
 
+  renderChannels();
   loadFeed();
 }
 
-// EXTRACT CHANNEL ID
-function extractChannelId(url) {
+// EXTRACT ID OR USERNAME
+function extractChannel(url) {
+
   if (url.includes("channel/")) {
-    return url.split("channel/")[1];
+    return {type:"id", value:url.split("channel/")[1]};
   }
+
+  if (url.includes("@")) {
+    let name = url.split("@")[1];
+    return {type:"user", value:name};
+  }
+
   return null;
 }
 
-// LOAD FEED (RSS)
-async function loadFeed() {
-  let container = document.getElementById("videos");
-  container.innerHTML = "";
+// DELETE CHANNEL
+function deleteChannel(i) {
+  channels.splice(i,1);
+  localStorage.setItem("channels", JSON.stringify(channels));
+  renderChannels();
+  loadFeed();
+}
 
-  for (let channelId of channels) {
-    await loadRSS(channelId);
+// RENDER CHANNELS
+function renderChannels() {
+  let list = document.getElementById("channelList");
+  list.innerHTML = "";
+
+  channels.forEach((c,i) => {
+    let div = document.createElement("div");
+    div.className = "channel";
+
+    div.innerHTML = `
+      <span>${c.value}</span>
+      <span onclick="deleteChannel(${i})">🗑</span>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+// LOAD FEED (INFINITE BASE)
+async function loadFeed() {
+  document.getElementById("videos").innerHTML = "";
+  pageIndex = 0;
+  loadMore();
+}
+
+// LOAD MORE
+async function loadMore() {
+
+  for (let c of channels) {
+    await loadRSS(c);
   }
 }
 
-// FETCH RSS
-async function loadRSS(channelId) {
+// RSS FETCH
+async function loadRSS(channel) {
 
-  let url = `https://api.allorigins.win/get?url=${encodeURIComponent(
-    "https://www.youtube.com/feeds/videos.xml?channel_id=" + channelId
-  )}`;
+  let channelUrl =
+    channel.type === "id"
+    ? `https://www.youtube.com/feeds/videos.xml?channel_id=${channel.value}`
+    : `https://www.youtube.com/feeds/videos.xml?user=${channel.value}`;
+
+  let url = `https://api.allorigins.win/get?url=${encodeURIComponent(channelUrl)}`;
 
   let res = await fetch(url);
   let data = await res.json();
@@ -165,28 +240,37 @@ async function loadRSS(channelId) {
 
   let container = document.getElementById("videos");
 
-  for (let i = 0; i < entries.length; i++) {
+  for (let i=0;i<entries.length;i++) {
 
-    let videoId = entries[i].getElementsByTagName("yt:videoId")[0].textContent;
+    let vid = entries[i].getElementsByTagName("yt:videoId")[0].textContent;
     let title = entries[i].getElementsByTagName("title")[0].textContent;
 
-    let thumb = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    let thumb = `https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
 
     let div = document.createElement("div");
     div.className = "video";
 
-    div.innerHTML = `
-      <img src="${thumb}">
-      <div>${title}</div>
-    `;
+    div.innerHTML = `<img src="${thumb}"><div>${title}</div>`;
 
     div.onclick = () => {
-      window.open(`https://youtube.com/watch?v=${videoId}`);
+      history.unshift(title);
+      localStorage.setItem("history", JSON.stringify(history));
+      window.open(`https://youtube.com/watch?v=${vid}`);
     };
 
     container.appendChild(div);
   }
 }
+
+// INFINITE SCROLL
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("videos").addEventListener("scroll", (e) => {
+    let el = e.target;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
+      loadMore();
+    }
+  });
+});
 
 </script>
 
