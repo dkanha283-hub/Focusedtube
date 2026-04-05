@@ -93,10 +93,9 @@
 
   <div class="container">
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
 
-      <input id="channelInput" placeholder="Paste channel link OR type name">
+      <input id="channelInput" placeholder="Paste @link or channel link">
       <button onclick="addChannel()">Add</button>
 
       <h3>Subscriptions</h3>
@@ -104,7 +103,6 @@
 
     </div>
 
-    <!-- MAIN -->
     <div class="main">
       <div id="videos" class="videos"></div>
     </div>
@@ -146,17 +144,42 @@ function loadChannels(){
   loadFeed();
 }
 
-// ADD CHANNEL (SMART)
-function addChannel(){
+// 🔥 CONVERT @link → channel ID
+async function getChannelId(url){
+
+  if(url.includes("channel/")){
+    return url.split("channel/")[1];
+  }
+
+  if(url.includes("@")){
+
+    try{
+      let proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      let res=await fetch(proxy);
+      let data=await res.json();
+
+      let match=data.contents.match(/"channelId":"(UC[^"]+)"/);
+
+      if(match) return match[1];
+
+    }catch(e){}
+  }
+
+  return null;
+}
+
+// ADD CHANNEL
+async function addChannel(){
 
   let input=channelInput.value.trim();
 
-  if(!input) return alert("Enter something");
+  let id=await getChannelId(input);
 
-  // duplicate check
-  if(channels.includes(input)) return alert("Already added");
+  if(!id) return alert("Invalid or unsupported link");
 
-  channels.push(input);
+  if(channels.includes(id)) return alert("Already added");
+
+  channels.push(id);
   localStorage.setItem("channels", JSON.stringify(channels));
 
   renderChannels();
@@ -169,12 +192,10 @@ function renderChannels(){
   channels.forEach((c,i)=>{
     let div=document.createElement("div");
     div.className="channel";
-
     div.innerHTML=`
-      <span>${c}</span>
+      ${c}
       <span onclick="deleteChannel(${i})">❌</span>
     `;
-
     channelList.appendChild(div);
   });
 }
@@ -193,17 +214,9 @@ async function loadFeed(){
 
   let all=[];
 
-  for(let c of channels){
+  for(let id of channels){
 
-    let rss;
-
-    if(c.includes("@")){
-      rss=`https://www.youtube.com/feeds/videos.xml?user=${c.split("@")[1]}`;
-    } else if(c.includes("channel/")){
-      rss=`https://www.youtube.com/feeds/videos.xml?channel_id=${c.split("channel/")[1]}`;
-    } else {
-      continue;
-    }
+    let rss=`https://www.youtube.com/feeds/videos.xml?channel_id=${id}`;
 
     try{
       let proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(rss)}`;
@@ -216,14 +229,13 @@ async function loadFeed(){
       let entries=xml.getElementsByTagName("entry");
 
       for(let i=0;i<entries.length;i++){
-
-        let id=entries[i].getElementsByTagName("yt:videoId")[0].textContent;
+        let vid=entries[i].getElementsByTagName("yt:videoId")[0].textContent;
         let title=entries[i].getElementsByTagName("title")[0].textContent;
 
         all.push({
-          id,
+          id:vid,
           title,
-          thumb:`https://img.youtube.com/vi/${id}/mqdefault.jpg`
+          thumb:`https://img.youtube.com/vi/${vid}/mqdefault.jpg`
         });
       }
 
