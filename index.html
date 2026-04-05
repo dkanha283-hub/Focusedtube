@@ -187,6 +187,8 @@
 <script>
 
 let accessToken = localStorage.getItem("token") || "";
+let nextPageToken = "";
+let currentChannels = [];
 
 // AUTO LOGIN
 window.onload = () => {
@@ -197,6 +199,7 @@ window.onload = () => {
   }
 };
 
+// LOGIN
 function login() {
   google.accounts.oauth2.initTokenClient({
     client_id: "901526621368-k63bfsq7aomg2e2k6u0625bub9291dhs.apps.googleusercontent.com",
@@ -222,6 +225,7 @@ function toggleSubs() {
   panel.style.display = panel.style.display === "block" ? "none" : "block";
 }
 
+// LOAD CHANNEL LIST
 async function loadSubscriptions() {
   let res = await fetch(
     "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=20",
@@ -229,6 +233,9 @@ async function loadSubscriptions() {
   );
 
   let data = await res.json();
+
+  currentChannels = data.items.map(i => i.snippet.resourceId.channelId);
+
   let list = document.getElementById("channelList");
   list.innerHTML = "";
 
@@ -250,27 +257,35 @@ async function loadSubscriptions() {
   });
 }
 
+// 🔥 LOAD HOME FEED (INITIAL)
 async function loadHomeFeed() {
-  let res = await fetch(
-    "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=10",
-    { headers: { Authorization: "Bearer " + accessToken } }
-  );
+  nextPageToken = "";
+  document.getElementById("videos").innerHTML = "";
+  loadMoreVideos();
+}
 
-  let data = await res.json();
+// 🔥 LOAD MORE VIDEOS (INFINITE)
+async function loadMoreVideos() {
+
   let container = document.getElementById("videos");
-  container.innerHTML = "";
 
-  for (let item of data.items) {
-    let channelId = item.snippet.resourceId.channelId;
+  for (let channelId of currentChannels) {
 
-    let vRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=2&type=video`,
-      { headers: { Authorization: "Bearer " + accessToken } }
-    );
+    let url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=2&type=video`;
 
-    let vData = await vRes.json();
+    if (nextPageToken) {
+      url += `&pageToken=${nextPageToken}`;
+    }
 
-    vData.items.forEach(video => {
+    let res = await fetch(url, {
+      headers: { Authorization: "Bearer " + accessToken }
+    });
+
+    let data = await res.json();
+
+    nextPageToken = data.nextPageToken || "";
+
+    data.items.forEach(video => {
       let vid = video.id.videoId;
       let title = video.snippet.title;
       let thumb = video.snippet.thumbnails.medium.url;
@@ -293,12 +308,46 @@ async function loadHomeFeed() {
   }
 }
 
+// 🔥 SCROLL DETECTION
+window.addEventListener("scroll", () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200) {
+    loadMoreVideos();
+  }
+});
+
+// LOAD CHANNEL VIDEOS
+async function loadVideos(channelId) {
+  let res = await fetch(
+    `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video`,
+    { headers: { Authorization: "Bearer " + accessToken } }
+  );
+
+  let data = await res.json();
+  let container = document.getElementById("videos");
+  container.innerHTML = "";
+
+  data.items.forEach(video => {
+    let vid = video.id.videoId;
+    let thumb = video.snippet.thumbnails.medium.url;
+
+    let div = document.createElement("div");
+    div.className = "video";
+
+    div.innerHTML = `<img src="${thumb}">`;
+
+    div.onclick = () => {
+      document.getElementById("player").src =
+        `https://www.youtube.com/embed/${vid}`;
+    };
+
+    container.appendChild(div);
+  });
+}
+
+// HOME
 function goHome() {
   document.getElementById("player").src = "";
   loadHomeFeed();
 }
 
 </script>
-
-</body>
-</html>
