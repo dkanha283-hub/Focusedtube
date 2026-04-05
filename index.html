@@ -420,7 +420,7 @@
   let historyData = [];
   let lastVideo = null;
 
-  let currentPage = "home"; // home | channel | history
+  let currentPage = "home";
   let currentChannelIndex = -1;
 
   let mixedHomeVideos = [];
@@ -730,41 +730,18 @@
     }
 
     try {
-      const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${ch.channelId}`;
-      const proxy = `https://corsproxy.io/?${encodeURIComponent(feedUrl)}`;
-      const res = await fetch(proxy);
-      const text = await res.text();
+      const res = await fetch(`${WORKER_URL}?videos=1&channelId=${encodeURIComponent(ch.channelId)}`);
+      const data = await res.json();
 
-      const xml = new DOMParser().parseFromString(text, "text/xml");
-      const entries = Array.from(xml.getElementsByTagName("entry"));
-
-      const videos = entries.map(entry => {
-        const title = entry.getElementsByTagName("title")[0]?.textContent || "Video";
-        const published = entry.getElementsByTagName("published")[0]?.textContent || "";
-
-        const linkEl = entry.getElementsByTagName("link")[0];
-        const href = linkEl ? linkEl.getAttribute("href") || "" : "";
-
-        let id = "";
-        if (href.includes("watch?v=")) {
-          id = href.split("watch?v=")[1].split("&")[0];
-        }
-
-        if (!id) {
-          const vidEl = entry.getElementsByTagName("yt:videoId")[0];
-          id = vidEl ? vidEl.textContent.trim() : "";
-        }
-
-        return {
-          id,
-          title,
-          date: published,
-          thumb: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
-          channelId: ch.channelId,
-          channelName: ch.name,
-          channelLogo: ch.logo
-        };
-      }).filter(v => v.id);
+      const videos = Array.isArray(data.videos) ? data.videos.map(v => ({
+        id: v.id || "",
+        title: v.title || "Video",
+        date: v.date || "",
+        thumb: v.thumb || (v.id ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : ""),
+        channelId: ch.channelId,
+        channelName: ch.name,
+        channelLogo: ch.logo
+      })).filter(v => v.id) : [];
 
       channelCache[ch.channelId] = videos;
       return videos;
@@ -956,3 +933,4 @@
 </script>
 </body>
 </html>
+
