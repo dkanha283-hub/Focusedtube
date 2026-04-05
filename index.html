@@ -1,313 +1,958 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FocusedTube</title>
+  <title>FocusedTube Pro</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body { margin:0; font-family:Arial; background:#0f0f0f; color:white; }
+    :root {
+      --bg: #0f0f0f;
+      --panel: #181818;
+      --panel2: #202020;
+      --card: #282828;
+      --text: #ffffff;
+      --muted: #b3b3b3;
+      --accent: #ff0000;
+      --border: #2e2e2e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
 
     .login {
-      height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      flex-direction:column;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .login h2 {
+      margin-bottom: 16px;
     }
 
     input, button {
-      padding:10px;
-      margin:5px;
-      border-radius:8px;
-      border:none;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      margin: 5px 0;
+      width: 100%;
+      max-width: 320px;
     }
 
-    button { background:red; color:white; }
+    input {
+      background: #1f1f1f;
+      color: white;
+      border: 1px solid var(--border);
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .app {
+      display: none;
+      height: 100vh;
+      overflow: hidden;
+    }
 
     .topbar {
-      display:flex;
-      justify-content:space-between;
-      padding:10px;
-      background:#181818;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 20;
     }
 
-    .icons span { margin-left:10px; cursor:pointer; }
-
-    .main { padding:15px; }
-
-    .grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-      gap:15px;
+    .brand {
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
     }
 
-    .card {
-      background:#181818;
-      border-radius:10px;
-      overflow:hidden;
-      cursor:pointer;
+    .icons {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      user-select: none;
     }
 
-    .card img {
-      width:100%;
-      height:140px;
+    .icons span {
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 8px;
     }
 
-    .title {
-      padding:8px;
-      font-size:14px;
+    .icons span:hover {
+      background: #2a2a2a;
     }
 
-    .player {
-      width:100%;
-      height:220px;
-      margin-bottom:15px;
+    .content {
+      height: calc(100vh - 52px);
+      overflow-y: auto;
+      padding: 14px;
     }
 
-    iframe {
-      width:100%;
-      height:100%;
-      border:none;
-      border-radius:10px;
+    .page-header {
+      margin-bottom: 12px;
     }
 
-    .dropdown {
-      position:absolute;
-      top:50px;
-      right:10px;
-      width:280px;
-      background:#181818;
-      padding:10px;
-      border-radius:10px;
-      display:none;
+    .page-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
     }
 
-    .dropdown.open { display:block; }
-
-    .channel {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:8px;
-      background:#282828;
-      border-radius:8px;
-      margin-bottom:8px;
-      cursor:pointer;
+    .page-title {
+      font-size: 22px;
+      font-weight: bold;
     }
 
-    .channel img {
-      width:30px;
-      height:30px;
-      border-radius:50%;
+    .page-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
     }
 
     .back {
-      margin-bottom:10px;
-      cursor:pointer;
-      color:#aaa;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: #1e1e1e;
+      border: 1px solid var(--border);
     }
 
+    .back:hover {
+      background: #2a2a2a;
+    }
+
+    .resume-box {
+      margin-bottom: 12px;
+    }
+
+    .resume-card {
+      background: linear-gradient(135deg, #232323, #171717);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .resume-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .resume-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .resume-title {
+      font-size: 15px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .resume-btn {
+      width: auto;
+      padding: 9px 14px;
+      margin: 0;
+    }
+
+    .player-box {
+      width: 100%;
+      min-height: 240px;
+      background: #151515;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .player-box iframe {
+      width: 100%;
+      height: 240px;
+      border: none;
+      display: block;
+    }
+
+    .player-empty {
+      height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      background: #1d1d1d;
+    }
+
+    .thumb {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      display: block;
+      background: #000;
+    }
+
+    .card-body {
+      padding: 10px;
+    }
+
+    .video-title {
+      font-size: 14px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      min-height: 40px;
+    }
+
+    .video-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .mini-logo {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #333;
+      flex-shrink: 0;
+    }
+
+    .dropdown {
+      position: fixed;
+      top: 54px;
+      right: 12px;
+      width: 320px;
+      max-height: 72vh;
+      overflow-y: auto;
+      background: #181818;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+      z-index: 50;
+
+      transform: translateY(-16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.22s ease;
+    }
+
+    .dropdown.open {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .dropdown h3 {
+      margin: 10px 0 8px;
+      font-size: 14px;
+      color: #f1f1f1;
+    }
+
+    .channel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px;
+      background: #242424;
+      border: 1px solid #2e2e2e;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+
+    .channel:hover {
+      background: #2a2a2a;
+    }
+
+    .channel-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .channel-left span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+
+    .channel-logo {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #333;
+      flex-shrink: 0;
+    }
+
+    .channel-delete {
+      color: #ff6b6b;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      flex-shrink: 0;
+    }
+
+    .channel-delete:hover {
+      background: #3a1d1d;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 18px 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .status {
+      color: var(--muted);
+      padding: 10px 0;
+      font-size: 14px;
+    }
+
+    .small-note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+      line-height: 1.45;
+    }
   </style>
 </head>
-
 <body>
 
 <div id="loginPage" class="login">
   <h2>FocusedTube</h2>
   <input id="u" placeholder="Username">
-  <input id="p" type="password">
+  <input id="p" type="password" placeholder="Password">
   <button onclick="login()">Login</button>
 </div>
 
-<div id="app" style="display:none">
-
+<div id="app" class="app">
   <div class="topbar">
-    <b onclick="home()" style="cursor:pointer">FocusedTube</b>
-    <div class="icons">
+    <div class="brand" onclick="home()">FocusedTube</div>
+    <div class="icons top-icons">
       <span onclick="home()">🏠</span>
       <span onclick="toggleDropdown()">📺</span>
+      <span onclick="showHistory()">⏱️</span>
       <span onclick="logout()">👤</span>
     </div>
   </div>
 
   <div id="dropdown" class="dropdown">
-    <input id="input" placeholder="@channel or link">
-    <button onclick="add()">Add</button>
+    <input id="input" placeholder="@channel or YouTube channel link">
+    <button onclick="add()">Add Channel</button>
+    <div class="small-note">
+      Paste a channel handle like @bhajanmarg or a channel link.
+    </div>
+
+    <h3>Subscriptions</h3>
     <div id="list"></div>
   </div>
 
-  <div class="main">
-
-    <div id="player" class="player"></div>
-
-    <div id="view"></div>
-
+  <div id="content" class="content">
+    <div id="pageHeader" class="page-header"></div>
+    <div id="resumeBox" class="resume-box"></div>
+    <div id="player" class="player-box"></div>
+    <div id="feedGrid" class="grid"></div>
   </div>
-
 </div>
 
 <script>
+  const WORKER_URL = "https://restless-brook-50e4.dkanha283.workers.dev/";
+  const $ = (id) => document.getElementById(id);
 
-let channels=[];
+  let channels = [];
+  let historyData = [];
+  let lastVideo = null;
 
-// LOGIN
-function login(){
-  localStorage.setItem("login","1");
-  start();
-}
+  let currentPage = "home"; // home | channel | history
+  let currentChannelIndex = -1;
 
-function logout(){
-  localStorage.removeItem("login");
-  location.reload();
-}
+  let mixedHomeVideos = [];
+  let currentChannelVideos = [];
 
-function start(){
-  loginPage.style.display="none";
-  app.style.display="block";
-  load();
-}
+  let homeVisibleCount = 12;
+  let channelVisibleCount = 12;
+  let historyVisibleCount = 12;
 
-if(localStorage.getItem("login")) start();
+  let channelCache = {};
+  let viewToken = 0;
 
-// LOAD
-function load(){
-  channels = JSON.parse(localStorage.getItem("channels")||"[]");
-  render();
-  home();
-}
+  document.addEventListener("DOMContentLoaded", init);
 
-// ADD CHANNEL
-async function add(){
+  function init() {
+    loadState();
 
-  let link=input.value.trim();
-  let api="https://restless-brook-50e4.dkanha283.workers.dev/";
+    if (localStorage.getItem("focusLogin") === "true") {
+      startApp();
+    } else {
+      showLogin();
+    }
 
-  let res;
-
-  if(link.includes("@")){
-    let h=link.split("@")[1].split("?")[0];
-    res=await fetch(api+"?handle="+h);
-  } else if(link.includes("channel/")){
-    let id=link.split("channel/")[1];
-    res=await fetch(api+"?id="+id);
-  } else {
-    alert("Invalid");
-    return;
+    $("content").addEventListener("scroll", onScroll);
+    document.addEventListener("click", closeDropdownOnOutside);
   }
 
-  let data=await res.json();
+  function normalizeChannel(item) {
+    if (!item) return null;
 
-  if(channels.some(c=>c.channelId===data.channelId)){
-    alert("Already added");
-    return;
+    if (typeof item === "string") {
+      return {
+        channelId: item,
+        name: item,
+        logo: ""
+      };
+    }
+
+    return {
+      channelId: item.channelId || item.id || "",
+      name: item.name || item.title || item.channelId || item.id || "Channel",
+      logo: item.logo || item.thumbnail || ""
+    };
   }
 
-  channels.push(data);
-  localStorage.setItem("channels",JSON.stringify(channels));
+  function normalizeHistory(item) {
+    if (!item) return null;
 
-  render();
-  home();
-}
+    if (typeof item === "string") {
+      return {
+        id: item,
+        title: "Video",
+        channelId: "",
+        channelName: "",
+        channelLogo: "",
+        thumb: `https://img.youtube.com/vi/${item}/hqdefault.jpg`,
+        watchedAt: Date.now()
+      };
+    }
 
-// RENDER CHANNEL LIST
-function render(){
-  list.innerHTML="";
+    return {
+      id: item.id || "",
+      title: item.title || "Video",
+      channelId: item.channelId || "",
+      channelName: item.channelName || "",
+      channelLogo: item.channelLogo || "",
+      thumb: item.thumb || (item.id ? `https://img.youtube.com/vi/${item.id}/hqdefault.jpg` : ""),
+      watchedAt: item.watchedAt || Date.now()
+    };
+  }
 
-  channels.forEach((c,i)=>{
-    let div=document.createElement("div");
-    div.className="channel";
+  function loadState() {
+    const rawChannels = JSON.parse(localStorage.getItem("channels") || "[]");
+    const rawHistory = JSON.parse(localStorage.getItem("history") || "[]");
+    const rawLastVideo = JSON.parse(localStorage.getItem("lastVideo") || "null");
 
-    div.innerHTML=`
-      <img src="${c.logo}">
-      <span>${c.name}</span>
-      <span onclick="event.stopPropagation(); del(${i})">❌</span>
+    channels = rawChannels.map(normalizeChannel).filter(x => x && x.channelId);
+    historyData = rawHistory.map(normalizeHistory).filter(x => x && x.id);
+    lastVideo = normalizeHistory(rawLastVideo);
+  }
+
+  function saveState() {
+    localStorage.setItem("channels", JSON.stringify(channels));
+    localStorage.setItem("history", JSON.stringify(historyData));
+    localStorage.setItem("lastVideo", JSON.stringify(lastVideo));
+  }
+
+  function showLogin() {
+    $("loginPage").style.display = "flex";
+    $("app").style.display = "none";
+  }
+
+  function showApp() {
+    $("loginPage").style.display = "none";
+    $("app").style.display = "block";
+  }
+
+  function login() {
+    const u = $("u").value.trim();
+    const p = $("p").value.trim();
+
+    if (!u || !p) {
+      alert("Enter username & password");
+      return;
+    }
+
+    localStorage.setItem("focusLogin", "true");
+    startApp();
+  }
+
+  function logout() {
+    localStorage.removeItem("focusLogin");
+    currentPage = "home";
+    currentChannelIndex = -1;
+    closeDropdown();
+    showLogin();
+  }
+
+  function startApp() {
+    showApp();
+    renderChannels();
+    home();
+  }
+
+  function closeDropdown() {
+    $("dropdown").classList.remove("open");
+  }
+
+  function toggleDropdown() {
+    $("dropdown").classList.toggle("open");
+  }
+
+  function closeDropdownOnOutside(e) {
+    if (!$("dropdown").classList.contains("open")) return;
+    if ($("dropdown").contains(e.target)) return;
+    if (e.target.closest(".top-icons")) return;
+    closeDropdown();
+  }
+
+  async function add() {
+    const link = $("input").value.trim();
+
+    if (!link) {
+      alert("Paste a channel link");
+      return;
+    }
+
+    let endpoint = "";
+    if (link.includes("@")) {
+      const handle = link.split("@")[1].split("?")[0].split("/")[0];
+      endpoint = `${WORKER_URL}?handle=${encodeURIComponent(handle)}`;
+    } else if (link.includes("channel/")) {
+      const id = link.split("channel/")[1].split("?")[0].split("/")[0];
+      endpoint = `${WORKER_URL}?id=${encodeURIComponent(id)}`;
+    } else if (link.startsWith("UC")) {
+      endpoint = `${WORKER_URL}?id=${encodeURIComponent(link)}`;
+    } else {
+      alert("Invalid link");
+      return;
+    }
+
+    try {
+      const res = await fetch(endpoint);
+      const data = await res.json();
+
+      if (!data.channelId) {
+        alert("Could not load channel");
+        return;
+      }
+
+      const ch = normalizeChannel(data);
+
+      if (channels.some(x => x.channelId === ch.channelId)) {
+        alert("Already added");
+        return;
+      }
+
+      channels.unshift(ch);
+      saveState();
+      $("input").value = "";
+      renderChannels();
+      home();
+    } catch (e) {
+      alert("Failed to fetch channel");
+    }
+  }
+
+  function renderChannels() {
+    const list = $("list");
+    list.innerHTML = "";
+
+    if (!channels.length) {
+      list.innerHTML = `<div class="empty">No channels added yet</div>`;
+      return;
+    }
+
+    channels.forEach((c, i) => {
+      const row = document.createElement("div");
+      row.className = "channel";
+
+      row.innerHTML = `
+        <div class="channel-left">
+          <img class="channel-logo" src="${c.logo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
+          <span>${escapeHtml(c.name)}</span>
+        </div>
+        <span class="channel-delete" onclick="event.stopPropagation(); del(${i})">❌</span>
+      `;
+
+      row.onclick = () => openChannel(i);
+      list.appendChild(row);
+    });
+  }
+
+  function del(i) {
+    channels.splice(i, 1);
+    saveState();
+    renderChannels();
+    home();
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function setPageHeader(title, subtitle = "", showBack = false) {
+    $("pageHeader").innerHTML = `
+      <div class="page-title-row">
+        ${showBack ? `<div class="back" onclick="home()">⬅ Back</div>` : ""}
+        <div>
+          <div class="page-title">${escapeHtml(title)}</div>
+          ${subtitle ? `<div class="page-subtitle">${escapeHtml(subtitle)}</div>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function setLoadingState(message) {
+    $("feedGrid").innerHTML = `<div class="status">${escapeHtml(message)}</div>`;
+  }
+
+  function clearPlayer() {
+    $("player").innerHTML = `<div class="player-empty">Select a video to play</div>`;
+  }
+
+  function showResume() {
+    const box = $("resumeBox");
+    box.innerHTML = "";
+
+    if (currentPage !== "home" || !lastVideo || !lastVideo.id) {
+      box.style.display = "none";
+      return;
+    }
+
+    box.style.display = "block";
+
+    const card = document.createElement("div");
+    card.className = "resume-card";
+    card.innerHTML = `
+      <div class="resume-label">Continue watching</div>
+      <div class="resume-title">${escapeHtml(lastVideo.title)}</div>
+      <button class="resume-btn">Resume</button>
     `;
 
-    div.onclick=()=>openChannel(i);
-
-    list.appendChild(div);
-  });
-}
-
-// DELETE
-function del(i){
-  channels.splice(i,1);
-  localStorage.setItem("channels",JSON.stringify(channels));
-  render();
-  home();
-}
-
-// PLAYER
-function playVideo(id){
-  player.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1"></iframe>`;
-}
-
-// HOME VIEW
-async function home(){
-
-  view.innerHTML="";
-  player.innerHTML="";
-
-  for(let c of channels){
-    await loadChannelVideos(c, false);
+    card.onclick = () => playVideo(lastVideo);
+    box.appendChild(card);
   }
-}
 
-// OPEN CHANNEL PAGE
-async function openChannel(i){
+  function playVideo(v) {
+    const video = normalizeHistory(v);
+    if (!video || !video.id) return;
 
-  let c = channels[i];
-
-  view.innerHTML = `<div class="back" onclick="home()">⬅ Back</div><h2>${c.name}</h2>`;
-  player.innerHTML="";
-
-  await loadChannelVideos(c, true);
-}
-
-// LOAD VIDEOS FUNCTION
-async function loadChannelVideos(channel, clear){
-
-  let res = await fetch(`https://corsproxy.io/?https://www.youtube.com/feeds/videos.xml?channel_id=${channel.channelId}`);
-  let text = await res.text();
-
-  let parser = new DOMParser();
-  let xml = parser.parseFromString(text,"text/xml");
-
-  let videos = xml.querySelectorAll("entry");
-
-  let container = document.createElement("div");
-  container.className="grid";
-
-  videos.forEach(v=>{
-
-    let title = v.querySelector("title").textContent;
-    let link = v.querySelector("link").getAttribute("href");
-    let id = link.split("v=")[1];
-    let thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-
-    let div=document.createElement("div");
-    div.className="card";
-
-    div.innerHTML=`
-      <img src="${thumb}">
-      <div class="title">${title}</div>
+    $("player").innerHTML = `
+      <iframe
+        src="https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
     `;
 
-    div.onclick=()=>playVideo(id);
+    historyData = [video, ...historyData.filter(x => x.id !== video.id)];
+    historyData = historyData.slice(0, 50);
 
-    container.appendChild(div);
+    lastVideo = video;
+    saveState();
+    showResume();
+    $("content").scrollTo({ top: 0, behavior: "smooth" });
+  }
 
-  });
+  function dedupeById(list) {
+    const seen = new Set();
+    return list.filter(v => {
+      if (!v || !v.id) return false;
+      if (seen.has(v.id)) return false;
+      seen.add(v.id);
+      return true;
+    });
+  }
 
-  view.appendChild(container);
-}
+  async function fetchChannelVideos(ch) {
+    if (channelCache[ch.channelId]) {
+      return channelCache[ch.channelId];
+    }
 
-// DROPDOWN
-function toggleDropdown(){
-  dropdown.classList.toggle("open");
-}
+    try {
+      const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${ch.channelId}`;
+      const proxy = `https://corsproxy.io/?${encodeURIComponent(feedUrl)}`;
+      const res = await fetch(proxy);
+      const text = await res.text();
 
+      const xml = new DOMParser().parseFromString(text, "text/xml");
+      const entries = Array.from(xml.getElementsByTagName("entry"));
+
+      const videos = entries.map(entry => {
+        const title = entry.getElementsByTagName("title")[0]?.textContent || "Video";
+        const published = entry.getElementsByTagName("published")[0]?.textContent || "";
+
+        const linkEl = entry.getElementsByTagName("link")[0];
+        const href = linkEl ? linkEl.getAttribute("href") || "" : "";
+
+        let id = "";
+        if (href.includes("watch?v=")) {
+          id = href.split("watch?v=")[1].split("&")[0];
+        }
+
+        if (!id) {
+          const vidEl = entry.getElementsByTagName("yt:videoId")[0];
+          id = vidEl ? vidEl.textContent.trim() : "";
+        }
+
+        return {
+          id,
+          title,
+          date: published,
+          thumb: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+          channelId: ch.channelId,
+          channelName: ch.name,
+          channelLogo: ch.logo
+        };
+      }).filter(v => v.id);
+
+      channelCache[ch.channelId] = videos;
+      return videos;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function buildSmartHomeFeed(token) {
+    mixedHomeVideos = [];
+
+    if (!channels.length) {
+      if (token !== viewToken || currentPage !== "home") return;
+      $("feedGrid").innerHTML = `<div class="empty">Add your first channel from the dropdown</div>`;
+      return;
+    }
+
+    const affinity = {};
+    historyData.forEach(v => {
+      if (v.channelId) {
+        affinity[v.channelId] = (affinity[v.channelId] || 0) + 1;
+      }
+    });
+
+    const results = await Promise.all(
+      channels.map(async ch => ({
+        channel: ch,
+        videos: await fetchChannelVideos(ch)
+      }))
+    );
+
+    if (token !== viewToken || currentPage !== "home") return;
+
+    results.sort((a, b) => {
+      const scoreB = affinity[b.channel.channelId] || 0;
+      const scoreA = affinity[a.channel.channelId] || 0;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return a.channel.name.localeCompare(b.channel.name);
+    });
+
+    let maxLen = 0;
+    for (const r of results) {
+      maxLen = Math.max(maxLen, r.videos.length);
+    }
+
+    for (let round = 0; round < maxLen; round++) {
+      for (const r of results) {
+        if (r.videos[round]) {
+          mixedHomeVideos.push(r.videos[round]);
+        }
+      }
+    }
+
+    mixedHomeVideos = dedupeById(mixedHomeVideos);
+  }
+
+  function createCard(v) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img class="thumb" src="${v.thumb}" alt="">
+      <div class="card-body">
+        <div class="video-title">${escapeHtml(v.title)}</div>
+        <div class="video-meta">
+          <img class="mini-logo" src="${v.channelLogo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
+          <span>${escapeHtml(v.channelName || "")}</span>
+        </div>
+      </div>
+    `;
+    card.onclick = () => playVideo(v);
+    return card;
+  }
+
+  function renderHome() {
+    const slice = mixedHomeVideos.slice(0, homeVisibleCount);
+    $("feedGrid").innerHTML = "";
+
+    if (!slice.length) {
+      $("feedGrid").innerHTML = `<div class="empty">No videos found yet</div>`;
+      return;
+    }
+
+    slice.forEach(v => $("feedGrid").appendChild(createCard(v)));
+  }
+
+  function renderChannel() {
+    const slice = currentChannelVideos.slice(0, channelVisibleCount);
+    $("feedGrid").innerHTML = "";
+
+    if (!slice.length) {
+      $("feedGrid").innerHTML = `<div class="empty">No videos found for this channel</div>`;
+      return;
+    }
+
+    slice.forEach(v => $("feedGrid").appendChild(createCard(v)));
+  }
+
+  function renderHistory() {
+    const slice = historyData.slice(0, historyVisibleCount);
+    $("feedGrid").innerHTML = "";
+
+    if (!slice.length) {
+      $("feedGrid").innerHTML = `<div class="empty">No watch history yet</div>`;
+      return;
+    }
+
+    slice.forEach(v => $("feedGrid").appendChild(createCard(v)));
+  }
+
+  async function home() {
+    currentPage = "home";
+    currentChannelIndex = -1;
+    const token = ++viewToken;
+
+    closeDropdown();
+    $("content").scrollTop = 0;
+    homeVisibleCount = 12;
+    currentChannelVideos = [];
+
+    setPageHeader("Home", "Smart mixed feed");
+    $("resumeBox").innerHTML = "";
+    clearPlayer();
+    setLoadingState("Loading your home feed...");
+
+    await buildSmartHomeFeed(token);
+    if (token !== viewToken || currentPage !== "home") return;
+
+    $("feedGrid").innerHTML = "";
+    renderHome();
+    showResume();
+  }
+
+  async function openChannel(i) {
+    currentPage = "channel";
+    currentChannelIndex = i;
+    const token = ++viewToken;
+
+    const ch = channels[i];
+    closeDropdown();
+    $("content").scrollTop = 0;
+    channelVisibleCount = 12;
+    currentChannelVideos = [];
+
+    setPageHeader(ch.name, "All videos from this channel", true);
+    $("resumeBox").innerHTML = "";
+    clearPlayer();
+    setLoadingState(`Loading ${ch.name} videos...`);
+
+    const videos = await fetchChannelVideos(ch);
+    if (token !== viewToken || currentPage !== "channel") return;
+
+    currentChannelVideos = videos;
+    $("feedGrid").innerHTML = "";
+    renderChannel();
+  }
+
+  function showHistory() {
+    currentPage = "history";
+    currentChannelIndex = -1;
+    ++viewToken;
+
+    closeDropdown();
+    $("content").scrollTop = 0;
+    historyVisibleCount = 12;
+    currentChannelVideos = [];
+
+    setPageHeader("History", "Recently watched videos", false);
+    $("resumeBox").innerHTML = "";
+    clearPlayer();
+    renderHistory();
+  }
+
+  function onScroll() {
+    const el = $("content");
+    const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 180;
+    if (!nearBottom) return;
+
+    if (currentPage === "home" && homeVisibleCount < mixedHomeVideos.length) {
+      homeVisibleCount += 12;
+      renderHome();
+    } else if (currentPage === "channel" && channelVisibleCount < currentChannelVideos.length) {
+      channelVisibleCount += 12;
+      renderChannel();
+    } else if (currentPage === "history" && historyVisibleCount < historyData.length) {
+      historyVisibleCount += 12;
+      renderHistory();
+    }
+  }
 </script>
-
 </body>
 </html>
