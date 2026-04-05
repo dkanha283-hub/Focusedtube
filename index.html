@@ -1147,17 +1147,25 @@
   }
 
   function openPlayer(v) {
-    const item = normalizeVideo(v);
-    saveHistory(item);
+  const item = normalizeVideo(v);
+  saveHistory(item);
 
-    const params = new URLSearchParams();
-    if (item.id) params.set("videoId", item.id);
-    if (item.title) params.set("title", item.title);
-    if (item.channelId) params.set("channelId", item.channelId);
-    if (item.channelName) params.set("channelName", item.channelName);
-    if (item.type === "playlist") params.set("playlistId", item.id);
+  const params = new URLSearchParams();
 
-    window.location.href = `${PLAYER_URL}?${params.toString()}`;
+  if (item.id) params.set("videoId", item.id);
+  if (item.title) params.set("title", item.title);
+  if (item.channelId) params.set("channelId", item.channelId);
+  if (item.channelName) params.set("channelName", item.channelName);
+
+  if (item.type === "playlist") {
+    params.set("playlistId", item.id);
+  }
+
+  // ✅ FORCE player.html (NO 404)
+  const PLAYER_URL = "https://dkanha283-hub.github.io/Player/player.html";
+
+  window.location.href = PLAYER_URL + "?" + params.toString();
+}
   }
 
   window.login = login;
