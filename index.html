@@ -1,111 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FocusTube</title>
+  <title>FocusedTube</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body { margin:0; font-family:Arial; background:#0f0f0f; color:white; }
+    body { margin:0; font-family:Arial; background:#111; color:white; }
 
-    .login, .app {
-      height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      flex-direction:column;
-    }
-
-    .app { display:none; }
-
-    input {
-      padding:10px;
-      border-radius:8px;
-      border:none;
-      margin:5px;
-      width:90%;
-    }
-
-    button {
-      padding:10px;
-      border:none;
-      border-radius:8px;
-      background:red;
-      color:white;
-      cursor:pointer;
-    }
-
-    .navbar {
-      width:100%;
-      padding:10px;
-      background:#181818;
+    /* TOP BAR */
+    .topbar {
       display:flex;
       justify-content:space-between;
       align-items:center;
-    }
-
-    .container {
-      display:flex;
-      height:calc(100vh - 50px);
-    }
-
-    /* FLOATING SIDEBAR */
-    .sidebar {
-      width:250px;
-      background:#181818;
       padding:10px;
-      overflow:auto;
-      position:fixed;
-      left:-260px;
-      top:50px;
-      height:100%;
-      transition:0.3s;
-      z-index:10;
+      background:#181818;
     }
 
-    .sidebar.open {
-      left:0;
-    }
-
-    .menu-btn {
+    .icons span {
+      margin:0 8px;
       cursor:pointer;
-      font-size:20px;
+      font-size:18px;
     }
 
+    /* LOGIN */
+    .login {
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+    }
+
+    /* MAIN */
     .main {
-      flex:1;
       padding:15px;
-      margin-left:0;
-      overflow:auto;
     }
 
     .grid {
       display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+      grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
       gap:15px;
     }
 
     iframe {
       width:100%;
-      height:180px;
+      height:160px;
       border:none;
-      border-radius:12px;
+      border-radius:10px;
     }
 
-    .channel-card {
+    /* FLOAT PANEL */
+    .panel {
+      position:fixed;
+      right:-300px;
+      top:0;
+      width:300px;
+      height:100%;
+      background:#181818;
+      padding:10px;
+      transition:0.3s;
+      overflow:auto;
+    }
+
+    .panel.open {
+      right:0;
+    }
+
+    .channel {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:#282828;
+      padding:8px;
+      border-radius:8px;
+      margin-bottom:8px;
+    }
+
+    .left {
       display:flex;
       align-items:center;
       gap:10px;
-      background:#282828;
-      padding:10px;
-      border-radius:10px;
-      margin-bottom:10px;
-      cursor:pointer;
     }
 
-    .channel-card img {
-      width:40px;
-      height:40px;
+    img {
+      width:35px;
+      height:35px;
       border-radius:50%;
+    }
+
+    input {
+      width:100%;
+      padding:8px;
+      margin-bottom:5px;
+      border-radius:6px;
+      border:none;
+    }
+
+    button {
+      width:100%;
+      padding:8px;
+      background:red;
+      border:none;
+      color:white;
+      border-radius:6px;
     }
 
   </style>
@@ -115,36 +112,41 @@
 
 <!-- LOGIN -->
 <div id="loginPage" class="login">
-  <h2>FocusTube</h2>
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
+  <h2>FocusedTube</h2>
+  <input id="u" placeholder="Username">
+  <input id="p" type="password" placeholder="Password">
   <button onclick="login()">Login</button>
 </div>
 
 <!-- APP -->
-<div id="app" class="app">
+<div id="app" style="display:none">
 
-  <div class="navbar">
-    <span class="menu-btn" onclick="toggleSidebar()">☰</span>
-    <b>FocusTube</b>
-    <button onclick="logout()">Logout</button>
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <b>FocusedTube</b>
+
+    <div class="icons">
+      <span onclick="home()">🏠</span>
+      <span onclick="togglePanel()">📺</span>
+      <span onclick="history()">⏱️</span>
+    </div>
   </div>
 
-  <!-- SIDEBAR -->
-  <div id="sidebar" class="sidebar">
+  <!-- FLOAT PANEL -->
+  <div id="panel" class="panel">
 
-    <input id="input" placeholder="Paste channel or @link">
-    <button onclick="add()">Add</button>
+    <input id="input" placeholder="@channel or link">
+    <button onclick="add()">Add Channel</button>
 
-    <h3>Channels</h3>
-    <div id="channelList"></div>
+    <h3>Subscriptions</h3>
+    <div id="list"></div>
 
   </div>
 
   <!-- MAIN -->
   <div class="main">
 
-    <div id="homeView"></div>
+    <div id="homeView" class="grid"></div>
     <div id="channelView" style="display:none"></div>
 
   </div>
@@ -153,139 +155,142 @@
 
 <script>
 
-// INIT
-document.addEventListener("DOMContentLoaded", ()=>{
-  if(localStorage.getItem("login")){
-    showApp();
-  }
-});
-
-function login(){
-  if(!username.value || !password.value) return alert("Enter details");
-  localStorage.setItem("login","true");
-  showApp();
-}
-
-function logout(){
-  localStorage.removeItem("login");
-  location.reload();
-}
-
-function showApp(){
-  loginPage.style.display="none";
-  app.style.display="block";
-  load();
-}
-
-// DATA
 let channels=[];
 
+// LOGIN
+function login(){
+  if(!u.value || !p.value) return alert("Enter details");
+  localStorage.setItem("login","1");
+  init();
+}
+
+function init(){
+  if(localStorage.getItem("login")){
+    loginPage.style.display="none";
+    app.style.display="block";
+    load();
+  }
+}
+init();
+
+// LOAD DATA
 function load(){
   channels = JSON.parse(localStorage.getItem("channels")||"[]");
-  renderChannels();
-  showHome();
+  render();
+  home();
 }
 
 // ADD CHANNEL
 async function add(){
 
-  let link = input.value.trim();
-  let api = "https://restless-brook-50e4.dkanha283.workers.dev/";
+  let link=input.value.trim();
+  let api="https://restless-brook-50e4.dkanha283.workers.dev/";
 
   let res;
 
   if(link.includes("@")){
-    let handle = link.split("@")[1].split("?")[0];
-    res = await fetch(api + "?handle=" + handle);
+    let h=link.split("@")[1].split("?")[0];
+    res=await fetch(api+"?handle="+h);
   } else if(link.includes("channel/")){
-    let id = link.split("channel/")[1];
-    res = await fetch(api + "?id=" + id);
+    let id=link.split("channel/")[1];
+    res=await fetch(api+"?id="+id);
   } else {
-    alert("Invalid link");
+    alert("Invalid");
     return;
   }
 
-  let info = await res.json();
+  let data=await res.json();
 
-  if(!info.channelId) return alert("Error");
+  if(!data.channelId) return alert("Error");
 
-  if(channels.some(c => c.channelId === info.channelId)){
+  if(channels.some(c=>c.channelId===data.channelId)){
     alert("Already added");
     return;
   }
 
-  channels.push(info);
-  localStorage.setItem("channels", JSON.stringify(channels));
+  channels.push(data);
+  localStorage.setItem("channels",JSON.stringify(channels));
 
-  renderChannels();
-  showHome();
+  render();
+  home();
 }
 
-// SIDEBAR
-function renderChannels(){
+// RENDER CHANNEL LIST
+function render(){
 
-  channelList.innerHTML="";
+  list.innerHTML="";
 
   channels.forEach((c,i)=>{
 
     let div=document.createElement("div");
-    div.className="channel-card";
+    div.className="channel";
 
     div.innerHTML=`
-      <img src="${c.logo}">
-      <span>${c.name}</span>
+      <div class="left">
+        <img src="${c.logo}">
+        <span>${c.name}</span>
+      </div>
+      <span onclick="del(${i})">❌</span>
     `;
 
     div.onclick=()=>openChannel(i);
 
-    channelList.appendChild(div);
+    list.appendChild(div);
   });
 }
 
-// HOME VIEW (ALL CHANNELS)
-function showHome(){
+// DELETE
+function del(i){
+  channels.splice(i,1);
+  localStorage.setItem("channels",JSON.stringify(channels));
+  render();
+  home();
+}
+
+// HOME FEED
+function home(){
 
   channelView.style.display="none";
-  homeView.style.display="block";
+  homeView.style.display="grid";
 
   homeView.innerHTML="";
 
   channels.forEach(c=>{
-    let playlist="UU"+c.channelId.substring(2);
+    let p="UU"+c.channelId.substring(2);
 
     let iframe=document.createElement("iframe");
-    iframe.src=`https://www.youtube.com/embed/videoseries?list=${playlist}`;
+    iframe.src=`https://www.youtube.com/embed/videoseries?list=${p}`;
 
     homeView.appendChild(iframe);
   });
 }
 
-// SINGLE CHANNEL VIEW
+// CHANNEL PAGE
 function openChannel(i){
 
-  let c = channels[i];
+  let c=channels[i];
 
   homeView.style.display="none";
   channelView.style.display="block";
 
+  let p="UU"+c.channelId.substring(2);
+
   channelView.innerHTML=`
     <h2>${c.name}</h2>
-    <div class="grid" id="grid"></div>
+    <div class="grid">
+      <iframe src="https://www.youtube.com/embed/videoseries?list=${p}"></iframe>
+    </div>
   `;
-
-  let grid=document.getElementById("grid");
-
-  let playlist="UU"+c.channelId.substring(2);
-
-  let iframe=document.createElement("iframe");
-  iframe.src=`https://www.youtube.com/embed/videoseries?list=${playlist}`;
-
-  grid.appendChild(iframe);
 }
 
-// SIDEBAR TOGGLE
-function toggleSidebar(){
-  sidebar.classList.toggle("open");
+// PANEL
+function togglePanel(){
+  panel.classList.toggle("open");
+}
+
+// HISTORY (simple placeholder)
+function history(){
+  alert("History coming next");
 }
 
 </script>
