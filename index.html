@@ -1147,6 +1147,7 @@
   }
 
   function openPlayer(v) {
+  function openPlayer(v) {
   const item = normalizeVideo(v);
   saveHistory(item);
 
@@ -1161,10 +1162,11 @@
     params.set("playlistId", item.id);
   }
 
-  // ✅ FORCE player.html (NO 404)
-  const PLAYER_URL = "https://dkanha283-hub.github.io/Player/player.html";
+  // ✅ NEW FIXED URL (NO 404 EVER)
+  const PLAYER_URL = "https://dkanha283-hub.github.io/Player/";
 
   window.location.href = PLAYER_URL + "?" + params.toString();
+}
 }
   }
 
