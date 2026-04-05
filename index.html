@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body { margin:0; font-family:Arial; background:#f5f5f5; }
+    body { margin:0; font-family:Arial; background:#f0f0f0; }
 
     .login, .app {
       height:100vh;
@@ -19,8 +19,8 @@
 
     .navbar {
       width:100%;
-      background:white;
       padding:10px;
+      background:white;
       display:flex;
       justify-content:space-between;
       border-bottom:1px solid #ddd;
@@ -33,23 +33,57 @@
     }
 
     .sidebar {
-      width:250px;
+      width:260px;
       background:white;
       border-right:1px solid #ddd;
       padding:10px;
       overflow:auto;
     }
 
+    .channel {
+      display:flex;
+      justify-content:space-between;
+      padding:8px;
+      margin-bottom:5px;
+      background:#fafafa;
+      border-radius:8px;
+    }
+
     .main {
       flex:1;
       padding:10px;
+      overflow:auto;
     }
+
+    .videos {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+      gap:10px;
+    }
+
+    .video {
+      background:white;
+      border-radius:10px;
+      overflow:hidden;
+      cursor:pointer;
+    }
+
+    .video img { width:100%; }
+
+    #previewBox {
+      background:#fff;
+      padding:10px;
+      margin-top:10px;
+      border-radius:10px;
+      display:none;
+    }
+
   </style>
 </head>
 
 <body>
 
-<!-- LOGIN PAGE -->
+<!-- LOGIN -->
 <div id="loginPage" class="login">
   <h2>FocusTube</h2>
   <input id="username" placeholder="Username"><br><br>
@@ -61,20 +95,32 @@
 <div id="app" class="app">
 
   <div class="navbar">
-    <b>FocusTube</b>
+    <b>FocusTube 🎯</b>
     <button onclick="logout()">Logout</button>
   </div>
 
   <div class="container">
 
+    <!-- SIDEBAR -->
     <div class="sidebar">
+
+      <input id="channelInput" placeholder="Paste channel link">
+      <button onclick="addChannel()">Add</button>
+
+      <div id="previewBox">
+        <img id="previewLogo" style="width:40px;border-radius:50%">
+        <div id="previewName"></div>
+        <button onclick="confirmAdd()">Confirm</button>
+      </div>
+
       <h3>Subscriptions</h3>
       <div id="channelList"></div>
+
     </div>
 
+    <!-- MAIN -->
     <div class="main">
-      <h3>Home Feed</h3>
-      <div id="videos">Loading...</div>
+      <div id="videos" class="videos"></div>
     </div>
 
   </div>
@@ -84,52 +130,38 @@
 <script>
 
 // ===== INIT =====
-window.onload = function () {
-  let user = localStorage.getItem("user");
-
-  if (user) {
-    showApp();
-  } else {
-    showLogin();
-  }
+window.onload = () => {
+  if (localStorage.getItem("user")) showApp();
+  else showLogin();
 };
 
-// ===== UI =====
 function showLogin() {
-  document.getElementById("loginPage").style.display = "flex";
-  document.getElementById("app").style.display = "none";
+  loginPage.style.display="flex";
+  app.style.display="none";
 }
 
 function showApp() {
-  document.getElementById("loginPage").style.display = "none";
-  document.getElementById("app").style.display = "block";
-
+  loginPage.style.display="none";
+  app.style.display="block";
   loadData();
 }
 
 // ===== LOGIN =====
 function login() {
-  let u = document.getElementById("username").value.trim();
-  let p = document.getElementById("password").value.trim();
-
-  if (u === "" || p === "") {
-    alert("Enter username & password");
-    return;
-  }
-
-  localStorage.setItem("user", JSON.stringify({username:u}));
-
+  let u=username.value.trim();
+  let p=password.value.trim();
+  if(!u||!p) return alert("Enter details");
+  localStorage.setItem("user", JSON.stringify({u}));
   showApp();
 }
 
-// ===== LOGOUT =====
 function logout() {
   localStorage.removeItem("user");
   showLogin();
 }
 
 // ===== DATA =====
-let channels = [];
+let channels=[];
 
 function loadData() {
   channels = JSON.parse(localStorage.getItem("channels") || "[]");
@@ -137,23 +169,170 @@ function loadData() {
   loadFeed();
 }
 
-// ===== CHANNEL UI =====
-function renderChannels() {
-  let list = document.getElementById("channelList");
-  list.innerHTML = "";
+// ===== EXTRACT CHANNEL =====
+async function extractChannel(url){
 
-  channels.forEach((c,i) => {
-    let div = document.createElement("div");
-    div.style.padding = "8px";
-    div.style.borderBottom = "1px solid #ddd";
-    div.innerHTML = c.name || "Channel";
+  url=url.trim().split("?")[0];
+
+  if(url.includes("channel/")){
+    return {value:url.split("channel/")[1]};
+  }
+
+  if(url.includes("@")){
+    let proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    let res=await fetch(proxy);
+    let data=await res.json();
+
+    let match=data.contents.match(/"channelId":"(UC[^"]+)"/)
+      || data.contents.match(/"externalId":"(UC[^"]+)"/);
+
+    if(match) return {value:match[1]};
+  }
+
+  return null;
+}
+
+// ===== ADD CHANNEL =====
+async function addChannel(){
+
+  let input=channelInput.value;
+  let ch=await extractChannel(input);
+
+  if(!ch) return alert("Invalid link");
+
+  if(channels.some(c=>c.value===ch.value))
+    return alert("Already added");
+
+  let info=await fetchInfo(ch.value);
+
+  previewLogo.src=info.logo;
+  previewName.innerText=info.name;
+
+  previewBox.style.display="block";
+
+  window.tempChannel={...ch,...info};
+}
+
+function confirmAdd(){
+  channels.push(window.tempChannel);
+  localStorage.setItem("channels", JSON.stringify(channels));
+
+  previewBox.style.display="none";
+  renderChannels();
+  loadFeed();
+}
+
+// ===== FETCH INFO =====
+async function fetchInfo(id){
+
+  let url=`https://api.allorigins.win/get?url=${encodeURIComponent(
+    "https://www.youtube.com/channel/"+id)}`;
+
+  let res=await fetch(url);
+  let data=await res.json();
+
+  let html=data.contents;
+
+  let name=html.match(/"title":"(.*?)"/);
+  let logo=html.match(/"avatar":{"thumbnails":\[{"url":"(.*?)"/);
+
+  return {
+    name:name?name[1]:"Channel",
+    logo:logo?logo[1]:""
+  };
+}
+
+// ===== SIDEBAR =====
+function renderChannels(){
+  let list=channelList;
+  list.innerHTML="";
+
+  channels.forEach((c,i)=>{
+    let div=document.createElement("div");
+    div.className="channel";
+
+    div.innerHTML=`
+      <div style="display:flex;gap:8px;">
+        <img src="${c.logo}" style="width:30px;border-radius:50%">
+        <span>${c.name}</span>
+      </div>
+      <span onclick="deleteChannel(${i})">🗑</span>
+    `;
+
     list.appendChild(div);
   });
 }
 
+function deleteChannel(i){
+  channels.splice(i,1);
+  localStorage.setItem("channels", JSON.stringify(channels));
+  renderChannels();
+  loadFeed();
+}
+
 // ===== FEED =====
-function loadFeed() {
-  document.getElementById("videos").innerHTML = "Feed working ✅";
+async function loadFeed(){
+
+  videos.innerHTML="Loading...";
+
+  let all=[];
+
+  for(let c of channels){
+    let vids=await fetchRSS(c.value);
+    all=all.concat(vids);
+  }
+
+  all.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  videos.innerHTML="";
+
+  all.forEach(v=>{
+    let div=document.createElement("div");
+    div.className="video";
+
+    div.innerHTML=`
+      <img src="${v.thumb}">
+      <div>${v.title}</div>
+    `;
+
+    div.onclick=()=>{
+      window.open("https://youtube.com/watch?v="+v.id);
+    };
+
+    videos.appendChild(div);
+  });
+}
+
+// ===== RSS =====
+async function fetchRSS(id){
+
+  let url=`https://api.allorigins.win/get?url=${encodeURIComponent(
+    "https://www.youtube.com/feeds/videos.xml?channel_id="+id)}`;
+
+  let res=await fetch(url);
+  let data=await res.json();
+
+  let parser=new DOMParser();
+  let xml=parser.parseFromString(data.contents,"text/xml");
+
+  let entries=xml.getElementsByTagName("entry");
+
+  let vids=[];
+
+  for(let i=0;i<entries.length;i++){
+    let idv=entries[i].getElementsByTagName("yt:videoId")[0].textContent;
+    let title=entries[i].getElementsByTagName("title")[0].textContent;
+    let date=entries[i].getElementsByTagName("published")[0].textContent;
+
+    vids.push({
+      id:idv,
+      title,
+      date,
+      thumb:`https://img.youtube.com/vi/${idv}/mqdefault.jpg`
+    });
+  }
+
+  return vids;
 }
 
 </script>
