@@ -13,6 +13,7 @@
       background: #f5f5f5;
     }
 
+    /* LOGIN */
     .login-screen {
       height: 100vh;
       display: flex;
@@ -43,6 +44,7 @@
 
     .app { display: none; }
 
+    /* NAVBAR */
     .navbar {
       height: 60px;
       background: white;
@@ -60,31 +62,44 @@
       cursor: pointer;
     }
 
-    .container {
-      display: flex;
-      height: calc(100vh - 60px);
-    }
-
-    .sidebar {
-      width: 230px;
+    /* FLOATING PANEL */
+    #subsPanel {
+      position: fixed;
+      top: 60px;
+      right: 20px;
+      width: 300px;
+      height: 400px;
       background: white;
-      border-right: 1px solid #ddd;
-      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      display: none;
       overflow-y: auto;
+      z-index: 1000;
+      padding: 10px;
     }
 
-    .channel {
-      padding: 10px;
-      border-radius: 6px;
+    .channel-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
       cursor: pointer;
     }
 
-    .channel:hover { background: #eee; }
+    .channel-item:hover {
+      background: #eee;
+    }
 
+    .channel-item img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+    }
+
+    /* MAIN */
     .main {
-      flex: 1;
       padding: 15px;
-      overflow-y: auto;
     }
 
     .player {
@@ -106,13 +121,8 @@
       border-radius: 10px;
     }
 
-    .page { display: none; }
-    .active { display: block; }
-
-    .search-box {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
+    .video-title {
+      font-size: 14px;
     }
   </style>
 </head>
@@ -132,44 +142,22 @@
     <div>FocusedTube</div>
 
     <div class="nav-icons">
-      <span onclick="showPage('home')">🏠</span>
-      <span onclick="showPage('search')">🔍</span>
-      <span onclick="showPage('subs')">📺</span>
-      <span onclick="showPage('history')">⏱</span>
+      <span onclick="goHome()">🏠</span>
+      <span onclick="searchAlert()">🔍</span>
+      <span onclick="toggleSubs()">📺</span>
+      <span onclick="showHistory()">⏱</span>
     </div>
   </div>
 
-  <div class="container">
+  <!-- FLOAT PANEL -->
+  <div id="subsPanel">
+    <h3>Subscriptions</h3>
+    <div id="channelList"></div>
+  </div>
 
-    <div class="sidebar" id="channelList"></div>
-
-    <div class="main">
-
-      <!-- HOME -->
-      <div id="home" class="page active">
-        <h2>Welcome</h2>
-      </div>
-
-      <!-- SEARCH -->
-      <div id="search" class="page">
-        <input id="searchInput" class="search-box" placeholder="Search videos..." oninput="searchVideos()">
-        <div id="searchResults" class="videos"></div>
-      </div>
-
-      <!-- SUBSCRIPTIONS -->
-      <div id="subs" class="page">
-        <iframe id="player" class="player"></iframe>
-        <div id="videos" class="videos"></div>
-      </div>
-
-      <!-- HISTORY -->
-      <div id="history" class="page">
-        <h3>History</h3>
-        <div id="historyList"></div>
-      </div>
-
-    </div>
-
+  <div class="main">
+    <iframe id="player" class="player"></iframe>
+    <div id="videos" class="videos"></div>
   </div>
 
 </div>
@@ -177,13 +165,6 @@
 <script>
 
 let accessToken = "";
-let historyData = JSON.parse(localStorage.getItem("history")) || [];
-
-// PAGE SWITCH
-function showPage(page) {
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById(page).classList.add("active");
-}
 
 // LOGIN
 function login() {
@@ -199,7 +180,13 @@ function login() {
   }).requestAccessToken();
 }
 
-// LOAD CHANNELS
+// TOGGLE PANEL
+function toggleSubs() {
+  let panel = document.getElementById("subsPanel");
+  panel.style.display = panel.style.display === "block" ? "none" : "block";
+}
+
+// LOAD SUBSCRIPTIONS
 async function loadSubscriptions() {
   let res = await fetch(
     "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50",
@@ -209,15 +196,19 @@ async function loadSubscriptions() {
   let data = await res.json();
 
   let list = document.getElementById("channelList");
-  list.innerHTML = "<h3>Subscriptions</h3>";
+  list.innerHTML = "";
 
   data.items.forEach(item => {
     let div = document.createElement("div");
-    div.className = "channel";
-    div.innerText = item.snippet.title;
+    div.className = "channel-item";
+
+    div.innerHTML = `
+      <img src="${item.snippet.thumbnails.default.url}">
+      <span>${item.snippet.title}</span>
+    `;
 
     div.onclick = () => {
-      showPage("subs");
+      document.getElementById("subsPanel").style.display = "none";
       loadVideos(item.snippet.resourceId.channelId);
     };
 
@@ -244,72 +235,38 @@ async function loadVideos(channelId) {
     let div = document.createElement("div");
     div.className = "video";
 
-    div.innerHTML = `<img src="${thumb}"><div>${title}</div>`;
-
-    div.onclick = () => playVideo(vid, title);
-
-    container.appendChild(div);
-
-    if (index === 0) playVideo(vid, title);
-  });
-}
-
-// PLAY + HISTORY
-function playVideo(id, title) {
-  document.getElementById("player").src =
-    `https://www.youtube.com/embed/${id}`;
-
-  historyData.unshift(title);
-  localStorage.setItem("history", JSON.stringify(historyData));
-  updateHistory();
-}
-
-// HISTORY
-function updateHistory() {
-  let list = document.getElementById("historyList");
-  list.innerHTML = "";
-
-  historyData.forEach(item => {
-    let div = document.createElement("div");
-    div.innerText = item;
-    list.appendChild(div);
-  });
-}
-
-// SEARCH
-async function searchVideos() {
-  let query = document.getElementById("searchInput").value;
-
-  if (!query) return;
-
-  let res = await fetch(
-    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${query}&maxResults=10&type=video`,
-    { headers: { Authorization: "Bearer " + accessToken } }
-  );
-
-  let data = await res.json();
-  let container = document.getElementById("searchResults");
-  container.innerHTML = "";
-
-  data.items.forEach(video => {
-    let vid = video.id.videoId;
-    let thumb = video.snippet.thumbnails.medium.url;
-
-    let div = document.createElement("div");
-    div.className = "video";
-    div.innerHTML = `<img src="${thumb}">`;
+    div.innerHTML = `
+      <img src="${thumb}">
+      <div class="video-title">${title}</div>
+    `;
 
     div.onclick = () => {
-      showPage("subs");
       document.getElementById("player").src =
         `https://www.youtube.com/embed/${vid}`;
     };
 
     container.appendChild(div);
+
+    if (index === 0) {
+      document.getElementById("player").src =
+        `https://www.youtube.com/embed/${vid}`;
+    }
   });
 }
 
-updateHistory();
+// EXTRA BUTTONS
+function goHome() {
+  document.getElementById("videos").innerHTML = "";
+  document.getElementById("player").src = "";
+}
+
+function searchAlert() {
+  alert("Search feature coming next 🚀");
+}
+
+function showHistory() {
+  alert("History feature coming next 🚀");
+}
 
 </script>
 
