@@ -61,11 +61,15 @@
 
     .video img { width:100%; }
 
-    .suggestion {
+    .channel {
       padding:8px;
-      border-bottom:1px solid #eee;
-      cursor:pointer;
+      margin-bottom:5px;
+      background:#fafafa;
+      border-radius:8px;
+      display:flex;
+      justify-content:space-between;
     }
+
   </style>
 </head>
 
@@ -92,9 +96,8 @@
     <!-- SIDEBAR -->
     <div class="sidebar">
 
-      <input id="searchInput" placeholder="Search channel..." oninput="searchChannel()">
-
-      <div id="suggestions"></div>
+      <input id="channelInput" placeholder="Paste channel link OR type name">
+      <button onclick="addChannel()">Add</button>
 
       <h3>Subscriptions</h3>
       <div id="channelList"></div>
@@ -113,7 +116,7 @@
 <script>
 
 // LOGIN
-window.onload = () => {
+window.onload=()=>{
   if(localStorage.getItem("user")) showApp();
 };
 
@@ -143,46 +146,19 @@ function loadChannels(){
   loadFeed();
 }
 
-// SEARCH SYSTEM
-async function searchChannel(){
+// ADD CHANNEL (SMART)
+function addChannel(){
 
-  let q=searchInput.value;
-  if(q.length<2) return;
+  let input=channelInput.value.trim();
 
-  let proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(
-    "https://www.youtube.com/results?search_query="+q)}`;
+  if(!input) return alert("Enter something");
 
-  let res=await fetch(proxy);
-  let data=await res.json();
+  // duplicate check
+  if(channels.includes(input)) return alert("Already added");
 
-  let html=data.contents;
-
-  let matches=[...html.matchAll(/"title":{"runs":\[\{"text":"(.*?)"\}\]}/g)];
-
-  suggestions.innerHTML="";
-
-  matches.slice(0,5).forEach(m=>{
-    let name=m[1];
-
-    let div=document.createElement("div");
-    div.className="suggestion";
-    div.innerText=name;
-
-    div.onclick=()=>addChannel(name);
-
-    suggestions.appendChild(div);
-  });
-}
-
-// ADD CHANNEL
-function addChannel(name){
-
-  if(channels.includes(name)) return alert("Already added");
-
-  channels.push(name);
+  channels.push(input);
   localStorage.setItem("channels", JSON.stringify(channels));
 
-  suggestions.innerHTML="";
   renderChannels();
   loadFeed();
 }
@@ -192,10 +168,13 @@ function renderChannels(){
   channelList.innerHTML="";
   channels.forEach((c,i)=>{
     let div=document.createElement("div");
+    div.className="channel";
+
     div.innerHTML=`
-      ${c}
-      <button onclick="deleteChannel(${i})">❌</button>
+      <span>${c}</span>
+      <span onclick="deleteChannel(${i})">❌</span>
     `;
+
     channelList.appendChild(div);
   });
 }
@@ -216,7 +195,15 @@ async function loadFeed(){
 
   for(let c of channels){
 
-    let rss=`https://www.youtube.com/feeds/videos.xml?user=${encodeURIComponent(c)}`;
+    let rss;
+
+    if(c.includes("@")){
+      rss=`https://www.youtube.com/feeds/videos.xml?user=${c.split("@")[1]}`;
+    } else if(c.includes("channel/")){
+      rss=`https://www.youtube.com/feeds/videos.xml?channel_id=${c.split("channel/")[1]}`;
+    } else {
+      continue;
+    }
 
     try{
       let proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(rss)}`;
@@ -229,6 +216,7 @@ async function loadFeed(){
       let entries=xml.getElementsByTagName("entry");
 
       for(let i=0;i<entries.length;i++){
+
         let id=entries[i].getElementsByTagName("yt:videoId")[0].textContent;
         let title=entries[i].getElementsByTagName("title")[0].textContent;
 
