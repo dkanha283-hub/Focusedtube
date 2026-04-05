@@ -3,25 +3,26 @@
 <head>
   <title>FocusTube</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     body { margin:0; font-family:Arial; background:#f5f5f5; }
 
     .login-screen {
-      height:100vh; display:flex;
-      justify-content:center; align-items:center;
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
       flex-direction:column;
     }
-
-    .logo { font-size:40px; margin-bottom:20px; }
 
     .app { display:none; }
 
     .navbar {
-      height:60px; background:white;
-      display:flex; align-items:center;
+      height:60px;
+      background:white;
+      display:flex;
+      align-items:center;
       padding:0 20px;
       border-bottom:1px solid #ddd;
     }
@@ -30,13 +31,32 @@
       margin-left:auto;
       display:flex;
       gap:20px;
+      align-items:center;
       cursor:pointer;
+    }
+
+    .profile {
+      width:32px;
+      height:32px;
+      border-radius:50%;
+    }
+
+    #logoutBtn {
+      position:absolute;
+      top:60px;
+      right:20px;
+      background:white;
+      padding:10px;
+      border:1px solid #ddd;
+      display:none;
     }
 
     #subsPanel {
       position:fixed;
-      top:70px; right:20px;
-      width:280px; height:350px;
+      top:70px;
+      right:20px;
+      width:280px;
+      height:350px;
       background:white;
       border-radius:10px;
       box-shadow:0 5px 15px rgba(0,0,0,0.2);
@@ -46,13 +66,15 @@
     }
 
     .channel-item {
-      display:flex; gap:10px;
+      display:flex;
+      gap:10px;
       padding:8px;
       cursor:pointer;
     }
 
     .channel-item img {
-      width:30px; height:30px;
+      width:30px;
+      height:30px;
       border-radius:50%;
     }
 
@@ -82,21 +104,24 @@
 
 <!-- LOGIN -->
 <div id="loginScreen" class="login-screen">
-  <div class="logo">FocusedTube</div>
-  <button onclick="login()">Login</button>
+  <h2>FocusTube</h2>
+  <button onclick="login()">Sign in with Google</button>
 </div>
 
 <!-- APP -->
 <div id="app" class="app">
 
   <div class="navbar">
-    <div>FocusedTube</div>
+    <b>FocusTube</b>
 
     <div class="nav-icons">
       <span onclick="goHome()">🏠</span>
       <span onclick="toggleSubs()">📺</span>
+      <img id="profilePic" class="profile" onclick="toggleLogout()">
     </div>
   </div>
+
+  <div id="logoutBtn" onclick="logout()">Logout</div>
 
   <div id="subsPanel">
     <h3>Subscriptions</h3>
@@ -111,27 +136,67 @@
 
 <script>
 
-let accessToken = "";
+let accessToken = localStorage.getItem("token");
 let channels = [];
 let index = 0;
+
+// 🔥 AUTO LOGIN FIX
+window.onload = () => {
+  if (accessToken) {
+    startApp();
+  }
+};
 
 // LOGIN
 function login() {
   google.accounts.oauth2.initTokenClient({
     client_id: "901526621368-k63bfsq7aomg2e2k6u0625bub9291dhs.apps.googleusercontent.com",
-    scope: "https://www.googleapis.com/auth/youtube.readonly",
+    scope: "https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/userinfo.profile",
     callback: (res) => {
+
       accessToken = res.access_token;
+      localStorage.setItem("token", accessToken);
 
-      document.getElementById("loginScreen").style.display = "none";
-      document.getElementById("app").style.display = "block";
-
-      loadSubscriptions();
+      startApp();
     }
-  }).requestAccessToken();
+  }).requestAccessToken({ prompt: "consent" });
 }
 
-// TOGGLE PANEL
+// START APP (IMPORTANT)
+function startApp() {
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  loadProfile();
+  loadSubscriptions();
+}
+
+// PROFILE
+async function loadProfile() {
+  try {
+    let res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: "Bearer " + accessToken }
+    });
+
+    let data = await res.json();
+    document.getElementById("profilePic").src = data.picture;
+
+  } catch (e) {
+    console.log("Profile error");
+  }
+}
+
+function toggleLogout() {
+  let btn = document.getElementById("logoutBtn");
+  btn.style.display = btn.style.display === "block" ? "none" : "block";
+}
+
+function logout() {
+  localStorage.removeItem("token");
+  location.reload();
+}
+
+// SUB PANEL
 function toggleSubs() {
   let panel = document.getElementById("subsPanel");
   panel.style.display = panel.style.display === "block" ? "none" : "block";
@@ -139,46 +204,52 @@ function toggleSubs() {
 
 // LOAD SUBSCRIPTIONS
 async function loadSubscriptions() {
+  try {
 
-  let res = await fetch(
-    "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=20",
-    { headers: { Authorization: "Bearer " + accessToken } }
-  );
+    let res = await fetch(
+      "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=20",
+      { headers: { Authorization: "Bearer " + accessToken } }
+    );
 
-  let data = await res.json();
+    let data = await res.json();
 
-  console.log("Subscriptions:", data);
+    if (!data.items) {
+      alert("No subscriptions found. Check login.");
+      return;
+    }
 
-  channels = data.items.map(i => i.snippet.resourceId.channelId);
-  index = 0;
+    channels = data.items.map(i => i.snippet.resourceId.channelId);
+    index = 0;
 
-  let list = document.getElementById("channelList");
-  list.innerHTML = "";
+    let list = document.getElementById("channelList");
+    list.innerHTML = "";
 
-  data.items.forEach(item => {
-    let div = document.createElement("div");
-    div.className = "channel-item";
+    data.items.forEach(item => {
+      let div = document.createElement("div");
+      div.className = "channel-item";
 
-    div.innerHTML = `
-      <img src="${item.snippet.thumbnails.default.url}">
-      <span>${item.snippet.title}</span>
-    `;
+      div.innerHTML = `
+        <img src="${item.snippet.thumbnails.default.url}">
+        <span>${item.snippet.title}</span>
+      `;
 
-    div.onclick = () => loadChannelVideos(item.snippet.resourceId.channelId);
+      div.onclick = () => loadChannelVideos(item.snippet.resourceId.channelId);
 
-    list.appendChild(div);
-  });
+      list.appendChild(div);
+    });
 
-  loadMoreVideos(); // 🔥 THIS WAS MISSING
+    loadMoreVideos();
+
+  } catch (e) {
+    alert("Error loading subscriptions");
+  }
 }
 
-// LOAD MORE VIDEOS
+// LOAD FEED
 async function loadMoreVideos() {
-
   let container = document.getElementById("videos");
 
   for (let i = 0; i < 3; i++) {
-
     if (index >= channels.length) return;
 
     let channelId = channels[index++];
@@ -196,11 +267,10 @@ async function loadMoreVideos() {
 
       let div = document.createElement("div");
       div.className = "video";
-
       div.innerHTML = `<img src="${thumb}">`;
 
       div.onclick = () => {
-        window.open(`https://www.youtube.com/watch?v=${vid}`, "_blank");
+        window.open(`https://youtube.com/watch?v=${vid}`);
       };
 
       container.appendChild(div);
@@ -212,16 +282,21 @@ async function loadMoreVideos() {
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("videos").addEventListener("scroll", (e) => {
     let el = e.target;
-
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
       loadMoreVideos();
     }
   });
 });
 
-// CHANNEL VIDEOS
-async function loadChannelVideos(channelId) {
+// HOME
+function goHome() {
+  document.getElementById("videos").innerHTML = "";
+  index = 0;
+  loadMoreVideos();
+}
 
+// CHANNEL
+async function loadChannelVideos(channelId) {
   let res = await fetch(
     `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video`,
     { headers: { Authorization: "Bearer " + accessToken } }
@@ -242,13 +317,6 @@ async function loadChannelVideos(channelId) {
 
     container.appendChild(div);
   });
-}
-
-// HOME
-function goHome() {
-  document.getElementById("videos").innerHTML = "";
-  index = 0;
-  loadMoreVideos();
 }
 
 </script>
