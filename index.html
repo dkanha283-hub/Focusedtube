@@ -51,7 +51,6 @@
     .card img {
       width:100%;
       height:140px;
-      object-fit:cover;
     }
 
     .title {
@@ -59,7 +58,6 @@
       font-size:14px;
     }
 
-    /* PLAYER */
     .player {
       width:100%;
       height:220px;
@@ -73,7 +71,6 @@
       border-radius:10px;
     }
 
-    /* DROPDOWN */
     .dropdown {
       position:absolute;
       top:50px;
@@ -95,12 +92,19 @@
       background:#282828;
       border-radius:8px;
       margin-bottom:8px;
+      cursor:pointer;
     }
 
     .channel img {
       width:30px;
       height:30px;
       border-radius:50%;
+    }
+
+    .back {
+      margin-bottom:10px;
+      cursor:pointer;
+      color:#aaa;
     }
 
   </style>
@@ -118,7 +122,7 @@
 <div id="app" style="display:none">
 
   <div class="topbar">
-    <b>FocusedTube</b>
+    <b onclick="home()" style="cursor:pointer">FocusedTube</b>
     <div class="icons">
       <span onclick="home()">🏠</span>
       <span onclick="toggleDropdown()">📺</span>
@@ -134,11 +138,9 @@
 
   <div class="main">
 
-    <!-- PLAYER -->
     <div id="player" class="player"></div>
 
-    <!-- FEED -->
-    <div id="feed" class="grid"></div>
+    <div id="view"></div>
 
   </div>
 
@@ -207,7 +209,7 @@ async function add(){
   home();
 }
 
-// RENDER CHANNEL LIST (LOGO FIX)
+// RENDER CHANNEL LIST
 function render(){
   list.innerHTML="";
 
@@ -221,6 +223,8 @@ function render(){
       <span onclick="event.stopPropagation(); del(${i})">❌</span>
     `;
 
+    div.onclick=()=>openChannel(i);
+
     list.appendChild(div);
   });
 }
@@ -233,51 +237,69 @@ function del(i){
   home();
 }
 
-// PLAY VIDEO INSIDE APP
-function playVideo(videoId){
-  player.innerHTML = `
-    <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1"></iframe>
-  `;
+// PLAYER
+function playVideo(id){
+  player.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1"></iframe>`;
 }
 
-// HOME FEED
+// HOME VIEW
 async function home(){
 
-  feed.innerHTML="";
+  view.innerHTML="";
+  player.innerHTML="";
 
   for(let c of channels){
-
-    let res = await fetch(`https://corsproxy.io/?https://www.youtube.com/feeds/videos.xml?channel_id=${c.channelId}`);
-    let text = await res.text();
-
-    let parser = new DOMParser();
-    let xml = parser.parseFromString(text,"text/xml");
-
-    let videos = xml.querySelectorAll("entry");
-
-    videos.forEach(v=>{
-
-      let title = v.querySelector("title").textContent;
-      let link = v.querySelector("link").getAttribute("href");
-      let id = link.split("v=")[1];
-      let thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-
-      let div=document.createElement("div");
-      div.className="card";
-
-      div.innerHTML=`
-        <img src="${thumb}">
-        <div class="title">${title}</div>
-      `;
-
-      div.onclick=()=>playVideo(id);
-
-      feed.appendChild(div);
-
-    });
-
+    await loadChannelVideos(c, false);
   }
+}
 
+// OPEN CHANNEL PAGE
+async function openChannel(i){
+
+  let c = channels[i];
+
+  view.innerHTML = `<div class="back" onclick="home()">⬅ Back</div><h2>${c.name}</h2>`;
+  player.innerHTML="";
+
+  await loadChannelVideos(c, true);
+}
+
+// LOAD VIDEOS FUNCTION
+async function loadChannelVideos(channel, clear){
+
+  let res = await fetch(`https://corsproxy.io/?https://www.youtube.com/feeds/videos.xml?channel_id=${channel.channelId}`);
+  let text = await res.text();
+
+  let parser = new DOMParser();
+  let xml = parser.parseFromString(text,"text/xml");
+
+  let videos = xml.querySelectorAll("entry");
+
+  let container = document.createElement("div");
+  container.className="grid";
+
+  videos.forEach(v=>{
+
+    let title = v.querySelector("title").textContent;
+    let link = v.querySelector("link").getAttribute("href");
+    let id = link.split("v=")[1];
+    let thumb = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+
+    let div=document.createElement("div");
+    div.className="card";
+
+    div.innerHTML=`
+      <img src="${thumb}">
+      <div class="title">${title}</div>
+    `;
+
+    div.onclick=()=>playVideo(id);
+
+    container.appendChild(div);
+
+  });
+
+  view.appendChild(container);
 }
 
 // DROPDOWN
