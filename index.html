@@ -70,6 +70,12 @@
       justify-content:space-between;
     }
 
+    .note {
+      font-size:12px;
+      color:#666;
+      margin-top:8px;
+    }
+
   </style>
 </head>
 
@@ -95,8 +101,13 @@
 
     <div class="sidebar">
 
-      <input id="channelInput" placeholder="Paste @link or channel link">
+      <input id="channelInput" placeholder="Paste channel ID or /channel link">
       <button onclick="addChannel()">Add</button>
+
+      <div class="note">
+        ⚠ Use channel link like:<br>
+        youtube.com/channel/UCxxxx
+      </div>
 
       <h3>Subscriptions</h3>
       <div id="channelList"></div>
@@ -144,38 +155,28 @@ function loadChannels(){
   loadFeed();
 }
 
-// 🔥 CONVERT @link → channel ID
-async function getChannelId(url){
+// EXTRACT CHANNEL ID
+function extractId(input){
 
-  if(url.includes("channel/")){
-    return url.split("channel/")[1];
+  if(input.includes("channel/")){
+    return input.split("channel/")[1];
   }
 
-  if(url.includes("@")){
-
-    try{
-      let proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      let res=await fetch(proxy);
-      let data=await res.json();
-
-      let match=data.contents.match(/"channelId":"(UC[^"]+)"/);
-
-      if(match) return match[1];
-
-    }catch(e){}
+  if(input.startsWith("UC")){
+    return input;
   }
 
   return null;
 }
 
 // ADD CHANNEL
-async function addChannel(){
+function addChannel(){
 
   let input=channelInput.value.trim();
 
-  let id=await getChannelId(input);
+  let id=extractId(input);
 
-  if(!id) return alert("Invalid or unsupported link");
+  if(!id) return alert("Use channel link or UC ID");
 
   if(channels.includes(id)) return alert("Already added");
 
@@ -192,10 +193,12 @@ function renderChannels(){
   channels.forEach((c,i)=>{
     let div=document.createElement("div");
     div.className="channel";
+
     div.innerHTML=`
       ${c}
       <span onclick="deleteChannel(${i})">❌</span>
     `;
+
     channelList.appendChild(div);
   });
 }
@@ -229,6 +232,7 @@ async function loadFeed(){
       let entries=xml.getElementsByTagName("entry");
 
       for(let i=0;i<entries.length;i++){
+
         let vid=entries[i].getElementsByTagName("yt:videoId")[0].textContent;
         let title=entries[i].getElementsByTagName("title")[0].textContent;
 
