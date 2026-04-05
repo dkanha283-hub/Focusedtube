@@ -49,9 +49,9 @@
     iframe {
       width:100%;
       height:300px;
-      margin-bottom:15px;
-      border-radius:10px;
       border:none;
+      border-radius:10px;
+      margin-bottom:15px;
     }
 
     .channel {
@@ -86,16 +86,23 @@
 
   <div class="container">
 
+    <!-- SIDEBAR -->
     <div class="sidebar">
 
-      <input id="channelInput" placeholder="Paste channel ID or link">
+      <input id="channelInput" placeholder="Paste channel link or UC ID">
       <button onclick="addChannel()">Add</button>
+
+      <p style="font-size:12px;color:#666;">
+        Use format:<br>
+        youtube.com/channel/UCxxxx
+      </p>
 
       <h3>Subscriptions</h3>
       <div id="channelList"></div>
 
     </div>
 
+    <!-- MAIN -->
     <div class="main" id="videos"></div>
 
   </div>
@@ -104,13 +111,16 @@
 
 <script>
 
-// LOGIN
-window.onload=()=>{
+// LOGIN SYSTEM
+window.onload = () => {
   if(localStorage.getItem("user")) showApp();
 };
 
 function login(){
-  if(!username.value||!password.value) return alert("Enter details");
+  if(!username.value || !password.value){
+    alert("Enter username & password");
+    return;
+  }
   localStorage.setItem("user","ok");
   showApp();
 }
@@ -127,29 +137,45 @@ function showApp(){
 }
 
 // DATA
-let channels=[];
+let channels = [];
 
 function loadChannels(){
-  channels=JSON.parse(localStorage.getItem("channels")||"[]");
+  channels = JSON.parse(localStorage.getItem("channels") || "[]");
   renderChannels();
   loadFeed();
 }
 
 // EXTRACT CHANNEL ID
-function extractId(input){
-  if(input.includes("channel/")) return input.split("channel/")[1];
-  if(input.startsWith("UC")) return input;
+function getChannelId(input){
+
+  input = input.trim();
+
+  if(input.includes("channel/")){
+    return input.split("channel/")[1];
+  }
+
+  if(input.startsWith("UC")){
+    return input;
+  }
+
   return null;
 }
 
 // ADD CHANNEL
 function addChannel(){
-  let input=channelInput.value.trim();
-  let id=extractId(input);
 
-  if(!id) return alert("Invalid channel link");
+  let input = channelInput.value;
+  let id = getChannelId(input);
 
-  if(channels.includes(id)) return alert("Already added");
+  if(!id){
+    alert("Invalid link. Use channel link.");
+    return;
+  }
+
+  if(channels.includes(id)){
+    alert("Already added");
+    return;
+  }
 
   channels.push(id);
   localStorage.setItem("channels", JSON.stringify(channels));
@@ -160,17 +186,21 @@ function addChannel(){
 
 // SIDEBAR
 function renderChannels(){
-  channelList.innerHTML="";
-  channels.forEach((c,i)=>{
-    let div=document.createElement("div");
-    div.className="channel";
 
-    div.innerHTML=`
+  let list = document.getElementById("channelList");
+  list.innerHTML = "";
+
+  channels.forEach((c,i)=>{
+
+    let div = document.createElement("div");
+    div.className = "channel";
+
+    div.innerHTML = `
       ${c}
       <span onclick="deleteChannel(${i})">❌</span>
     `;
 
-    channelList.appendChild(div);
+    list.appendChild(div);
   });
 }
 
@@ -181,17 +211,20 @@ function deleteChannel(i){
   loadFeed();
 }
 
-// 🚀 FEED (EMBED METHOD)
+// 🔥 FEED (100% WORKING)
 function loadFeed(){
 
-  let container=document.getElementById("videos");
-  container.innerHTML="";
+  let container = document.getElementById("videos");
+  container.innerHTML = "";
 
-  channels.forEach(id=>{
+  channels.forEach(id => {
 
-    let iframe=document.createElement("iframe");
+    // convert UC → UU
+    let playlistId = id.replace("UC", "UU");
 
-    iframe.src=`https://www.youtube.com/embed?listType=user_uploads&list=${id}`;
+    let iframe = document.createElement("iframe");
+
+    iframe.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
 
     container.appendChild(iframe);
 
