@@ -37,13 +37,11 @@
       background:white;
       border-right:1px solid #ddd;
       padding:10px;
-      overflow:auto;
     }
 
     .main {
       flex:1;
       padding:10px;
-      overflow:auto;
     }
 
     iframe {
@@ -54,7 +52,7 @@
       margin-bottom:15px;
     }
 
-    .channel {
+    .item {
       padding:8px;
       margin-bottom:5px;
       background:#fafafa;
@@ -80,7 +78,7 @@
 <div id="app" class="app">
 
   <div class="navbar">
-    <b>FocusTube 🚀</b>
+    <b>FocusTube 🎯</b>
     <button onclick="logout()">Logout</button>
   </div>
 
@@ -89,16 +87,15 @@
     <!-- SIDEBAR -->
     <div class="sidebar">
 
-      <input id="channelInput" placeholder="Paste channel link or UC ID">
-      <button onclick="addChannel()">Add</button>
+      <input id="linkInput" placeholder="Paste ANY YouTube link">
+      <button onclick="addItem()">Add</button>
 
       <p style="font-size:12px;color:#666;">
-        Use format:<br>
-        youtube.com/channel/UCxxxx
+        Paste video or channel link
       </p>
 
-      <h3>Subscriptions</h3>
-      <div id="channelList"></div>
+      <h3>Saved</h3>
+      <div id="list"></div>
 
     </div>
 
@@ -111,14 +108,14 @@
 
 <script>
 
-// LOGIN SYSTEM
-window.onload = () => {
+// LOGIN
+window.onload=()=>{
   if(localStorage.getItem("user")) showApp();
 };
 
 function login(){
-  if(!username.value || !password.value){
-    alert("Enter username & password");
+  if(!username.value||!password.value){
+    alert("Enter details");
     return;
   }
   localStorage.setItem("user","ok");
@@ -133,100 +130,81 @@ function logout(){
 function showApp(){
   loginPage.style.display="none";
   app.style.display="block";
-  loadChannels();
+  loadData();
 }
 
 // DATA
-let channels = [];
+let items=[];
 
-function loadChannels(){
-  channels = JSON.parse(localStorage.getItem("channels") || "[]");
-  renderChannels();
-  loadFeed();
+function loadData(){
+  items=JSON.parse(localStorage.getItem("items")||"[]");
+  renderList();
+  loadVideos();
 }
 
-// EXTRACT CHANNEL ID
-function getChannelId(input){
+// ADD ITEM (SUPER SIMPLE)
+function addItem(){
 
-  input = input.trim();
+  let link=linkInput.value.trim();
 
-  if(input.includes("channel/")){
-    return input.split("channel/")[1];
-  }
-
-  if(input.startsWith("UC")){
-    return input;
-  }
-
-  return null;
-}
-
-// ADD CHANNEL
-function addChannel(){
-
-  let input = channelInput.value;
-  let id = getChannelId(input);
-
-  if(!id){
-    alert("Invalid link. Use channel link.");
+  if(!link.includes("youtube.com")){
+    alert("Paste valid YouTube link");
     return;
   }
 
-  if(channels.includes(id)){
+  if(items.includes(link)){
     alert("Already added");
     return;
   }
 
-  channels.push(id);
-  localStorage.setItem("channels", JSON.stringify(channels));
+  items.push(link);
+  localStorage.setItem("items", JSON.stringify(items));
 
-  renderChannels();
-  loadFeed();
+  renderList();
+  loadVideos();
 }
 
-// SIDEBAR
-function renderChannels(){
+// LIST
+function renderList(){
+  list.innerHTML="";
+  items.forEach((l,i)=>{
+    let div=document.createElement("div");
+    div.className="item";
 
-  let list = document.getElementById("channelList");
-  list.innerHTML = "";
-
-  channels.forEach((c,i)=>{
-
-    let div = document.createElement("div");
-    div.className = "channel";
-
-    div.innerHTML = `
-      ${c}
-      <span onclick="deleteChannel(${i})">❌</span>
+    div.innerHTML=`
+      Saved Link
+      <span onclick="deleteItem(${i})">❌</span>
     `;
 
     list.appendChild(div);
   });
 }
 
-function deleteChannel(i){
-  channels.splice(i,1);
-  localStorage.setItem("channels", JSON.stringify(channels));
-  renderChannels();
-  loadFeed();
+function deleteItem(i){
+  items.splice(i,1);
+  localStorage.setItem("items", JSON.stringify(items));
+  renderList();
+  loadVideos();
 }
 
-// 🔥 FEED (100% WORKING)
-function loadFeed(){
+// LOAD VIDEOS (WORKS ALWAYS)
+function loadVideos(){
 
-  let container = document.getElementById("videos");
-  container.innerHTML = "";
+  videos.innerHTML="";
 
-  channels.forEach(id => {
+  items.forEach(link=>{
 
-    // convert UC → UU
-    let playlistId = id.replace("UC", "UU");
+    let videoId=null;
 
-    let iframe = document.createElement("iframe");
+    if(link.includes("watch?v=")){
+      videoId=link.split("watch?v=")[1].split("&")[0];
+    }
 
-    iframe.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
-
-    container.appendChild(iframe);
+    if(videoId){
+      let iframe=document.createElement("iframe");
+      iframe.src=`https://www.youtube.com/embed/${videoId}`;
+      videos.appendChild(iframe);
+    }
 
   });
 }
