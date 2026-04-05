@@ -5,7 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    body { margin:0; font-family:Arial; background:#111; color:white; }
+    body {
+      margin:0;
+      font-family:Arial;
+      background:#0f0f0f;
+      color:white;
+    }
+
+    /* LOGIN */
+    .login {
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+    }
+
+    input {
+      padding:10px;
+      margin:5px;
+      border:none;
+      border-radius:8px;
+      width:200px;
+    }
+
+    button {
+      padding:10px;
+      border:none;
+      border-radius:8px;
+      background:red;
+      color:white;
+      cursor:pointer;
+    }
 
     /* TOP BAR */
     .topbar {
@@ -17,18 +48,9 @@
     }
 
     .icons span {
-      margin:0 8px;
+      margin-left:10px;
       cursor:pointer;
       font-size:18px;
-    }
-
-    /* LOGIN */
-    .login {
-      height:100vh;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;
     }
 
     /* MAIN */
@@ -49,31 +71,41 @@
       border-radius:10px;
     }
 
-    /* FLOAT PANEL */
-    .panel {
-      position:fixed;
-      right:-300px;
-      top:0;
-      width:300px;
-      height:100%;
+    /* DROPDOWN PANEL */
+    .dropdown {
+      position:absolute;
+      top:50px;
+      right:10px;
+      width:280px;
+      max-height:400px;
       background:#181818;
+      border-radius:10px;
       padding:10px;
-      transition:0.3s;
       overflow:auto;
+
+      transform:translateY(-20px);
+      opacity:0;
+      pointer-events:none;
+      transition:0.3s;
+      z-index:1000;
     }
 
-    .panel.open {
-      right:0;
+    .dropdown.open {
+      transform:translateY(0);
+      opacity:1;
+      pointer-events:auto;
     }
 
+    /* CHANNEL ITEM */
     .channel {
       display:flex;
-      align-items:center;
       justify-content:space-between;
+      align-items:center;
       background:#282828;
       padding:8px;
       border-radius:8px;
       margin-bottom:8px;
+      cursor:pointer;
     }
 
     .left {
@@ -83,26 +115,9 @@
     }
 
     img {
-      width:35px;
-      height:35px;
+      width:30px;
+      height:30px;
       border-radius:50%;
-    }
-
-    input {
-      width:100%;
-      padding:8px;
-      margin-bottom:5px;
-      border-radius:6px;
-      border:none;
-    }
-
-    button {
-      width:100%;
-      padding:8px;
-      background:red;
-      border:none;
-      color:white;
-      border-radius:6px;
     }
 
   </style>
@@ -127,13 +142,14 @@
 
     <div class="icons">
       <span onclick="home()">🏠</span>
-      <span onclick="togglePanel()">📺</span>
-      <span onclick="history()">⏱️</span>
+      <span onclick="toggleDropdown()">📺</span>
+      <span onclick="showHistory()">⏱️</span>
+      <span onclick="logout()">👤</span>
     </div>
   </div>
 
-  <!-- FLOAT PANEL -->
-  <div id="panel" class="panel">
+  <!-- DROPDOWN -->
+  <div id="dropdown" class="dropdown">
 
     <input id="input" placeholder="@channel or link">
     <button onclick="add()">Add Channel</button>
@@ -145,10 +161,8 @@
 
   <!-- MAIN -->
   <div class="main">
-
     <div id="homeView" class="grid"></div>
     <div id="channelView" style="display:none"></div>
-
   </div>
 
 </div>
@@ -157,23 +171,31 @@
 
 let channels=[];
 
-// LOGIN
+// INIT
+document.addEventListener("DOMContentLoaded", ()=>{
+  if(localStorage.getItem("login")){
+    startApp();
+  }
+});
+
 function login(){
   if(!u.value || !p.value) return alert("Enter details");
   localStorage.setItem("login","1");
-  init();
+  startApp();
 }
 
-function init(){
-  if(localStorage.getItem("login")){
-    loginPage.style.display="none";
-    app.style.display="block";
-    load();
-  }
+function logout(){
+  localStorage.removeItem("login");
+  location.reload();
 }
-init();
 
-// LOAD DATA
+function startApp(){
+  loginPage.style.display="none";
+  app.style.display="block";
+  load();
+}
+
+// LOAD
 function load(){
   channels = JSON.parse(localStorage.getItem("channels")||"[]");
   render();
@@ -195,7 +217,7 @@ async function add(){
     let id=link.split("channel/")[1];
     res=await fetch(api+"?id="+id);
   } else {
-    alert("Invalid");
+    alert("Invalid link");
     return;
   }
 
@@ -215,7 +237,7 @@ async function add(){
   home();
 }
 
-// RENDER CHANNEL LIST
+// RENDER LIST
 function render(){
 
   list.innerHTML="";
@@ -230,7 +252,7 @@ function render(){
         <img src="${c.logo}">
         <span>${c.name}</span>
       </div>
-      <span onclick="del(${i})">❌</span>
+      <span onclick="event.stopPropagation(); del(${i})">❌</span>
     `;
 
     div.onclick=()=>openChannel(i);
@@ -250,6 +272,8 @@ function del(i){
 // HOME FEED
 function home(){
 
+  dropdown.classList.remove("open");
+
   channelView.style.display="none";
   homeView.style.display="grid";
 
@@ -268,6 +292,8 @@ function home(){
 // CHANNEL PAGE
 function openChannel(i){
 
+  dropdown.classList.remove("open");
+
   let c=channels[i];
 
   homeView.style.display="none";
@@ -283,13 +309,22 @@ function openChannel(i){
   `;
 }
 
-// PANEL
-function togglePanel(){
-  panel.classList.toggle("open");
+// DROPDOWN
+function toggleDropdown(){
+  dropdown.classList.toggle("open");
 }
 
-// HISTORY (simple placeholder)
-function history(){
+// CLOSE WHEN CLICK OUTSIDE
+document.addEventListener("click",(e)=>{
+  if(dropdown.classList.contains("open")){
+    if(!dropdown.contains(e.target) && !e.target.innerText.includes("📺")){
+      dropdown.classList.remove("open");
+    }
+  }
+});
+
+// HISTORY (placeholder)
+function showHistory(){
   alert("History coming next");
 }
 
