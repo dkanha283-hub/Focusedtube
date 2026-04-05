@@ -37,12 +37,13 @@
       background:white;
       border-right:1px solid #ddd;
       overflow:auto;
+      padding:10px;
     }
 
     .channel {
       display:flex;
       justify-content:space-between;
-      padding:10px;
+      padding:8px;
       border-bottom:1px solid #eee;
       cursor:pointer;
     }
@@ -50,7 +51,6 @@
     .main {
       flex:1;
       padding:10px;
-      overflow:hidden;
     }
 
     .videos {
@@ -69,6 +69,14 @@
     }
 
     .video img { width:100%; }
+
+    #previewBox {
+      background:white;
+      padding:10px;
+      margin-top:10px;
+      border-radius:10px;
+      display:none;
+    }
 
   </style>
 </head>
@@ -99,6 +107,13 @@
       <input id="channelInput" placeholder="Paste channel link">
       <button onclick="addChannel()">Add</button>
 
+      <!-- PREVIEW -->
+      <div id="previewBox">
+        <img id="previewLogo" style="width:40px;border-radius:50%">
+        <div id="previewName"></div>
+        <button onclick="confirmAdd()">Confirm</button>
+      </div>
+
       <div id="channelList"></div>
 
     </div>
@@ -116,7 +131,6 @@
 
 let channels = JSON.parse(localStorage.getItem("channels") || "[]");
 let history = JSON.parse(localStorage.getItem("history") || "[]");
-let pageIndex = 0;
 
 // LOGIN
 function login() {
@@ -135,11 +149,8 @@ function logout() {
 }
 
 function startApp() {
-  loginDiv = document.getElementById("login");
-  appDiv = document.getElementById("app");
-
-  loginDiv.style.display = "none";
-  appDiv.style.display = "block";
+  login.style.display = "none";
+  app.style.display = "block";
 
   renderChannels();
   loadFeed();
@@ -149,59 +160,88 @@ window.onload = () => {
   if (localStorage.getItem("user")) startApp();
 };
 
-// ADD CHANNEL
-async function addChannel() {
-
-  let input = document.getElementById("channelInput").value;
-
-  let channel = await extractChannel(input);
-
-  if (!channel) return alert("Invalid or unsupported link");
-
-  channels.push(channel);
-  localStorage.setItem("channels", JSON.stringify(channels));
-
-  renderChannels();
-  loadFeed();
-}
-
-// EXTRACT ID OR USERNAME
+// AUTO EXTRACT CHANNEL
 async function extractChannel(url) {
 
-  // CASE 1: Already channel ID
   if (url.includes("channel/")) {
-    return { type: "id", value: url.split("channel/")[1] };
+    return { type:"id", value:url.split("channel/")[1] };
   }
 
-  // CASE 2: @username → convert to ID
   if (url.includes("@")) {
+    let clean = url.split("?")[0];
 
-    try {
-      let cleanUrl = url.split("?")[0];
+    let proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(clean)}`;
+    let res = await fetch(proxy);
+    let data = await res.json();
 
-      let proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`;
+    let match = data.contents.match(/"channelId":"(UC[^"]+)"/);
 
-      let res = await fetch(proxy);
-      let data = await res.json();
-
-      let html = data.contents;
-
-      // 🔥 Extract channelId from page
-      let match = html.match(/"channelId":"(UC[^"]+)"/);
-
-      if (match && match[1]) {
-        return { type: "id", value: match[1] };
-      }
-
-    } catch (e) {
-      console.log("Error extracting channel ID");
-    }
+    if (match) return { type:"id", value:match[1] };
   }
 
   return null;
 }
 
-// DELETE CHANNEL
+// ADD CHANNEL
+async function addChannel() {
+
+  let input = channelInput.value;
+
+  let channel = await extractChannel(input);
+  if (!channel) return alert("Invalid link");
+
+  // duplicate check
+  if (channels.some(c => c.value === channel.value)) {
+    return alert("Already added");
+  }
+
+  let info = await fetchInfo(channel.value);
+
+  previewLogo.src = info.logo;
+  previewName.innerText = info.name;
+
+  previewBox.style.display = "block";
+
+  window.tempChannel = {
+    ...channel,
+    name: info.name,
+    logo: info.logo
+  };
+}
+
+// CONFIRM ADD
+function confirmAdd() {
+  channels.push(window.tempChannel);
+  localStorage.setItem("channels", JSON.stringify(channels));
+
+  previewBox.style.display = "none";
+
+  renderChannels();
+  loadFeed();
+}
+
+// FETCH CHANNEL INFO
+async function fetchInfo(id) {
+
+  let url = `https://api.allorigins.win/get?url=${encodeURIComponent(
+    "https://www.youtube.com/channel/" + id
+  )}`;
+
+  let res = await fetch(url);
+  let data = await res.json();
+
+  let html = data.contents;
+
+  let name = html.match(/"title":"(.*?)"/);
+  let logo = html.match(/"avatar":{"thumbnails":\[{"url":"(.*?)"/);
+
+  return {
+    name: name ? name[1] : "Channel",
+    logo: logo ? logo[1] : ""
+  };
+}
+
+// DELETE
 function deleteChannel(i) {
   channels.splice(i,1);
   localStorage.setItem("channels", JSON.stringify(channels));
@@ -209,17 +249,21 @@ function deleteChannel(i) {
   loadFeed();
 }
 
-// RENDER CHANNELS
+// SIDEBAR
 function renderChannels() {
   let list = document.getElementById("channelList");
   list.innerHTML = "";
 
   channels.forEach((c,i) => {
+
     let div = document.createElement("div");
     div.className = "channel";
 
     div.innerHTML = `
-      <span>${c.value}</span>
+      <div style="display:flex;gap:10px;">
+        <img src="${c.logo}" style="width:30px;border-radius:50%">
+        <span>${c.name}</span>
+      </div>
       <span onclick="deleteChannel(${i})">🗑</span>
     `;
 
@@ -227,30 +271,48 @@ function renderChannels() {
   });
 }
 
-// LOAD FEED (INFINITE BASE)
+// SMART FEED
 async function loadFeed() {
-  document.getElementById("videos").innerHTML = "";
-  pageIndex = 0;
-  loadMore();
-}
 
-// LOAD MORE
-async function loadMore() {
+  let container = document.getElementById("videos");
+  container.innerHTML = "";
+
+  let all = [];
 
   for (let c of channels) {
-    await loadRSS(c);
+    let vids = await fetchRSS(c.value);
+    all = all.concat(vids);
   }
+
+  // sort latest
+  all.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  all.forEach(v => {
+
+    let div = document.createElement("div");
+    div.className = "video";
+
+    div.innerHTML = `
+      <img src="${v.thumb}">
+      <div>${v.title}</div>
+    `;
+
+    div.onclick = () => {
+      history.unshift(v.title);
+      localStorage.setItem("history", JSON.stringify(history));
+      window.open(`https://youtube.com/watch?v=${v.id}`);
+    };
+
+    container.appendChild(div);
+  });
 }
 
 // RSS FETCH
-async function loadRSS(channel) {
+async function fetchRSS(id) {
 
-  let channelUrl =
-    channel.type === "id"
-    ? `https://www.youtube.com/feeds/videos.xml?channel_id=${channel.value}`
-    : `https://www.youtube.com/feeds/videos.xml?user=${channel.value}`;
-
-  let url = `https://api.allorigins.win/get?url=${encodeURIComponent(channelUrl)}`;
+  let url = `https://api.allorigins.win/get?url=${encodeURIComponent(
+    "https://www.youtube.com/feeds/videos.xml?channel_id=" + id
+  )}`;
 
   let res = await fetch(url);
   let data = await res.json();
@@ -260,39 +322,24 @@ async function loadRSS(channel) {
 
   let entries = xml.getElementsByTagName("entry");
 
-  let container = document.getElementById("videos");
+  let vids = [];
 
   for (let i=0;i<entries.length;i++) {
 
-    let vid = entries[i].getElementsByTagName("yt:videoId")[0].textContent;
+    let idv = entries[i].getElementsByTagName("yt:videoId")[0].textContent;
     let title = entries[i].getElementsByTagName("title")[0].textContent;
+    let date = entries[i].getElementsByTagName("published")[0].textContent;
 
-    let thumb = `https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
-
-    let div = document.createElement("div");
-    div.className = "video";
-
-    div.innerHTML = `<img src="${thumb}"><div>${title}</div>`;
-
-    div.onclick = () => {
-      history.unshift(title);
-      localStorage.setItem("history", JSON.stringify(history));
-      window.open(`https://youtube.com/watch?v=${vid}`);
-    };
-
-    container.appendChild(div);
+    vids.push({
+      id:idv,
+      title,
+      date,
+      thumb:`https://img.youtube.com/vi/${idv}/mqdefault.jpg`
+    });
   }
-}
 
-// INFINITE SCROLL
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("videos").addEventListener("scroll", (e) => {
-    let el = e.target;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
-      loadMore();
-    }
-  });
-});
+  return vids;
+}
 
 </script>
 
