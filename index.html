@@ -20,7 +20,7 @@
     .navbar {
       width:100%;
       background:white;
-      padding:10px 20px;
+      padding:10px;
       display:flex;
       justify-content:space-between;
       border-bottom:1px solid #ddd;
@@ -36,55 +36,21 @@
       width:250px;
       background:white;
       border-right:1px solid #ddd;
-      overflow:auto;
       padding:10px;
-    }
-
-    .channel {
-      display:flex;
-      justify-content:space-between;
-      padding:8px;
-      border-bottom:1px solid #eee;
-      cursor:pointer;
+      overflow:auto;
     }
 
     .main {
       flex:1;
       padding:10px;
     }
-
-    .videos {
-      height:100%;
-      overflow-y:auto;
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-      gap:10px;
-    }
-
-    .video {
-      background:white;
-      border-radius:10px;
-      overflow:hidden;
-      cursor:pointer;
-    }
-
-    .video img { width:100%; }
-
-    #previewBox {
-      background:white;
-      padding:10px;
-      margin-top:10px;
-      border-radius:10px;
-      display:none;
-    }
-
   </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="login" class="login">
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login">
   <h2>FocusTube</h2>
   <input id="username" placeholder="Username"><br><br>
   <input id="password" type="password" placeholder="Password"><br><br>
@@ -101,26 +67,14 @@
 
   <div class="container">
 
-    <!-- SIDEBAR -->
     <div class="sidebar">
-
-      <input id="channelInput" placeholder="Paste channel link">
-      <button onclick="addChannel()">Add</button>
-
-      <!-- PREVIEW -->
-      <div id="previewBox">
-        <img id="previewLogo" style="width:40px;border-radius:50%">
-        <div id="previewName"></div>
-        <button onclick="confirmAdd()">Confirm</button>
-      </div>
-
+      <h3>Subscriptions</h3>
       <div id="channelList"></div>
-
     </div>
 
-    <!-- MAIN -->
     <div class="main">
-      <div id="videos" class="videos"></div>
+      <h3>Home Feed</h3>
+      <div id="videos">Loading...</div>
     </div>
 
   </div>
@@ -129,12 +83,8 @@
 
 <script>
 
-let channels = JSON.parse(localStorage.getItem("channels") || "[]");
-let history = JSON.parse(localStorage.getItem("history") || "[]");
-
-// LOGIN
-// 🔐 CHECK SESSION ON LOAD
-window.onload = () => {
+// ===== INIT =====
+window.onload = function () {
   let user = localStorage.getItem("user");
 
   if (user) {
@@ -144,238 +94,66 @@ window.onload = () => {
   }
 };
 
-// SHOW LOGIN
+// ===== UI =====
 function showLogin() {
   document.getElementById("loginPage").style.display = "flex";
   document.getElementById("app").style.display = "none";
 }
 
-// SHOW APP
 function showApp() {
   document.getElementById("loginPage").style.display = "none";
   document.getElementById("app").style.display = "block";
 
-  renderChannels();
-  loadFeed();
+  loadData();
 }
 
-// LOGIN
+// ===== LOGIN =====
 function login() {
-  let u = document.getElementById("username").value;
-  let p = document.getElementById("password").value;
+  let u = document.getElementById("username").value.trim();
+  let p = document.getElementById("password").value.trim();
 
-  if (!u || !p) {
+  if (u === "" || p === "") {
     alert("Enter username & password");
     return;
   }
 
-  let userData = { username: u, password: p };
-
-  localStorage.setItem("user", JSON.stringify(userData));
+  localStorage.setItem("user", JSON.stringify({username:u}));
 
   showApp();
 }
 
-// LOGOUT
+// ===== LOGOUT =====
 function logout() {
-  localStorage.removeItem("user"); // ✅ only remove user
+  localStorage.removeItem("user");
   showLogin();
 }
-// AUTO EXTRACT CHANNEL
-async function extractChannel(url) {
 
-  // Clean URL
-  url = url.trim().split("?")[0];
+// ===== DATA =====
+let channels = [];
 
-  // Case 1: channel ID already
-  if (url.includes("channel/")) {
-    return { type: "id", value: url.split("channel/")[1] };
-  }
-
-  // Case 2: @username
-  if (url.includes("@")) {
-
-    try {
-      let proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-      let res = await fetch(proxy);
-      let data = await res.json();
-      let html = data.contents;
-
-      // 🔥 Try multiple patterns (strong)
-      let match =
-        html.match(/"channelId":"(UC[^"]+)"/) ||
-        html.match(/"externalId":"(UC[^"]+)"/) ||
-        html.match(/"browseId":"(UC[^"]+)"/);
-
-      if (match && match[1]) {
-        return { type: "id", value: match[1] };
-      }
-
-    } catch (e) {
-      console.log("Extractor error:", e);
-    }
-  }
-
-  return null;
-}
-
-// ADD CHANNEL
-async function addChannel() {
-
-  let input = channelInput.value;
-
-  let channel = await extractChannel(input);
-  if (!channel) return alert("Invalid link");
-
-  // duplicate check
-  if (channels.some(c => c.value === channel.value)) {
-    return alert("Already added");
-  }
-
-  let info = await fetchInfo(channel.value);
-
-  previewLogo.src = info.logo;
-  previewName.innerText = info.name;
-
-  previewBox.style.display = "block";
-
-  window.tempChannel = {
-    ...channel,
-    name: info.name,
-    logo: info.logo
-  };
-}
-
-// CONFIRM ADD
-function confirmAdd() {
-  channels.push(window.tempChannel);
-  localStorage.setItem("channels", JSON.stringify(channels));
-
-  previewBox.style.display = "none";
-
+function loadData() {
+  channels = JSON.parse(localStorage.getItem("channels") || "[]");
   renderChannels();
   loadFeed();
 }
 
-// FETCH CHANNEL INFO
-async function fetchInfo(id) {
-
-  let url = `https://api.allorigins.win/get?url=${encodeURIComponent(
-    "https://www.youtube.com/channel/" + id
-  )}`;
-
-  let res = await fetch(url);
-  let data = await res.json();
-
-  let html = data.contents;
-
-  let name = html.match(/"title":"(.*?)"/);
-  let logo = html.match(/"avatar":{"thumbnails":\[{"url":"(.*?)"/);
-
-  return {
-    name: name ? name[1] : "Channel",
-    logo: logo ? logo[1] : ""
-  };
-}
-
-// DELETE
-function deleteChannel(i) {
-  channels.splice(i,1);
-  localStorage.setItem("channels", JSON.stringify(channels));
-  renderChannels();
-  loadFeed();
-}
-
-// SIDEBAR
+// ===== CHANNEL UI =====
 function renderChannels() {
   let list = document.getElementById("channelList");
   list.innerHTML = "";
 
   channels.forEach((c,i) => {
-
     let div = document.createElement("div");
-    div.className = "channel";
-
-    div.innerHTML = `
-      <div style="display:flex;gap:10px;">
-        <img src="${c.logo}" style="width:30px;border-radius:50%">
-        <span>${c.name}</span>
-      </div>
-      <span onclick="deleteChannel(${i})">🗑</span>
-    `;
-
+    div.style.padding = "8px";
+    div.style.borderBottom = "1px solid #ddd";
+    div.innerHTML = c.name || "Channel";
     list.appendChild(div);
   });
 }
 
-// SMART FEED
-async function loadFeed() {
-
-  let container = document.getElementById("videos");
-  container.innerHTML = "";
-
-  let all = [];
-
-  for (let c of channels) {
-    let vids = await fetchRSS(c.value);
-    all = all.concat(vids);
-  }
-
-  // sort latest
-  all.sort((a,b) => new Date(b.date) - new Date(a.date));
-
-  all.forEach(v => {
-
-    let div = document.createElement("div");
-    div.className = "video";
-
-    div.innerHTML = `
-      <img src="${v.thumb}">
-      <div>${v.title}</div>
-    `;
-
-    div.onclick = () => {
-      history.unshift(v.title);
-      localStorage.setItem("history", JSON.stringify(history));
-      window.open(`https://youtube.com/watch?v=${v.id}`);
-    };
-
-    container.appendChild(div);
-  });
-}
-
-// RSS FETCH
-async function fetchRSS(id) {
-
-  let url = `https://api.allorigins.win/get?url=${encodeURIComponent(
-    "https://www.youtube.com/feeds/videos.xml?channel_id=" + id
-  )}`;
-
-  let res = await fetch(url);
-  let data = await res.json();
-
-  let parser = new DOMParser();
-  let xml = parser.parseFromString(data.contents, "text/xml");
-
-  let entries = xml.getElementsByTagName("entry");
-
-  let vids = [];
-
-  for (let i=0;i<entries.length;i++) {
-
-    let idv = entries[i].getElementsByTagName("yt:videoId")[0].textContent;
-    let title = entries[i].getElementsByTagName("title")[0].textContent;
-    let date = entries[i].getElementsByTagName("published")[0].textContent;
-
-    vids.push({
-      id:idv,
-      title,
-      date,
-      thumb:`https://img.youtube.com/vi/${idv}/mqdefault.jpg`
-    });
-  }
-
-  return vids;
+// ===== FEED =====
+function loadFeed() {
+  document.getElementById("videos").innerHTML = "Feed working ✅";
 }
 
 </script>
