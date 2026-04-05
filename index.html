@@ -5,108 +5,115 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-body {
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0f0f0f;
-  color:white;
-}
+    body { margin:0; font-family:Arial; background:#0f0f0f; color:white; }
 
-/* layout */
-.container {
-  display:flex;
-  height:100vh;
-}
+    .login, .app {
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+    }
 
-.sidebar {
-  width:240px;
-  background:#181818;
-  padding:10px;
-  overflow:auto;
-}
+    .app { display:none; }
 
-.main {
-  flex:1;
-  padding:15px;
-  overflow:auto;
+    input {
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      margin:5px;
+      width:90%;
+    }
 
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
-  gap:15px;
-}
+    button {
+      padding:10px;
+      border:none;
+      border-radius:8px;
+      background:red;
+      color:white;
+      cursor:pointer;
+    }
 
-/* navbar */
-.navbar {
-  width:100%;
-  padding:10px;
-  background:#181818;
-  display:flex;
-  justify-content:space-between;
-}
+    .navbar {
+      width:100%;
+      padding:10px;
+      background:#181818;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
 
-/* inputs */
-input {
-  width:100%;
-  padding:10px;
-  margin-bottom:8px;
-  border-radius:8px;
-  border:none;
-}
+    .container {
+      display:flex;
+      height:calc(100vh - 50px);
+    }
 
-button {
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:red;
-  color:white;
-}
+    /* FLOATING SIDEBAR */
+    .sidebar {
+      width:250px;
+      background:#181818;
+      padding:10px;
+      overflow:auto;
+      position:fixed;
+      left:-260px;
+      top:50px;
+      height:100%;
+      transition:0.3s;
+      z-index:10;
+    }
 
-/* channel list */
-.item {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:#282828;
-  padding:8px;
-  border-radius:8px;
-  margin-bottom:8px;
-}
+    .sidebar.open {
+      left:0;
+    }
 
-.info {
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
+    .menu-btn {
+      cursor:pointer;
+      font-size:20px;
+    }
 
-img {
-  width:35px;
-  height:35px;
-  border-radius:50%;
-}
+    .main {
+      flex:1;
+      padding:15px;
+      margin-left:0;
+      overflow:auto;
+    }
 
-/* video cards */
-iframe {
-  width:100%;
-  height:180px;
-  border:none;
-  border-radius:12px;
-  background:black;
-}
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+      gap:15px;
+    }
 
-/* login */
-.login {
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-}
-</style>
+    iframe {
+      width:100%;
+      height:180px;
+      border:none;
+      border-radius:12px;
+    }
+
+    .channel-card {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:#282828;
+      padding:10px;
+      border-radius:10px;
+      margin-bottom:10px;
+      cursor:pointer;
+    }
+
+    .channel-card img {
+      width:40px;
+      height:40px;
+      border-radius:50%;
+    }
+
+  </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
 <div id="loginPage" class="login">
   <h2>FocusTube</h2>
   <input id="username" placeholder="Username">
@@ -114,22 +121,31 @@ iframe {
   <button onclick="login()">Login</button>
 </div>
 
+<!-- APP -->
 <div id="app" class="app">
 
   <div class="navbar">
+    <span class="menu-btn" onclick="toggleSidebar()">☰</span>
     <b>FocusTube</b>
     <button onclick="logout()">Logout</button>
   </div>
 
-  <div class="container">
+  <!-- SIDEBAR -->
+  <div id="sidebar" class="sidebar">
 
-    <div class="sidebar">
-      <input id="input" placeholder="Paste channel or @link">
-      <button onclick="add()">Add</button>
-      <div id="list"></div>
-    </div>
+    <input id="input" placeholder="Paste channel or @link">
+    <button onclick="add()">Add</button>
 
-    <div class="main" id="videos"></div>
+    <h3>Channels</h3>
+    <div id="channelList"></div>
+
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <div id="homeView"></div>
+    <div id="channelView" style="display:none"></div>
 
   </div>
 
@@ -137,6 +153,7 @@ iframe {
 
 <script>
 
+// INIT
 document.addEventListener("DOMContentLoaded", ()=>{
   if(localStorage.getItem("login")){
     showApp();
@@ -160,14 +177,16 @@ function showApp(){
   load();
 }
 
-let data=[];
+// DATA
+let channels=[];
 
 function load(){
-  data = JSON.parse(localStorage.getItem("channels")||"[]");
-  render();
-  videosLoad();
+  channels = JSON.parse(localStorage.getItem("channels")||"[]");
+  renderChannels();
+  showHome();
 }
 
+// ADD CHANNEL
 async function add(){
 
   let link = input.value.trim();
@@ -188,57 +207,85 @@ async function add(){
 
   let info = await res.json();
 
-  if(!info.channelId) return alert("Error fetching");
+  if(!info.channelId) return alert("Error");
 
-  if(data.some(c => c.id === info.channelId)){
+  if(channels.some(c => c.channelId === info.channelId)){
     alert("Already added");
     return;
   }
 
-  data.push(info);
-  localStorage.setItem("channels", JSON.stringify(data));
+  channels.push(info);
+  localStorage.setItem("channels", JSON.stringify(channels));
 
-  render();
-  videosLoad();
+  renderChannels();
+  showHome();
 }
 
-function render(){
-  list.innerHTML="";
+// SIDEBAR
+function renderChannels(){
 
-  data.forEach((c,i)=>{
+  channelList.innerHTML="";
+
+  channels.forEach((c,i)=>{
+
     let div=document.createElement("div");
-    div.className="item";
+    div.className="channel-card";
 
     div.innerHTML=`
-      <div class="info">
-        <img src="${c.logo}">
-        <span>${c.name}</span>
-      </div>
-      <span onclick="del(${i})">❌</span>
+      <img src="${c.logo}">
+      <span>${c.name}</span>
     `;
 
-    list.appendChild(div);
+    div.onclick=()=>openChannel(i);
+
+    channelList.appendChild(div);
   });
 }
 
-function del(i){
-  data.splice(i,1);
-  localStorage.setItem("channels", JSON.stringify(data));
-  render();
-  videosLoad();
-}
+// HOME VIEW (ALL CHANNELS)
+function showHome(){
 
-function videosLoad(){
-  videos.innerHTML="";
+  channelView.style.display="none";
+  homeView.style.display="block";
 
-  data.forEach(c=>{
-    let playlist = "UU" + c.channelId.substring(2);
+  homeView.innerHTML="";
+
+  channels.forEach(c=>{
+    let playlist="UU"+c.channelId.substring(2);
 
     let iframe=document.createElement("iframe");
     iframe.src=`https://www.youtube.com/embed/videoseries?list=${playlist}`;
 
-    videos.appendChild(iframe);
+    homeView.appendChild(iframe);
   });
+}
+
+// SINGLE CHANNEL VIEW
+function openChannel(i){
+
+  let c = channels[i];
+
+  homeView.style.display="none";
+  channelView.style.display="block";
+
+  channelView.innerHTML=`
+    <h2>${c.name}</h2>
+    <div class="grid" id="grid"></div>
+  `;
+
+  let grid=document.getElementById("grid");
+
+  let playlist="UU"+c.channelId.substring(2);
+
+  let iframe=document.createElement("iframe");
+  iframe.src=`https://www.youtube.com/embed/videoseries?list=${playlist}`;
+
+  grid.appendChild(iframe);
+}
+
+// SIDEBAR TOGGLE
+function toggleSidebar(){
+  sidebar.classList.toggle("open");
 }
 
 </script>
