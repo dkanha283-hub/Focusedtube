@@ -163,20 +163,36 @@ window.onload = () => {
 // AUTO EXTRACT CHANNEL
 async function extractChannel(url) {
 
+  // Clean URL
+  url = url.trim().split("?")[0];
+
+  // Case 1: channel ID already
   if (url.includes("channel/")) {
-    return { type:"id", value:url.split("channel/")[1] };
+    return { type: "id", value: url.split("channel/")[1] };
   }
 
+  // Case 2: @username
   if (url.includes("@")) {
-    let clean = url.split("?")[0];
 
-    let proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(clean)}`;
-    let res = await fetch(proxy);
-    let data = await res.json();
+    try {
+      let proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+      let res = await fetch(proxy);
+      let data = await res.json();
+      let html = data.contents;
 
-    let match = data.contents.match(/"channelId":"(UC[^"]+)"/);
+      // 🔥 Try multiple patterns (strong)
+      let match =
+        html.match(/"channelId":"(UC[^"]+)"/) ||
+        html.match(/"externalId":"(UC[^"]+)"/) ||
+        html.match(/"browseId":"(UC[^"]+)"/);
 
-    if (match) return { type:"id", value:match[1] };
+      if (match && match[1]) {
+        return { type: "id", value: match[1] };
+      }
+
+    } catch (e) {
+      console.log("Extractor error:", e);
+    }
   }
 
   return null;
