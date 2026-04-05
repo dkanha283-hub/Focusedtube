@@ -5,102 +5,87 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-body {
-  margin:0;
-  font-family:Arial, sans-serif;
-  background:#0f0f0f;
-  color:white;
-}
+    body { margin:0; font-family:Arial; background:#0f0f0f; color:white; }
 
-.login, .app {
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-}
+    .login, .app {
+      height:100vh;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      flex-direction:column;
+    }
 
-input {
-  padding:10px;
-  border-radius:8px;
-  border:none;
-  width:220px;
-}
+    .app { display:none; }
 
-button {
-  padding:10px 15px;
-  border:none;
-  border-radius:8px;
-  background:#ff0000;
-  color:white;
-  cursor:pointer;
-}
+    input {
+      padding:10px;
+      border-radius:8px;
+      border:none;
+      margin:5px;
+    }
 
-.navbar {
-  width:100%;
-  padding:12px;
-  background:#181818;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
+    button {
+      padding:10px;
+      border:none;
+      border-radius:8px;
+      background:red;
+      color:white;
+      cursor:pointer;
+    }
 
-.container {
-  display:flex;
-  width:100%;
-  height:calc(100vh - 50px);
-}
+    .navbar {
+      width:100%;
+      padding:10px;
+      background:#181818;
+      display:flex;
+      justify-content:space-between;
+    }
 
-.sidebar {
-  width:250px;
-  background:#181818;
-  padding:10px;
-}
+    .container {
+      display:flex;
+      width:100%;
+      height:calc(100vh - 50px);
+    }
 
-.main {
-  flex:1;
-  padding:10px;
-  overflow:auto;
-}
+    .sidebar {
+      width:250px;
+      background:#181818;
+      padding:10px;
+      overflow:auto;
+    }
 
-/* 🎥 GRID LIKE YOUTUBE */
-.main {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-  gap:15px;
-}
+    .main {
+      flex:1;
+      padding:10px;
+      overflow:auto;
+    }
 
-iframe {
-  width:100%;
-  height:180px;
-  border:none;
-  border-radius:10px;
-  background:black;
-}
+    iframe {
+      width:100%;
+      height:250px;
+      border:none;
+      border-radius:10px;
+      margin-bottom:15px;
+    }
 
-/* sidebar items */
-.item {
-  padding:8px;
-  margin-bottom:8px;
-  background:#282828;
-  border-radius:8px;
-  display:flex;
-  justify-content:space-between;
-}
-
-h2, h3 {
-  margin:10px 0;
-}
-</style>
+    .item {
+      background:#282828;
+      padding:8px;
+      margin-bottom:8px;
+      border-radius:8px;
+      display:flex;
+      justify-content:space-between;
+    }
+  </style>
 </head>
 
 <body>
 
 <!-- LOGIN -->
 <div id="loginPage" class="login">
-  <h2>FocusTube</h2>
-  <input id="username" placeholder="Username"><br><br>
-  <input id="password" type="password" placeholder="Password"><br><br>
+  <h2>FocusTube 🎯</h2>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
   <button onclick="handleLogin()">Login</button>
 </div>
 
@@ -108,17 +93,17 @@ h2, h3 {
 <div id="app" class="app">
 
   <div class="navbar">
-    <b>FocusTube 🎯</b>
+    <b>FocusTube</b>
     <button onclick="handleLogout()">Logout</button>
   </div>
 
   <div class="container">
 
     <div class="sidebar">
-      <input id="linkInput" placeholder="Paste YouTube link">
+      <input id="linkInput" placeholder="Paste channel or @link">
       <button onclick="addItem()">Add</button>
 
-      <h3>Saved</h3>
+      <h3>Channels</h3>
       <div id="list"></div>
     </div>
 
@@ -130,102 +115,88 @@ h2, h3 {
 
 <script>
 
-// ===== SAFE START =====
-document.addEventListener("DOMContentLoaded", function () {
-  init();
-});
+// ===== INIT =====
+document.addEventListener("DOMContentLoaded", init);
 
-function init() {
-  const user = localStorage.getItem("user");
-
-  if (user === "logged") {
+function init(){
+  if(localStorage.getItem("focusUser")==="true"){
     showApp();
   } else {
     showLogin();
   }
 }
 
-// ===== UI CONTROL =====
-function showLogin() {
-  document.getElementById("loginPage").style.display = "flex";
-  document.getElementById("app").style.display = "none";
+// ===== UI =====
+function showLogin(){
+  loginPage.style.display="flex";
+  app.style.display="none";
 }
 
-function showApp() {
-  document.getElementById("loginPage").style.display = "none";
-  document.getElementById("app").style.display = "block";
+function showApp(){
+  loginPage.style.display="none";
+  app.style.display="block";
   loadData();
 }
 
 // ===== LOGIN =====
-function handleLogin() {
-  const u = document.getElementById("username").value.trim();
-  const p = document.getElementById("password").value.trim();
+function handleLogin(){
+  let u=username.value.trim();
+  let p=password.value.trim();
 
-  if (!u || !p) {
-    alert("Enter username & password");
+  if(!u || !p){
+    alert("Enter details");
     return;
   }
 
-  localStorage.setItem("user", "logged");
+  localStorage.setItem("focusUser","true");
   showApp();
 }
 
-// ===== LOGOUT =====
-function handleLogout() {
-  localStorage.removeItem("user");
+function handleLogout(){
+  localStorage.removeItem("focusUser");
   showLogin();
 }
 
 // ===== DATA =====
-let items = [];
+let items=[];
 
-function loadData() {
-  items = JSON.parse(localStorage.getItem("items") || "[]");
+function loadData(){
+  items = JSON.parse(localStorage.getItem("channels") || "[]");
   renderList();
   loadVideos();
 }
 
-// ===== ADD LINK =====
+// ===== ADD CHANNEL =====
 async function addItem(){
 
-  let link = document.getElementById("linkInput").value.trim();
+  let link = linkInput.value.trim();
   let channelId = null;
 
-  // normal channel link
+  // normal channel
   if(link.includes("channel/")){
     channelId = link.split("channel/")[1];
   }
 
-  // @username via backend
+  // @link (backend)
   if(link.includes("@")){
     let handle = link.split("@")[1].split("?")[0];
 
-    try {
+    try{
       let res = await fetch("https://restless-brook-50e4.dkanha283.workers.dev/?handle=" + handle);
       let data = await res.json();
-
-      console.log("Backend response:", data);
-
       channelId = data.channelId;
-    } catch (e) {
-      alert("Backend failed");
+    }catch{
+      alert("Backend error");
       return;
     }
   }
 
   if(!channelId){
-    alert("Invalid channel");
+    alert("Invalid link");
     return;
   }
 
-  // 🔥 IMPORTANT CLEAN FIX
   channelId = channelId.trim();
-
-  if(!channelId.startsWith("UC")){
-    alert("Invalid channel ID");
-    return;
-  }
 
   if(items.includes(channelId)){
     alert("Already added");
@@ -233,23 +204,22 @@ async function addItem(){
   }
 
   items.push(channelId);
-  localStorage.setItem("items", JSON.stringify(items));
+  localStorage.setItem("channels", JSON.stringify(items));
 
   renderList();
   loadVideos();
 }
 
 // ===== LIST =====
-function renderList() {
-  let list = document.getElementById("list");
-  list.innerHTML = "";
+function renderList(){
+  list.innerHTML="";
 
-  items.forEach((l, i) => {
-    let div = document.createElement("div");
-    div.className = "item";
+  items.forEach((c,i)=>{
+    let div=document.createElement("div");
+    div.className="item";
 
     div.innerHTML = `
-      Link ${i+1}
+      ${c}
       <span onclick="deleteItem(${i})">❌</span>
     `;
 
@@ -257,37 +227,27 @@ function renderList() {
   });
 }
 
-function deleteItem(i) {
-  items.splice(i, 1);
-  localStorage.setItem("items", JSON.stringify(items));
+function deleteItem(i){
+  items.splice(i,1);
+  localStorage.setItem("channels", JSON.stringify(items));
   renderList();
   loadVideos();
 }
 
-// ===== VIDEO LOAD =====
+// ===== LOAD VIDEOS =====
 function loadVideos(){
 
-  let container = document.getElementById("videos");
-  container.innerHTML = "";
+  videos.innerHTML="";
 
-  items.forEach(channelId => {
+  items.forEach(id=>{
 
-    console.log("Loading channel:", channelId);
-
-    // convert UC → UU
-    let playlistId = "UU" + channelId.substring(2);
+    // UC → UU
+    let playlistId = "UU" + id.substring(2);
 
     let iframe = document.createElement("iframe");
-
     iframe.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
-    iframe.style.width = "100%";
-    iframe.style.height = "250px";
-    iframe.style.border = "none";
 
-    container.appendChild(iframe);
-
-  });
-}
+    videos.appendChild(iframe);
   });
 }
 
