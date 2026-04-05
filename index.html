@@ -15,6 +15,7 @@
     }
 
     .logo { font-size:48px; margin-bottom:20px; }
+
     .logo span {
       color:red; border:2px solid red;
       padding:5px 12px; border-radius:6px;
@@ -37,8 +38,29 @@
     }
 
     .nav-icons {
-      margin-left:auto; display:flex;
-      gap:20px; font-size:22px; cursor:pointer;
+      margin-left:auto;
+      display:flex;
+      align-items:center;
+      gap:15px;
+      font-size:22px;
+      cursor:pointer;
+    }
+
+    .profile {
+      width:32px; height:32px;
+      border-radius:50%;
+      cursor:pointer;
+    }
+
+    #logoutBtn {
+      display:none;
+      position:absolute;
+      top:60px;
+      right:20px;
+      background:white;
+      border:1px solid #ddd;
+      padding:10px;
+      cursor:pointer;
     }
 
     #subsPanel {
@@ -57,10 +79,6 @@
       cursor:pointer;
     }
 
-    .channel-item img {
-      width:30px; height:30px; border-radius:50%;
-    }
-
     .main { padding:15px; }
 
     .player {
@@ -75,11 +93,7 @@
       gap:15px;
     }
 
-    .video img {
-      width:100%; border-radius:10px;
-    }
-
-    .video-title { font-size:14px; }
+    .video img { width:100%; border-radius:10px; }
   </style>
 </head>
 
@@ -99,13 +113,16 @@
 
     <div class="nav-icons">
       <span onclick="goHome()">🏠</span>
-      <span onclick="alert('Search coming soon')">🔍</span>
+      <span onclick="alert('Search coming')">🔍</span>
       <span onclick="toggleSubs()">📺</span>
-      <span onclick="alert('History coming soon')">⏱</span>
+      <span onclick="alert('History coming')">⏱</span>
+
+      <img id="profilePic" class="profile" onclick="toggleLogout()" />
     </div>
   </div>
 
-  <!-- FLOAT PANEL -->
+  <div id="logoutBtn" onclick="logout()">Logout</div>
+
   <div id="subsPanel">
     <h3>Subscriptions</h3>
     <div id="channelList"></div>
@@ -121,14 +138,11 @@
 <script>
 
 let accessToken = localStorage.getItem("token") || "";
-let watchHistory = JSON.parse(localStorage.getItem("watchHistory")) || [];
 
-// AUTO LOGIN ON REFRESH
+// AUTO LOGIN
 window.onload = () => {
   if (accessToken) {
-    document.getElementById("loginScreen").style.display = "none";
-    document.getElementById("app").style.display = "block";
-
+    showApp();
     loadSubscriptions();
     loadHomeFeed();
   }
@@ -138,29 +152,49 @@ window.onload = () => {
 function login() {
   google.accounts.oauth2.initTokenClient({
     client_id: "901526621368-k63bfsq7aomg2e2k6u0625bub9291dhs.apps.googleusercontent.com",
-    scope: "https://www.googleapis.com/auth/youtube.readonly",
+    scope: "https://www.googleapis.com/auth/youtube.readonly openid profile email",
     callback: (res) => {
       accessToken = res.access_token;
-
-      // 🔥 SAVE TOKEN
       localStorage.setItem("token", accessToken);
 
-      document.getElementById("loginScreen").style.display = "none";
-      document.getElementById("app").style.display = "block";
-
+      fetchProfile();
+      showApp();
       loadSubscriptions();
       loadHomeFeed();
     }
-  }).requestAccessToken();
+  }).requestAccessToken({ prompt: "" });
 }
 
-// LOGOUT (OPTIONAL)
+// SHOW APP
+function showApp() {
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+}
+
+// PROFILE
+async function fetchProfile() {
+  let res = await fetch(
+    "https://www.googleapis.com/oauth2/v3/userinfo",
+    { headers: { Authorization: "Bearer " + accessToken } }
+  );
+
+  let data = await res.json();
+  document.getElementById("profilePic").src = data.picture;
+}
+
+// LOGOUT MENU
+function toggleLogout() {
+  let btn = document.getElementById("logoutBtn");
+  btn.style.display = btn.style.display === "block" ? "none" : "block";
+}
+
+// LOGOUT
 function logout() {
-  localStorage.removeItem("token");
+  localStorage.clear();
   location.reload();
 }
 
-// TOGGLE PANEL
+// SUBS PANEL
 function toggleSubs() {
   let panel = document.getElementById("subsPanel");
   panel.style.display = panel.style.display === "block" ? "none" : "block";
@@ -174,7 +208,6 @@ async function loadSubscriptions() {
   );
 
   let data = await res.json();
-
   let list = document.getElementById("channelList");
   list.innerHTML = "";
 
@@ -198,23 +231,20 @@ async function loadSubscriptions() {
 
 // HOME FEED
 async function loadHomeFeed() {
-
   let res = await fetch(
-    "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=15",
+    "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=10",
     { headers: { Authorization: "Bearer " + accessToken } }
   );
 
   let data = await res.json();
-
   let container = document.getElementById("videos");
   container.innerHTML = "";
 
   for (let item of data.items) {
-
     let channelId = item.snippet.resourceId.channelId;
 
     let vRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=2&order=date&type=video`,
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=2&type=video`,
       { headers: { Authorization: "Bearer " + accessToken } }
     );
 
@@ -222,28 +252,27 @@ async function loadHomeFeed() {
 
     vData.items.forEach(video => {
       let vid = video.id.videoId;
-      let title = video.snippet.title;
       let thumb = video.snippet.thumbnails.medium.url;
 
       let div = document.createElement("div");
       div.className = "video";
 
-      div.innerHTML = `
-        <img src="${thumb}">
-        <div class="video-title">${title}</div>
-      `;
+      div.innerHTML = `<img src="${thumb}">`;
 
-      div.onclick = () => playVideo(vid, title);
+      div.onclick = () => {
+        document.getElementById("player").src =
+          `https://www.youtube.com/embed/${vid}`;
+      };
 
       container.appendChild(div);
     });
   }
 }
 
-// LOAD CHANNEL VIDEOS
+// LOAD VIDEOS
 async function loadVideos(channelId) {
   let res = await fetch(
-    `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=12&order=date&type=video`,
+    `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video`,
     { headers: { Authorization: "Bearer " + accessToken } }
   );
 
@@ -251,40 +280,25 @@ async function loadVideos(channelId) {
   let container = document.getElementById("videos");
   container.innerHTML = "";
 
-  data.items.forEach((video, index) => {
+  data.items.forEach(video => {
     let vid = video.id.videoId;
-    let title = video.snippet.title;
     let thumb = video.snippet.thumbnails.medium.url;
 
     let div = document.createElement("div");
     div.className = "video";
 
-    div.innerHTML = `
-      <img src="${thumb}">
-      <div class="video-title">${title}</div>
-    `;
+    div.innerHTML = `<img src="${thumb}">`;
 
-    div.onclick = () => playVideo(vid, title);
-
-    container.appendChild(div);
-
-    if (index === 0) {
+    div.onclick = () => {
       document.getElementById("player").src =
         `https://www.youtube.com/embed/${vid}`;
-    }
+    };
+
+    container.appendChild(div);
   });
 }
 
-// PLAY VIDEO
-function playVideo(id, title) {
-  document.getElementById("player").src =
-    `https://www.youtube.com/embed/${id}`;
-
-  watchHistory.unshift(title);
-  localStorage.setItem("watchHistory", JSON.stringify(watchHistory));
-}
-
-// HOME BUTTON
+// HOME
 function goHome() {
   document.getElementById("player").src = "";
   loadHomeFeed();
