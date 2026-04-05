@@ -14,7 +14,7 @@
       color: white;
     }
 
-    /* 🔝 NAVBAR */
+    /* NAVBAR */
     .navbar {
       height: 60px;
       background: #181818;
@@ -27,6 +27,18 @@
     .logo {
       font-size: 18px;
       font-weight: bold;
+      margin-right: 20px;
+    }
+
+    .nav-btn {
+      margin-right: 10px;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 5px;
+    }
+
+    .nav-btn:hover {
+      background: #333;
     }
 
     .login-btn {
@@ -36,29 +48,28 @@
       color: white;
       padding: 8px 12px;
       cursor: pointer;
-      border-radius: 5px;
     }
 
-    /* 📦 LAYOUT */
+    /* LAYOUT */
     .container {
       display: flex;
       height: calc(100vh - 60px);
     }
 
-    /* 📂 SIDEBAR */
+    /* SIDEBAR */
     .sidebar {
       width: 250px;
       background: #181818;
       padding: 10px;
-      overflow-y: auto;
       border-right: 1px solid #333;
+      overflow-y: auto;
     }
 
     .channel {
       padding: 10px;
       background: #222;
-      margin-bottom: 6px;
-      border-radius: 6px;
+      margin-bottom: 5px;
+      border-radius: 5px;
       cursor: pointer;
     }
 
@@ -66,23 +77,21 @@
       background: #333;
     }
 
-    /* 📺 MAIN */
+    /* MAIN */
     .main {
       flex: 1;
       padding: 15px;
       overflow-y: auto;
     }
 
-    /* ▶ PLAYER */
     .player {
       width: 100%;
       height: 300px;
-      border-radius: 10px;
       border: none;
+      border-radius: 10px;
       margin-bottom: 15px;
     }
 
-    /* 🎥 VIDEO GRID */
     .videos {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -103,37 +112,55 @@
       margin-top: 5px;
     }
 
-    /* 📱 MOBILE */
-    @media(max-width: 700px) {
-      .sidebar {
-        display: none;
-      }
+    .page {
+      display: none;
+    }
 
-      .player {
-        height: 200px;
-      }
+    .active {
+      display: block;
     }
   </style>
 </head>
 
 <body>
 
-<!-- 🔝 NAVBAR -->
+<!-- NAVBAR -->
 <div class="navbar">
   <div class="logo">FocusTube 🎯</div>
+
+  <div class="nav-btn" onclick="showPage('home')">Home</div>
+  <div class="nav-btn" onclick="showPage('subscriptions')">Subscriptions</div>
+  <div class="nav-btn" onclick="showPage('history')">History</div>
+
   <button class="login-btn" onclick="login()">Login</button>
 </div>
 
-<!-- 📦 MAIN LAYOUT -->
 <div class="container">
 
-  <!-- 📂 SIDEBAR -->
+  <!-- SIDEBAR -->
   <div class="sidebar" id="channelList"></div>
 
-  <!-- 📺 MAIN -->
+  <!-- MAIN -->
   <div class="main">
-    <iframe id="player" class="player"></iframe>
-    <div id="videos" class="videos"></div>
+
+    <!-- HOME -->
+    <div id="home" class="page active">
+      <h2>Welcome to FocusTube</h2>
+      <p>Login and select a channel to start</p>
+    </div>
+
+    <!-- SUBSCRIPTIONS -->
+    <div id="subscriptions" class="page">
+      <iframe id="player" class="player"></iframe>
+      <div id="videos" class="videos"></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div id="history" class="page">
+      <h2>History</h2>
+      <div id="historyList"></div>
+    </div>
+
   </div>
 
 </div>
@@ -141,8 +168,15 @@
 <script>
 
 let accessToken = "";
+let historyList = JSON.parse(localStorage.getItem("history")) || [];
 
-// 🔐 LOGIN
+// PAGE SWITCH
+function showPage(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(page).classList.add("active");
+}
+
+// LOGIN
 function login() {
   google.accounts.oauth2.initTokenClient({
     client_id: "901526621368-k63bfsq7aomg2e2k6u0625bub9291dhs.apps.googleusercontent.com",
@@ -154,7 +188,7 @@ function login() {
   }).requestAccessToken();
 }
 
-// 📺 LOAD CHANNELS
+// LOAD CHANNELS
 async function loadSubscriptions() {
   let res = await fetch(
     "https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=50",
@@ -166,20 +200,23 @@ async function loadSubscriptions() {
   let data = await res.json();
 
   let list = document.getElementById("channelList");
-  list.innerHTML = "<h3>Subscriptions</h3>";
+  list.innerHTML = "<h3>Channels</h3>";
 
   data.items.forEach(item => {
     let div = document.createElement("div");
     div.className = "channel";
     div.innerText = item.snippet.title;
 
-    div.onclick = () => loadVideos(item.snippet.resourceId.channelId);
+    div.onclick = () => {
+      showPage("subscriptions");
+      loadVideos(item.snippet.resourceId.channelId);
+    };
 
     list.appendChild(div);
   });
 }
 
-// 🎥 LOAD VIDEOS
+// LOAD VIDEOS
 async function loadVideos(channelId) {
 
   let res = await fetch(
@@ -207,19 +244,38 @@ async function loadVideos(channelId) {
       <div class="video-title">${title}</div>
     `;
 
-    div.onclick = () => {
-      document.getElementById("player").src =
-        `https://www.youtube.com/embed/${vid}`;
-    };
+    div.onclick = () => playVideo(vid, title);
 
     container.appendChild(div);
 
-    if (index === 0) {
-      document.getElementById("player").src =
-        `https://www.youtube.com/embed/${vid}`;
-    }
+    if (index === 0) playVideo(vid, title);
   });
 }
+
+// PLAY VIDEO + SAVE HISTORY
+function playVideo(id, title) {
+  document.getElementById("player").src =
+    `https://www.youtube.com/embed/${id}`;
+
+  historyList.unshift(title);
+  localStorage.setItem("history", JSON.stringify(historyList));
+
+  updateHistory();
+}
+
+// SHOW HISTORY
+function updateHistory() {
+  let list = document.getElementById("historyList");
+  list.innerHTML = "";
+
+  historyList.forEach(item => {
+    let div = document.createElement("div");
+    div.innerText = item;
+    list.appendChild(div);
+  });
+}
+
+updateHistory();
 
 </script>
 
