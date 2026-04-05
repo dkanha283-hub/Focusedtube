@@ -1,395 +1,418 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>FocusedTube Pro</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FocusedTube</title>
   <style>
-    :root {
-      --bg: #0f0f0f;
-      --panel: #181818;
-      --card: #282828;
-      --text: #ffffff;
-      --muted: #b3b3b3;
-      --accent: #ff0000;
-      --border: #2e2e2e;
+    :root{
+      --bg:#0f0f0f;
+      --panel:#181818;
+      --panel2:#222;
+      --card:#282828;
+      --text:#fff;
+      --muted:#aaa;
+      --accent:#ff0000;
+      --border:#2e2e2e;
     }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
 
-    .login {
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      text-align: center;
+    .login{
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:10px;
+      padding:20px;
+      text-align:center;
     }
 
-    .login h2 {
-      margin-bottom: 16px;
+    .login input,
+    .login button,
+    .topbar input,
+    .panel input,
+    .playlist-create input{
+      width:100%;
+      border:none;
+      outline:none;
+      border-radius:10px;
+      padding:12px 14px;
+      font-size:15px;
+      background:#1f1f1f;
+      color:var(--text);
+      border:1px solid var(--border);
     }
 
-    input, button {
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      margin: 5px 0;
-      width: 100%;
-      max-width: 320px;
+    .login button,
+    .topbar button,
+    .panel button,
+    .playlist-create button{
+      width:100%;
+      border:none;
+      border-radius:10px;
+      padding:12px 14px;
+      font-weight:700;
+      cursor:pointer;
+      background:var(--accent);
+      color:white;
     }
 
-    input {
-      background: #1f1f1f;
-      color: white;
-      border: 1px solid var(--border);
+    .app{display:none;height:100vh;overflow:hidden}
+    .topbar{
+      height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 10px;
+      background:var(--panel);
+      border-bottom:1px solid var(--border);
+      position:sticky;
+      top:0;
+      z-index:20;
     }
 
-    button {
-      background: var(--accent);
-      color: white;
-      cursor: pointer;
-      font-weight: bold;
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight:800;
+      white-space:nowrap;
+      cursor:pointer;
     }
 
-    .app {
-      display: none;
-      height: 100vh;
-      overflow: hidden;
+    .icons{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      flex-wrap:nowrap;
     }
 
-    .topbar {
-      height: 52px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 12px;
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 20;
+    .icon-btn{
+      width:38px;
+      height:38px;
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      user-select:none;
+      background:#202020;
+      border:1px solid var(--border);
     }
 
-    .brand {
-      font-weight: bold;
-      cursor: pointer;
-      user-select: none;
+    .icon-btn:hover{background:#2a2a2a}
+
+    .content{
+      height:calc(100vh - 56px);
+      overflow:auto;
+      padding:14px;
     }
 
-    .icons {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 18px;
-      user-select: none;
+    .page-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
     }
 
-    .icons span {
-      cursor: pointer;
-      padding: 6px 8px;
-      border-radius: 8px;
+    .page-title{
+      font-size:24px;
+      font-weight:800;
+      margin:0;
     }
 
-    .icons span:hover {
-      background: #2a2a2a;
+    .page-sub{
+      color:var(--muted);
+      margin-top:4px;
+      font-size:13px;
     }
 
-    .content {
-      height: calc(100vh - 52px);
-      overflow-y: auto;
-      padding: 14px;
+    .back{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:8px 12px;
+      border-radius:10px;
+      background:#202020;
+      border:1px solid var(--border);
+      cursor:pointer;
+      user-select:none;
     }
 
-    .page-header {
-      margin-bottom: 12px;
+    .resume-box,
+    .section,
+    .feed-block{
+      margin-bottom:18px;
     }
 
-    .page-title-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
+    .resume-card{
+      background:linear-gradient(135deg,#232323,#171717);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px;
+      cursor:pointer;
     }
 
-    .page-title {
-      font-size: 22px;
-      font-weight: bold;
+    .resume-label{
+      color:var(--muted);
+      font-size:12px;
+      margin-bottom:6px;
     }
 
-    .page-subtitle {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 4px;
+    .resume-title{
+      font-size:16px;
+      font-weight:700;
+      margin-bottom:10px;
+      line-height:1.4;
     }
 
-    .back {
-      color: var(--muted);
-      cursor: pointer;
-      padding: 6px 10px;
-      border-radius: 8px;
-      background: #1e1e1e;
-      border: 1px solid var(--border);
+    .section-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin:0 0 12px;
     }
 
-    .back:hover {
-      background: #2a2a2a;
+    .section-title{
+      margin:0;
+      font-size:18px;
+      font-weight:800;
     }
 
-    .resume-box {
-      margin-bottom: 12px;
+    .section-count{
+      color:var(--muted);
+      font-size:12px;
+      white-space:nowrap;
     }
 
-    .resume-card {
-      background: linear-gradient(135deg, #232323, #171717);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      cursor: pointer;
-      transition: transform 0.2s ease;
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+      gap:14px;
     }
 
-    .resume-card:hover {
-      transform: translateY(-2px);
+    .card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      cursor:pointer;
+      transition:transform .16s ease, background .16s ease;
     }
 
-    .resume-label {
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 6px;
+    .card:hover{transform:translateY(-2px);background:#1d1d1d}
+
+    .thumb{
+      width:100%;
+      aspect-ratio:16/9;
+      object-fit:cover;
+      display:block;
+      background:black;
     }
 
-    .resume-title {
-      font-size: 15px;
-      font-weight: bold;
-      margin-bottom: 8px;
-      line-height: 1.4;
+    .card-body{
+      padding:10px;
     }
 
-    .resume-btn {
-      width: auto;
-      padding: 9px 14px;
-      margin: 0;
+    .title{
+      font-size:14px;
+      line-height:1.4;
+      min-height:40px;
+      margin-bottom:8px;
     }
 
-    .player-box {
-      width: 100%;
-      min-height: 240px;
-      background: #151515;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 14px;
+    .meta{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:var(--muted);
+      font-size:12px;
     }
 
-    .player-box iframe {
-      width: 100%;
-      height: 240px;
-      border: none;
-      display: block;
+    .logo{
+      width:20px;
+      height:20px;
+      border-radius:50%;
+      object-fit:cover;
+      background:#333;
+      flex-shrink:0;
     }
 
-    .player-empty {
-      height: 240px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      font-size: 14px;
-      text-align: center;
-      padding: 16px;
+    .panel{
+      position:fixed;
+      top:58px;
+      right:10px;
+      width:min(360px,calc(100vw - 20px));
+      max-height:74vh;
+      overflow:auto;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow:0 18px 40px rgba(0,0,0,.45);
+      padding:10px;
+      z-index:50;
+      transform:translateY(-12px);
+      opacity:0;
+      pointer-events:none;
+      transition:.2s ease;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 14px;
-      align-items: start;
+    .panel.open{
+      transform:translateY(0);
+      opacity:1;
+      pointer-events:auto;
     }
 
-    .section {
-      margin-bottom: 22px;
+    .panel h3{
+      margin:10px 0 8px;
+      font-size:14px;
     }
 
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 4px 0 12px;
+    .channel-item,
+    .playlist-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:var(--card);
+      border:1px solid var(--border);
+      padding:10px;
+      border-radius:12px;
+      margin-bottom:8px;
+      cursor:pointer;
     }
 
-    .section-title {
-      font-size: 18px;
-      font-weight: bold;
+    .left-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
     }
 
-    .section-count {
-      color: var(--muted);
-      font-size: 12px;
+    .left-row span{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: transform 0.2s ease, background 0.2s ease;
+    .avatar{
+      width:32px;
+      height:32px;
+      border-radius:50%;
+      object-fit:cover;
+      background:#333;
+      flex-shrink:0;
     }
 
-    .card:hover {
-      transform: translateY(-2px);
-      background: #1d1d1d;
+    .danger{
+      color:#ff7a7a;
+      cursor:pointer;
+      flex-shrink:0;
     }
 
-    .thumb {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
-      display: block;
-      background: #000;
+    .small-note{
+      font-size:12px;
+      color:var(--muted);
+      margin:6px 0 10px;
+      line-height:1.4;
     }
 
-    .card-body {
-      padding: 10px;
+    .view{
+      display:none;
+    }
+    .view.active{
+      display:block;
     }
 
-    .video-title {
-      font-size: 14px;
-      line-height: 1.4;
-      margin-bottom: 8px;
-      min-height: 40px;
+    .section-block{
+      margin-bottom:24px;
     }
 
-    .video-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 12px;
+    .empty{
+      color:var(--muted);
+      padding:18px 8px;
+      text-align:center;
     }
 
-    .mini-logo {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #333;
-      flex-shrink: 0;
+    .search-box{
+      position:fixed;
+      top:58px;
+      left:10px;
+      right:10px;
+      z-index:60;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:14px;
+      box-shadow:0 18px 40px rgba(0,0,0,.4);
+      padding:10px;
+      transform:translateY(-12px);
+      opacity:0;
+      pointer-events:none;
+      transition:.2s ease;
     }
 
-    .dropdown {
-      position: fixed;
-      top: 54px;
-      right: 12px;
-      width: 320px;
-      max-height: 72vh;
-      overflow-y: auto;
-      background: #181818;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.45);
-      z-index: 50;
-
-      transform: translateY(-16px);
-      opacity: 0;
-      pointer-events: none;
-      transition: 0.22s ease;
+    .search-box.open{
+      transform:translateY(0);
+      opacity:1;
+      pointer-events:auto;
     }
 
-    .dropdown.open {
-      transform: translateY(0);
-      opacity: 1;
-      pointer-events: auto;
+    .search-results{
+      margin-top:10px;
+      display:grid;
+      gap:10px;
     }
 
-    .dropdown h3 {
-      margin: 10px 0 8px;
-      font-size: 14px;
-      color: #f1f1f1;
+    .search-row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px;
+      border-radius:12px;
+      background:var(--card);
+      border:1px solid var(--border);
+      cursor:pointer;
     }
 
-    .channel {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 9px;
-      background: #242424;
-      border: 1px solid #2e2e2e;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      cursor: pointer;
+    .search-row img{
+      width:84px;
+      height:48px;
+      border-radius:8px;
+      object-fit:cover;
+      background:#000;
+      flex-shrink:0;
     }
 
-    .channel:hover {
-      background: #2a2a2a;
+    .search-row .sr-txt{
+      min-width:0;
     }
 
-    .channel-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
+    .search-row .sr-title{
+      font-size:14px;
+      font-weight:700;
+      line-height:1.35;
+      margin-bottom:4px;
     }
 
-    .channel-left span {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 180px;
+    .search-row .sr-meta{
+      font-size:12px;
+      color:var(--muted);
     }
 
-    .channel-logo {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #333;
-      flex-shrink: 0;
-    }
-
-    .channel-delete {
-      color: #ff6b6b;
-      cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 6px;
-      flex-shrink: 0;
-    }
-
-    .channel-delete:hover {
-      background: #3a1d1d;
-    }
-
-    .empty {
-      color: var(--muted);
-      padding: 18px 8px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    .status {
-      color: var(--muted);
-      padding: 10px 0;
-      font-size: 14px;
-    }
-
-    .small-note {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 6px;
-      line-height: 1.45;
+    .playlist-create{
+      display:grid;
+      gap:8px;
+      margin-bottom:12px;
     }
   </style>
 </head>
@@ -404,626 +427,729 @@
 
 <div id="app" class="app">
   <div class="topbar">
-    <div class="brand" onclick="home()">FocusedTube</div>
-    <div class="icons top-icons">
-      <span onclick="home()">🏠</span>
-      <span onclick="toggleDropdown()">📺</span>
-      <span onclick="showHistory()">⏱️</span>
-      <span onclick="logout()">👤</span>
+    <div class="brand" onclick="showHome()">📌 FocusedTube</div>
+    <div class="icons">
+      <div class="icon-btn" onclick="showHome()" title="Home">🏠</div>
+      <div class="icon-btn" onclick="toggleSearch()" title="Search">🔎</div>
+      <div class="icon-btn" onclick="toggleSubs()" title="Subscriptions">📺</div>
+      <div class="icon-btn" onclick="showHistory()" title="History">⏱️</div>
+      <div class="icon-btn" onclick="togglePlaylists()" title="Playlists">📁</div>
+      <div class="icon-btn" onclick="logout()" title="Profile">👤</div>
     </div>
   </div>
 
-  <div id="dropdown" class="dropdown">
-    <input id="input" placeholder="@channel or YouTube channel link">
-    <button onclick="add()">Add Channel</button>
+  <div id="subsPanel" class="panel">
+    <input id="channelInput" placeholder="@handle or channel link">
+    <button onclick="addChannel()">Add Channel</button>
     <div class="small-note">
-      Paste a channel handle like @bhajanmarg or a channel link.
+      Add a channel by pasting @handle or /channel/ link.
     </div>
-
     <h3>Subscriptions</h3>
-    <div id="list"></div>
+    <div id="subsList"></div>
   </div>
 
-  <div id="content" class="content">
-    <div id="pageHeader" class="page-header"></div>
-    <div id="resumeBox" class="resume-box"></div>
-    <div id="player" class="player-box"></div>
-    <div id="feedGrid" class="grid"></div>
+  <div id="searchBox" class="search-box">
+    <input id="searchInput" placeholder="Search videos on YouTube">
+    <button onclick="runSearch()">Search</button>
+    <div id="searchResults" class="search-results"></div>
+  </div>
+
+  <div id="playlistsPanel" class="panel">
+    <div class="playlist-create">
+      <input id="playlistName" placeholder="New playlist name">
+      <button onclick="createPlaylist()">Create Playlist</button>
+    </div>
+    <h3>Your playlists</h3>
+    <div id="userPlaylists"></div>
+  </div>
+
+  <div class="content" id="content">
+    <div id="homeView" class="view active">
+      <div id="pageHeader" class="page-header"></div>
+      <div id="resumeBox" class="resume-box"></div>
+      <div id="feedGrid"></div>
+    </div>
+
+    <div id="channelView" class="view">
+      <div id="channelHeader" class="page-header"></div>
+      <div id="channelSections"></div>
+    </div>
+
+    <div id="historyView" class="view">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">History</h1>
+          <div class="page-sub">Recently watched videos</div>
+        </div>
+      </div>
+      <div id="historyGrid" class="grid"></div>
+    </div>
+
+    <div id="playlistView" class="view">
+      <div id="playlistHeader" class="page-header"></div>
+      <div id="playlistGrid" class="grid"></div>
+    </div>
   </div>
 </div>
 
 <script>
-  const WORKER_URL = "https://restless-brook-50e4.dkanha283.workers.dev/";
-  const $ = (id) => document.getElementById(id);
+const WORKER = "https://YOUR-WORKER-URL.workers.dev";
+const APP = document.getElementById("app");
+const $ = (id) => document.getElementById(id);
 
-  let channels = [];
-  let historyData = [];
-  let lastVideo = null;
+let channels = [];
+let historyData = [];
+let lastVideo = null;
+let playlists = {};
+let currentPage = "home";
+let currentChannel = null;
+let currentPlaylistName = null;
 
-  let currentPage = "home";
-  let currentChannelIndex = -1;
+let homeItems = [];
+let channelData = null;
+let currentSearchResults = [];
+let currentPlaylistItems = [];
+let sectionCache = {};
+let visibleCount = 12;
+let viewToken = 0;
 
-  let mixedHomeVideos = [];
-  let currentChannelData = null;
+function readState() {
+  channels = JSON.parse(localStorage.getItem("channels") || "[]");
+  historyData = JSON.parse(localStorage.getItem("history") || "[]");
+  lastVideo = JSON.parse(localStorage.getItem("lastVideo") || "null");
+  playlists = JSON.parse(localStorage.getItem("playlists") || "{}");
+  sectionCache = {};
+}
 
-  let homeVisibleCount = 12;
-  let channelVisibleCount = 12;
-  let historyVisibleCount = 12;
+function saveState() {
+  localStorage.setItem("channels", JSON.stringify(channels));
+  localStorage.setItem("history", JSON.stringify(historyData));
+  localStorage.setItem("lastVideo", JSON.stringify(lastVideo));
+  localStorage.setItem("playlists", JSON.stringify(playlists));
+}
 
-  let sectionCache = {};
-  let viewToken = 0;
+document.addEventListener("DOMContentLoaded", init);
 
-  document.addEventListener("DOMContentLoaded", init);
-
-  function init() {
-    loadState();
-
-    if (localStorage.getItem("focusLogin") === "true") {
-      startApp();
-    } else {
-      showLogin();
-    }
-
-    $("content").addEventListener("scroll", onScroll);
-    document.addEventListener("click", closeDropdownOnOutside);
-  }
-
-  function normalizeChannel(item) {
-    if (!item) return null;
-
-    if (typeof item === "string") {
-      return {
-        channelId: item,
-        name: item,
-        logo: ""
-      };
-    }
-
-    return {
-      channelId: item.channelId || item.id || "",
-      name: item.name || item.title || item.channelId || item.id || "Channel",
-      logo: item.logo || item.thumbnail || ""
-    };
-  }
-
-  function normalizeHistory(item) {
-    if (!item) return null;
-
-    if (typeof item === "string") {
-      return {
-        id: item,
-        type: "video",
-        title: "Video",
-        channelId: "",
-        channelName: "",
-        channelLogo: "",
-        thumb: `https://img.youtube.com/vi/${item}/hqdefault.jpg`,
-        watchedAt: Date.now()
-      };
-    }
-
-    return {
-      id: item.id || "",
-      type: item.type || "video",
-      title: item.title || "Video",
-      channelId: item.channelId || "",
-      channelName: item.channelName || "",
-      channelLogo: item.channelLogo || "",
-      thumb: item.thumb || (item.id ? `https://img.youtube.com/vi/${item.id}/hqdefault.jpg` : ""),
-      watchedAt: item.watchedAt || Date.now()
-    };
-  }
-
-  function loadState() {
-    const rawChannels = JSON.parse(localStorage.getItem("channels") || "[]");
-    const rawHistory = JSON.parse(localStorage.getItem("history") || "[]");
-    const rawLastVideo = JSON.parse(localStorage.getItem("lastVideo") || "null");
-
-    channels = rawChannels.map(normalizeChannel).filter(x => x && x.channelId);
-    historyData = rawHistory.map(normalizeHistory).filter(x => x && x.id);
-    lastVideo = normalizeHistory(rawLastVideo);
-  }
-
-  function saveState() {
-    localStorage.setItem("channels", JSON.stringify(channels));
-    localStorage.setItem("history", JSON.stringify(historyData));
-    localStorage.setItem("lastVideo", JSON.stringify(lastVideo));
-  }
-
-  function showLogin() {
-    $("loginPage").style.display = "flex";
-    $("app").style.display = "none";
-  }
-
-  function showApp() {
-    $("loginPage").style.display = "none";
-    $("app").style.display = "block";
-  }
-
-  function login() {
-    const u = $("u").value.trim();
-    const p = $("p").value.trim();
-
-    if (!u || !p) {
-      alert("Enter username & password");
-      return;
-    }
-
-    localStorage.setItem("focusLogin", "true");
-    startApp();
-  }
-
-  function logout() {
-    localStorage.removeItem("focusLogin");
-    currentPage = "home";
-    currentChannelIndex = -1;
-    closeDropdown();
+function init() {
+  readState();
+  if (localStorage.getItem("login") === "1") {
+    showApp();
+    renderEverything();
+    showHome();
+  } else {
     showLogin();
   }
+  $("content").addEventListener("scroll", onScroll);
+  document.addEventListener("click", closePanelsOnOutside);
+}
 
-  function startApp() {
-    showApp();
-    renderChannels();
-    home();
+function showLogin() {
+  $("loginPage").style.display = "flex";
+  APP.style.display = "none";
+}
+
+function showApp() {
+  $("loginPage").style.display = "none";
+  APP.style.display = "block";
+}
+
+function login() {
+  const u = $("u").value.trim();
+  const p = $("p").value.trim();
+  if (!u || !p) {
+    alert("Enter username and password");
+    return;
+  }
+  localStorage.setItem("login", "1");
+  showApp();
+  renderEverything();
+  showHome();
+}
+
+function logout() {
+  localStorage.removeItem("login");
+  showLogin();
+}
+
+function closePanelsOnOutside(e) {
+  const ids = ["subsPanel", "searchBox", "playlistsPanel"];
+  for (const id of ids) {
+    const el = $(id);
+    if (!el.classList.contains("open")) continue;
+    if (el.contains(e.target)) return;
+    if (e.target.closest(".icon-btn")) return;
+    el.classList.remove("open");
+  }
+}
+
+function toggleSubs() {
+  $("subsPanel").classList.toggle("open");
+  $("searchBox").classList.remove("open");
+  $("playlistsPanel").classList.remove("open");
+}
+
+function toggleSearch() {
+  $("searchBox").classList.toggle("open");
+  $("subsPanel").classList.remove("open");
+  $("playlistsPanel").classList.remove("open");
+  $("searchInput").focus();
+}
+
+function togglePlaylists() {
+  $("playlistsPanel").classList.toggle("open");
+  $("subsPanel").classList.remove("open");
+  $("searchBox").classList.remove("open");
+}
+
+function showView(viewName) {
+  ["homeView","channelView","historyView","playlistView"].forEach(id => {
+    $(id).classList.remove("active");
+  });
+  $(viewName).classList.add("active");
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function normalizeChannel(c) {
+  return {
+    channelId: c.channelId || c.id || "",
+    name: c.name || c.title || "Channel",
+    logo: c.logo || c.thumbnail || ""
+  };
+}
+
+function normalizeVideo(v, channel = {}) {
+  return {
+    id: v.id || "",
+    title: v.title || "Video",
+    date: v.date || "",
+    thumb: v.thumb || (v.id ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : ""),
+    type: v.type || "video",
+    channelId: v.channelId || channel.channelId || "",
+    channelName: v.channelName || channel.name || "",
+    channelLogo: v.channelLogo || channel.logo || ""
+  };
+}
+
+function saveHistory(item) {
+  const v = normalizeVideo(item);
+  if (!v.id) return;
+  historyData = [v, ...historyData.filter(x => x.id !== v.id)].slice(0, 50);
+  lastVideo = v;
+  saveState();
+}
+
+function addToPlaylist(video) {
+  const names = Object.keys(playlists);
+  let name = prompt(
+    names.length
+      ? `Enter playlist name.\nExisting: ${names.join(", ")}`
+      : "Enter playlist name"
+  );
+  if (!name) return;
+  name = name.trim();
+  if (!name) return;
+
+  if (!playlists[name]) playlists[name] = [];
+  if (!playlists[name].some(v => v.id === video.id)) {
+    playlists[name].push(normalizeVideo(video));
+    saveState();
+    renderPlaylistsPanel();
+    alert(`Added to ${name}`);
+  }
+}
+
+function createPlaylist() {
+  const name = $("playlistName").value.trim();
+  if (!name) return;
+  if (!playlists[name]) playlists[name] = [];
+  saveState();
+  $("playlistName").value = "";
+  renderPlaylistsPanel();
+  renderPlaylistListView();
+}
+
+function renderEverything() {
+  renderSubsPanel();
+  renderPlaylistsPanel();
+}
+
+function renderSubsPanel() {
+  const list = $("subsList");
+  list.innerHTML = "";
+
+  if (!channels.length) {
+    list.innerHTML = `<div class="empty">No channels added yet</div>`;
+    return;
   }
 
-  function closeDropdown() {
-    $("dropdown").classList.remove("open");
+  channels.forEach((c, i) => {
+    const row = document.createElement("div");
+    row.className = "channel-item";
+    row.innerHTML = `
+      <div class="left-row">
+        <img class="avatar" src="${c.logo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
+        <span>${escapeHtml(c.name)}</span>
+      </div>
+      <span class="danger" onclick="event.stopPropagation(); removeChannel(${i})">❌</span>
+    `;
+    row.onclick = () => openChannel(i);
+    list.appendChild(row);
+  });
+}
+
+function renderPlaylistsPanel() {
+  const panel = $("userPlaylists");
+  panel.innerHTML = "";
+  const names = Object.keys(playlists);
+
+  if (!names.length) {
+    panel.innerHTML = `<div class="empty">No playlists yet</div>`;
+    return;
   }
 
-  function toggleDropdown() {
-    $("dropdown").classList.toggle("open");
+  names.forEach(name => {
+    const row = document.createElement("div");
+    row.className = "playlist-item";
+    row.innerHTML = `
+      <div class="left-row">
+        <span>📁</span>
+        <span>${escapeHtml(name)}</span>
+      </div>
+      <span class="danger" onclick="event.stopPropagation(); deletePlaylist('${name.replace(/'/g,"\\'")}')">🗑</span>
+    `;
+    row.onclick = () => openPlaylist(name);
+    panel.appendChild(row);
+  });
+}
+
+function deletePlaylist(name) {
+  delete playlists[name];
+  saveState();
+  renderPlaylistsPanel();
+  if (currentPage === "playlist" && currentPlaylistName === name) showPlaylistsHome();
+}
+
+function removeChannel(index) {
+  channels.splice(index, 1);
+  sectionCache = {};
+  saveState();
+  renderSubsPanel();
+  showHome();
+}
+
+async function addChannel() {
+  const raw = $("channelInput").value.trim();
+  if (!raw) return;
+
+  let endpoint = "";
+  if (raw.includes("@")) {
+    const handle = raw.split("@")[1].split("?")[0].split("/")[0];
+    endpoint = `${WORKER}?handle=${encodeURIComponent(handle)}`;
+  } else if (raw.includes("channel/")) {
+    const id = raw.split("channel/")[1].split("?")[0].split("/")[0];
+    endpoint = `${WORKER}?id=${encodeURIComponent(id)}`;
+  } else if (raw.startsWith("UC")) {
+    endpoint = `${WORKER}?id=${encodeURIComponent(raw)}`;
+  } else {
+    alert("Invalid channel link");
+    return;
   }
 
-  function closeDropdownOnOutside(e) {
-    if (!$("dropdown").classList.contains("open")) return;
-    if ($("dropdown").contains(e.target)) return;
-    if (e.target.closest(".top-icons")) return;
-    closeDropdown();
-  }
-
-  async function add() {
-    const link = $("input").value.trim();
-
-    if (!link) {
-      alert("Paste a channel link");
+  try {
+    const res = await fetch(endpoint);
+    const data = await res.json();
+    if (!data.channelId) {
+      alert("Channel not found");
       return;
     }
-
-    let endpoint = "";
-    if (link.includes("@")) {
-      const handle = link.split("@")[1].split("?")[0].split("/")[0];
-      endpoint = `${WORKER_URL}?handle=${encodeURIComponent(handle)}`;
-    } else if (link.includes("channel/")) {
-      const id = link.split("channel/")[1].split("?")[0].split("/")[0];
-      endpoint = `${WORKER_URL}?id=${encodeURIComponent(id)}`;
-    } else if (link.startsWith("UC")) {
-      endpoint = `${WORKER_URL}?id=${encodeURIComponent(link)}`;
-    } else {
-      alert("Invalid link");
+    const ch = normalizeChannel(data);
+    if (channels.some(x => x.channelId === ch.channelId)) {
+      alert("Already added");
       return;
     }
-
-    try {
-      const res = await fetch(endpoint);
-      const data = await res.json();
-
-      if (!data.channelId) {
-        alert("Could not load channel");
-        return;
-      }
-
-      const ch = normalizeChannel(data);
-
-      if (channels.some(x => x.channelId === ch.channelId)) {
-        alert("Already added");
-        return;
-      }
-
-      channels.unshift(ch);
-      sectionCache = {};
-      saveState();
-      $("input").value = "";
-      renderChannels();
-      home();
-    } catch (e) {
-      alert("Failed to fetch channel");
-    }
-  }
-
-  function renderChannels() {
-    const list = $("list");
-    list.innerHTML = "";
-
-    if (!channels.length) {
-      list.innerHTML = `<div class="empty">No channels added yet</div>`;
-      return;
-    }
-
-    channels.forEach((c, i) => {
-      const row = document.createElement("div");
-      row.className = "channel";
-
-      row.innerHTML = `
-        <div class="channel-left">
-          <img class="channel-logo" src="${c.logo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
-          <span>${escapeHtml(c.name)}</span>
-        </div>
-        <span class="channel-delete" onclick="event.stopPropagation(); del(${i})">❌</span>
-      `;
-
-      row.onclick = () => openChannel(i);
-      list.appendChild(row);
-    });
-  }
-
-  function del(i) {
-    channels.splice(i, 1);
+    channels.unshift(ch);
     sectionCache = {};
     saveState();
-    renderChannels();
-    home();
+    $("channelInput").value = "";
+    renderSubsPanel();
+    showHome();
+  } catch {
+    alert("Failed to fetch channel");
+  }
+}
+
+function setPageHeader(title, subtitle, backAction) {
+  $("pageHeader").innerHTML = `
+    <div>
+      <h1 class="page-title">${escapeHtml(title)}</h1>
+      <div class="page-sub">${escapeHtml(subtitle || "")}</div>
+    </div>
+    ${backAction ? `<div class="back" onclick="${backAction}">⬅ Back</div>` : ""}
+  `;
+}
+
+function setChannelHeader(title, subtitle, backAction) {
+  $("channelHeader").innerHTML = `
+    <div>
+      <h1 class="page-title">${escapeHtml(title)}</h1>
+      <div class="page-sub">${escapeHtml(subtitle || "")}</div>
+    </div>
+    ${backAction ? `<div class="back" onclick="${backAction}">⬅ Back</div>` : ""}
+  `;
+}
+
+function setPlaylistHeader(title, subtitle) {
+  $("playlistHeader").innerHTML = `
+    <div>
+      <h1 class="page-title">${escapeHtml(title)}</h1>
+      <div class="page-sub">${escapeHtml(subtitle || "")}</div>
+    </div>
+  `;
+}
+
+function clearAllViews() {
+  $("homeView").classList.remove("active");
+  $("channelView").classList.remove("active");
+  $("historyView").classList.remove("active");
+  $("playlistView").classList.remove("active");
+}
+
+function showHome() {
+  currentPage = "home";
+  currentChannel = null;
+  currentPlaylistName = null;
+  showView("homeView");
+  setPageHeader("Home", "Smart mixed feed from subscribed channels", null);
+  $("resumeBox").innerHTML = "";
+  visibleCount = 12;
+  loadHomeFeed();
+  renderResume();
+  $("content").scrollTop = 0;
+}
+
+function renderResume() {
+  const box = $("resumeBox");
+  box.innerHTML = "";
+  if (currentPage !== "home" || !lastVideo || !lastVideo.id) return;
+
+  const card = document.createElement("div");
+  card.className = "resume-card";
+  card.innerHTML = `
+    <div class="resume-label">Continue watching</div>
+    <div class="resume-title">${escapeHtml(lastVideo.title)}</div>
+    <button class="resume-btn">Resume</button>
+  `;
+  card.onclick = () => openPlayer(lastVideo);
+  box.appendChild(card);
+}
+
+async function fetchChannelSections(ch) {
+  if (sectionCache[ch.channelId]) return sectionCache[ch.channelId];
+
+  const res = await fetch(`${WORKER}?sections=1&channelId=${encodeURIComponent(ch.channelId)}`);
+  const data = await res.json();
+
+  const normalized = {
+    videos: (data.videos || []).map(v => normalizeVideo(v, ch)),
+    shorts: (data.shorts || []).map(v => normalizeVideo(v, ch)),
+    playlists: (data.playlists || []).map(v => ({
+      id: v.id || "",
+      title: v.title || "Playlist",
+      date: v.date || "",
+      thumb: v.thumb || "",
+      type: "playlist",
+      channelId: ch.channelId,
+      channelName: ch.name,
+      channelLogo: ch.logo
+    }))
+  };
+
+  sectionCache[ch.channelId] = normalized;
+  return normalized;
+}
+
+async function loadHomeFeed() {
+  const token = ++viewToken;
+  homeItems = [];
+  $("feedGrid").innerHTML = `<div class="empty">Loading home feed...</div>`;
+
+  if (!channels.length) {
+    $("feedGrid").innerHTML = `<div class="empty">Add channels from the subscriptions panel</div>`;
+    return;
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  const results = [];
+  for (const ch of channels) {
+    const sec = await fetchChannelSections(ch);
+    results.push(...sec.videos, ...sec.shorts);
   }
 
-  function setPageHeader(title, subtitle = "", showBack = false) {
-    $("pageHeader").innerHTML = `
-      <div class="page-title-row">
-        ${showBack ? `<div class="back" onclick="home()">⬅ Back</div>` : ""}
-        <div>
-          <div class="page-title">${escapeHtml(title)}</div>
-          ${subtitle ? `<div class="page-subtitle">${escapeHtml(subtitle)}</div>` : ""}
-        </div>
+  if (token !== viewToken || currentPage !== "home") return;
+
+  results.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+  const seen = new Set();
+  homeItems = results.filter(v => {
+    if (!v.id || seen.has(v.id)) return false;
+    seen.add(v.id);
+    return true;
+  });
+
+  renderHomeFeed();
+}
+
+function renderHomeFeed() {
+  $("feedGrid").innerHTML = "";
+  const slice = homeItems.slice(0, visibleCount);
+
+  if (!slice.length) {
+    $("feedGrid").innerHTML = `<div class="empty">No videos found yet</div>`;
+    return;
+  }
+
+  slice.forEach(v => $("feedGrid").appendChild(createCard(v)));
+}
+
+async function openChannel(i) {
+  currentPage = "channel";
+  currentPlaylistName = null;
+  currentChannel = channels[i];
+  showView("channelView");
+  visibleCount = 12;
+  $("content").scrollTop = 0;
+
+  setChannelHeader(currentChannel.name, "Videos · Shorts · Playlists", "showHome()");
+  $("channelSections").innerHTML = `<div class="empty">Loading channel...</div>`;
+
+  const sec = await fetchChannelSections(currentChannel);
+  channelData = sec;
+  renderChannelPage();
+}
+
+function renderChannelPage() {
+  const container = $("channelSections");
+  container.innerHTML = "";
+
+  if (!channelData) {
+    container.innerHTML = `<div class="empty">No channel data</div>`;
+    return;
+  }
+
+  const blocks = [
+    { title: "Videos", items: channelData.videos || [] },
+    { title: "Shorts", items: channelData.shorts || [] },
+    { title: "Playlists", items: channelData.playlists || [] }
+  ];
+
+  blocks.forEach(block => {
+    const section = document.createElement("div");
+    section.className = "section-block";
+    const items = block.items.slice(0, visibleCount);
+
+    section.innerHTML = `
+      <div class="section-head">
+        <h2 class="section-title">${escapeHtml(block.title)}</h2>
+        <div class="section-count">${items.length} shown</div>
       </div>
     `;
-  }
 
-  function setLoadingState(message) {
-    $("feedGrid").innerHTML = `<div class="status">${escapeHtml(message)}</div>`;
-  }
-
-  function clearPlayer() {
-    $("player").innerHTML = `<div class="player-empty">Select a video to play</div>`;
-  }
-
-  function showResume() {
-    const box = $("resumeBox");
-    box.innerHTML = "";
-
-    if (currentPage !== "home" || !lastVideo || !lastVideo.id) {
-      box.style.display = "none";
+    if (!items.length) {
+      section.innerHTML += `<div class="empty">No ${block.title.toLowerCase()} found</div>`;
+      container.appendChild(section);
       return;
     }
 
-    box.style.display = "block";
+    const grid = document.createElement("div");
+    grid.className = "grid";
 
-    const card = document.createElement("div");
-    card.className = "resume-card";
-    card.innerHTML = `
-      <div class="resume-label">Continue watching</div>
-      <div class="resume-title">${escapeHtml(lastVideo.title)}</div>
-      <button class="resume-btn">Resume</button>
-    `;
+    items.forEach(v => grid.appendChild(createCard(v)));
+    section.appendChild(grid);
+    container.appendChild(section);
+  });
+}
 
-    card.onclick = () => playItem(lastVideo);
-    box.appendChild(card);
+function showHistory() {
+  currentPage = "history";
+  currentChannel = null;
+  currentPlaylistName = null;
+  showView("historyView");
+  $("historyGrid").innerHTML = "";
+  visibleCount = 12;
+  setPageHeader("History", "Recently watched videos", "showHome()");
+  renderHistoryPage();
+  $("content").scrollTop = 0;
+}
+
+function renderHistoryPage() {
+  const grid = $("historyGrid");
+  grid.innerHTML = "";
+  const slice = historyData.slice(0, visibleCount);
+
+  if (!slice.length) {
+    grid.innerHTML = `<div class="empty">No watch history yet</div>`;
+    return;
   }
 
-  function playItem(v) {
-    const item = normalizeHistory(v);
-    if (!item || !item.id) return;
+  slice.forEach(v => grid.appendChild(createCard(normalizeVideo(v))));
+}
 
-    if (item.type === "playlist") {
-      $("player").innerHTML = `
-        <iframe
-          src="https://www.youtube.com/embed/videoseries?list=${item.id}&autoplay=1&rel=0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
-      `;
+function openPlaylist(name) {
+  currentPage = "playlist";
+  currentPlaylistName = name;
+  currentChannel = null;
+  showView("playlistView");
+  visibleCount = 12;
+  $("content").scrollTop = 0;
+  setPlaylistHeader(name, "Your saved videos");
+  renderPlaylistPage();
+}
+
+function renderPlaylistPage() {
+  const grid = $("playlistGrid");
+  grid.innerHTML = "";
+  const list = playlists[currentPlaylistName] || [];
+  const slice = list.slice(0, visibleCount);
+
+  if (!slice.length) {
+    grid.innerHTML = `<div class="empty">Playlist is empty</div>`;
+    return;
+  }
+
+  slice.forEach(v => grid.appendChild(createCard(normalizeVideo(v))));
+}
+
+function showPlaylistsHome() {
+  currentPage = "home";
+  currentPlaylistName = null;
+  showHome();
+}
+
+function renderPlaylistListView() {
+  renderPlaylistsPanel();
+}
+
+function createCard(v) {
+  const item = normalizeVideo(v);
+  const card = document.createElement("div");
+  card.className = "card";
+
+  card.innerHTML = `
+    <img class="thumb" src="${item.thumb}" alt="">
+    <div class="card-body">
+      <div class="title">${escapeHtml(item.title)}</div>
+      <div class="meta">
+        <img class="logo" src="${item.channelLogo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
+        <span>${escapeHtml(item.channelName || "")}${item.type === "short" ? " • Short" : item.type === "playlist" ? " • Playlist" : ""}</span>
+      </div>
+    </div>
+  `;
+
+  card.onclick = () => {
+    if (item.type === "playlist" && item.id && !item.id.startsWith("PL_")) {
+      openPlayer({ ...item, playlistId: item.id });
     } else {
-      $("player").innerHTML = `
-        <iframe
-          src="https://www.youtube.com/embed/${item.id}?autoplay=1&rel=0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen>
-        </iframe>
-      `;
+      openPlayer(item);
     }
+  };
 
-    historyData = [item, ...historyData.filter(x => x.id !== item.id)];
-    historyData = historyData.slice(0, 50);
-    lastVideo = item;
-    saveState();
-    showResume();
-    $("content").scrollTo({ top: 0, behavior: "smooth" });
+  return card;
+}
+
+async function runSearch() {
+  const q = $("searchInput").value.trim();
+  if (!q) return;
+
+  currentPage = "search";
+  currentChannel = null;
+  currentPlaylistName = null;
+  visibleCount = 12;
+  showView("homeView");
+  setPageHeader(`Search: ${q}`, "YouTube results", null);
+  $("resumeBox").innerHTML = "";
+  $("feedGrid").innerHTML = `<div class="empty">Searching...</div>`;
+
+  const res = await fetch(`${WORKER}?search=1&q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  currentSearchResults = (data || []).map(v => normalizeVideo(v));
+
+  renderSearchResults();
+  $("searchBox").classList.remove("open");
+}
+
+function renderSearchResults() {
+  $("feedGrid").innerHTML = "";
+  const slice = currentSearchResults.slice(0, visibleCount);
+
+  if (!slice.length) {
+    $("feedGrid").innerHTML = `<div class="empty">No results found</div>`;
+    return;
   }
 
-  function dedupeById(list) {
-    const seen = new Set();
-    return list.filter(v => {
-      if (!v || !v.id) return false;
-      if (seen.has(v.id)) return false;
-      seen.add(v.id);
-      return true;
-    });
+  slice.forEach(v => $("feedGrid").appendChild(createCard(v)));
+}
+
+function openPlayer(item) {
+  const v = normalizeVideo(item);
+  saveHistory(v);
+
+  const params = new URLSearchParams();
+  if (v.id) params.set("videoId", v.id);
+  if (v.playlistId) params.set("playlistId", v.playlistId);
+  if (v.title) params.set("title", v.title);
+  if (v.channelId) params.set("channelId", v.channelId);
+  if (v.channelName) params.set("channelName", v.channelName);
+
+  window.location.href = `player.html?${params.toString()}`;
+}
+
+function onScroll() {
+  const el = $("content");
+  const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 180;
+  if (!nearBottom) return;
+
+  if (currentPage === "home" && visibleCount < homeItems.length) {
+    visibleCount += 12;
+    renderHomeFeed();
   }
 
-  async function fetchChannelSections(ch) {
-    if (sectionCache[ch.channelId]) {
-      return sectionCache[ch.channelId];
-    }
-
-    try {
-      const res = await fetch(`${WORKER_URL}?sections=1&channelId=${encodeURIComponent(ch.channelId)}`);
-      const data = await res.json();
-
-      const normalized = {
-        videos: Array.isArray(data.videos) ? data.videos.map(v => ({
-          id: v.id || "",
-          type: v.type || "video",
-          title: v.title || "Video",
-          date: v.date || "",
-          thumb: v.thumb || (v.id ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : ""),
-          channelId: ch.channelId,
-          channelName: ch.name,
-          channelLogo: ch.logo
-        })).filter(v => v.id) : [],
-        shorts: Array.isArray(data.shorts) ? data.shorts.map(v => ({
-          id: v.id || "",
-          type: v.type || "short",
-          title: v.title || "Short",
-          date: v.date || "",
-          thumb: v.thumb || (v.id ? `https://img.youtube.com/vi/${v.id}/hqdefault.jpg` : ""),
-          channelId: ch.channelId,
-          channelName: ch.name,
-          channelLogo: ch.logo
-        })).filter(v => v.id) : [],
-        playlists: Array.isArray(data.playlists) ? data.playlists.map(v => ({
-          id: v.id || "",
-          type: "playlist",
-          title: v.title || "Playlist",
-          date: v.date || "",
-          thumb: v.thumb || ch.logo || "",
-          channelId: ch.channelId,
-          channelName: ch.name,
-          channelLogo: ch.logo
-        })).filter(v => v.id) : []
-      };
-
-      sectionCache[ch.channelId] = normalized;
-      return normalized;
-    } catch (e) {
-      return { videos: [], shorts: [], playlists: [] };
-    }
-  }
-
-  async function buildSmartHomeFeed(token) {
-    mixedHomeVideos = [];
-
-    if (!channels.length) {
-      if (token !== viewToken || currentPage !== "home") return;
-      $("feedGrid").innerHTML = `<div class="empty">Add your first channel from the dropdown</div>`;
-      return;
-    }
-
-    const affinity = {};
-    historyData.forEach(v => {
-      if (v.channelId) {
-        affinity[v.channelId] = (affinity[v.channelId] || 0) + 1;
-      }
-    });
-
-    const results = await Promise.all(
-      channels.map(async ch => ({
-        channel: ch,
-        sections: await fetchChannelSections(ch)
-      }))
-    );
-
-    if (token !== viewToken || currentPage !== "home") return;
-
-    results.sort((a, b) => {
-      const scoreB = affinity[b.channel.channelId] || 0;
-      const scoreA = affinity[a.channel.channelId] || 0;
-      if (scoreB !== scoreA) return scoreB - scoreA;
-      return a.channel.name.localeCompare(b.channel.name);
-    });
-
-    const all = [];
-    results.forEach(r => {
-      const merged = [...(r.sections.videos || []), ...(r.sections.shorts || [])];
-      merged.forEach(v => all.push(v));
-    });
-
-    all.sort((a, b) => {
-      const da = Date.parse(a.date || "") || 0;
-      const db = Date.parse(b.date || "") || 0;
-      return db - da;
-    });
-
-    mixedHomeVideos = dedupeById(all);
-  }
-
-  function createCard(v) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <img class="thumb" src="${v.thumb}" alt="">
-      <div class="card-body">
-        <div class="video-title">${escapeHtml(v.title)}</div>
-        <div class="video-meta">
-          <img class="mini-logo" src="${v.channelLogo || ''}" onerror="this.src='https://www.google.com/s2/favicons?domain=youtube.com&sz=64'">
-          <span>${escapeHtml(v.channelName || "")}${v.type === 'playlist' ? ' • Playlist' : v.type === 'short' ? ' • Short' : ''}</span>
-        </div>
-      </div>
-    `;
-    card.onclick = () => playItem(v);
-    return card;
-  }
-
-  function renderHome() {
-    const slice = mixedHomeVideos.slice(0, homeVisibleCount);
-    $("feedGrid").innerHTML = "";
-
-    if (!slice.length) {
-      $("feedGrid").innerHTML = `<div class="empty">No videos found yet</div>`;
-      return;
-    }
-
-    slice.forEach(v => $("feedGrid").appendChild(createCard(v)));
-  }
-
-  function renderChannel() {
-    $("feedGrid").innerHTML = "";
-
-    if (!currentChannelData) {
-      $("feedGrid").innerHTML = `<div class="empty">No channel selected</div>`;
-      return;
-    }
-
-    const sections = [
-      { title: "Videos", items: (currentChannelData.videos || []).slice(0, channelVisibleCount) },
-      { title: "Shorts", items: (currentChannelData.shorts || []).slice(0, channelVisibleCount) },
-      { title: "Playlists", items: (currentChannelData.playlists || []).slice(0, channelVisibleCount) }
-    ];
-
-    const hasAny = sections.some(s => s.items.length);
-
-    if (!hasAny) {
-      $("feedGrid").innerHTML = `<div class="empty">No videos found for this channel</div>`;
-      return;
-    }
-
-    sections.forEach(section => {
-      const block = document.createElement("div");
-      block.className = "section";
-
-      block.innerHTML = `
-        <div class="section-head">
-          <div class="section-title">${section.title}</div>
-          <div class="section-count">${section.items.length} shown</div>
-        </div>
-      `;
-
-      const grid = document.createElement("div");
-      grid.className = "grid";
-
-      if (!section.items.length) {
-        const empty = document.createElement("div");
-        empty.className = "empty";
-        empty.textContent = `No ${section.title.toLowerCase()} found`;
-        block.appendChild(empty);
-      } else {
-        section.items.forEach(v => grid.appendChild(createCard(v)));
-        block.appendChild(grid);
-      }
-
-      $("feedGrid").appendChild(block);
-    });
-  }
-
-  function renderHistory() {
-    const slice = historyData.slice(0, historyVisibleCount);
-    $("feedGrid").innerHTML = "";
-
-    if (!slice.length) {
-      $("feedGrid").innerHTML = `<div class="empty">No watch history yet</div>`;
-      return;
-    }
-
-    slice.forEach(v => $("feedGrid").appendChild(createCard(v)));
-  }
-
-  async function home() {
-    currentPage = "home";
-    currentChannelIndex = -1;
-    currentChannelData = null;
-    const token = ++viewToken;
-
-    closeDropdown();
-    $("content").scrollTop = 0;
-    homeVisibleCount = 12;
-
-    setPageHeader("Home", "Smart mixed feed");
-    $("resumeBox").innerHTML = "";
-    clearPlayer();
-    setLoadingState("Loading your home feed...");
-
-    await buildSmartHomeFeed(token);
-    if (token !== viewToken || currentPage !== "home") return;
-
-    $("feedGrid").innerHTML = "";
-    renderHome();
-    showResume();
-  }
-
-  async function openChannel(i) {
-    currentPage = "channel";
-    currentChannelIndex = i;
-    const token = ++viewToken;
-
-    const ch = channels[i];
-    closeDropdown();
-    $("content").scrollTop = 0;
-    channelVisibleCount = 12;
-
-    setPageHeader(ch.name, "Videos, Shorts, and Playlists", true);
-    $("resumeBox").innerHTML = "";
-    clearPlayer();
-    setLoadingState(`Loading ${ch.name} channel page...`);
-
-    const sections = await fetchChannelSections(ch);
-    if (token !== viewToken || currentPage !== "channel") return;
-
-    currentChannelData = sections;
-    $("feedGrid").innerHTML = "";
-    renderChannel();
-  }
-
-  function showHistory() {
-    currentPage = "history";
-    currentChannelIndex = -1;
-    currentChannelData = null;
-    ++viewToken;
-
-    closeDropdown();
-    $("content").scrollTop = 0;
-    historyVisibleCount = 12;
-
-    setPageHeader("History", "Recently watched videos", false);
-    $("resumeBox").innerHTML = "";
-    clearPlayer();
-    renderHistory();
-  }
-
-  function onScroll() {
-    const el = $("content");
-    const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 180;
-    if (!nearBottom) return;
-
-    if (currentPage === "home" && homeVisibleCount < mixedHomeVideos.length) {
-      homeVisibleCount += 12;
-      renderHome();
-    } else if (currentPage === "channel" && currentChannelData) {
-      const total = (currentChannelData.videos || []).length + (currentChannelData.shorts || []).length + (currentChannelData.playlists || []).length;
-      if (channelVisibleCount < total) {
-        channelVisibleCount += 12;
-        renderChannel();
-      }
-    } else if (currentPage === "history" && historyVisibleCount < historyData.length) {
-      historyVisibleCount += 12;
-      renderHistory();
+  if (currentPage === "channel" && channelData) {
+    const total = [
+      ...(channelData.videos || []),
+      ...(channelData.shorts || []),
+      ...(channelData.playlists || [])
+    ].length;
+    if (visibleCount < total) {
+      visibleCount += 12;
+      renderChannelPage();
     }
   }
+
+  if (currentPage === "history" && visibleCount < historyData.length) {
+    visibleCount += 12;
+    renderHistoryPage();
+  }
+
+  if (currentPage === "search" && visibleCount < currentSearchResults.length) {
+    visibleCount += 12;
+    renderSearchResults();
+  }
+
+  if (currentPage === "playlist" && currentPlaylistName) {
+    const total = (playlists[currentPlaylistName] || []).length;
+    if (visibleCount < total) {
+      visibleCount += 12;
+      renderPlaylistPage();
+    }
+  }
+}
 </script>
 </body>
 </html>
