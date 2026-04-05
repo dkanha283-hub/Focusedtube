@@ -150,14 +150,15 @@ window.onload = () => {
 };
 
 // ADD CHANNEL
-function addChannel() {
+async function addChannel() {
+
   let input = document.getElementById("channelInput").value;
 
-  let id = extractChannel(input);
+  let channel = await extractChannel(input);
 
-  if (!id) return alert("Invalid link");
+  if (!channel) return alert("Invalid or unsupported link");
 
-  channels.push(id);
+  channels.push(channel);
   localStorage.setItem("channels", JSON.stringify(channels));
 
   renderChannels();
@@ -165,15 +166,36 @@ function addChannel() {
 }
 
 // EXTRACT ID OR USERNAME
-function extractChannel(url) {
+async function extractChannel(url) {
 
+  // CASE 1: Already channel ID
   if (url.includes("channel/")) {
-    return {type:"id", value:url.split("channel/")[1]};
+    return { type: "id", value: url.split("channel/")[1] };
   }
 
+  // CASE 2: @username → convert to ID
   if (url.includes("@")) {
-    let name = url.split("@")[1];
-    return {type:"user", value:name};
+
+    try {
+      let cleanUrl = url.split("?")[0];
+
+      let proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(cleanUrl)}`;
+
+      let res = await fetch(proxy);
+      let data = await res.json();
+
+      let html = data.contents;
+
+      // 🔥 Extract channelId from page
+      let match = html.match(/"channelId":"(UC[^"]+)"/);
+
+      if (match && match[1]) {
+        return { type: "id", value: match[1] };
+      }
+
+    } catch (e) {
+      console.log("Error extracting channel ID");
+    }
   }
 
   return null;
