@@ -14,7 +14,35 @@
       color: white;
     }
 
-    /* NAVBAR */
+    /* LOGIN SCREEN */
+    .login-screen {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    .logo-big {
+      font-size: 40px;
+      margin-bottom: 20px;
+    }
+
+    .login-btn {
+      padding: 12px 20px;
+      background: #4285F4;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* MAIN APP */
+    .app {
+      display: none;
+    }
+
     .navbar {
       height: 60px;
       background: #181818;
@@ -24,39 +52,11 @@
       border-bottom: 1px solid #333;
     }
 
-    .logo {
-      font-size: 18px;
-      font-weight: bold;
-      margin-right: 20px;
-    }
-
-    .nav-btn {
-      margin-right: 10px;
-      cursor: pointer;
-      padding: 6px 10px;
-      border-radius: 5px;
-    }
-
-    .nav-btn:hover {
-      background: #333;
-    }
-
-    .login-btn {
-      margin-left: auto;
-      background: #333;
-      border: none;
-      color: white;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-
-    /* LAYOUT */
     .container {
       display: flex;
       height: calc(100vh - 60px);
     }
 
-    /* SIDEBAR */
     .sidebar {
       width: 250px;
       background: #181818;
@@ -77,7 +77,6 @@
       background: #333;
     }
 
-    /* MAIN */
     .main {
       flex: 1;
       padding: 15px;
@@ -87,8 +86,8 @@
     .player {
       width: 100%;
       height: 300px;
-      border: none;
       border-radius: 10px;
+      border: none;
       margin-bottom: 15px;
     }
 
@@ -98,67 +97,33 @@
       gap: 15px;
     }
 
-    .video {
-      cursor: pointer;
-    }
-
     .video img {
       width: 100%;
       border-radius: 10px;
-    }
-
-    .video-title {
-      font-size: 14px;
-      margin-top: 5px;
-    }
-
-    .page {
-      display: none;
-    }
-
-    .active {
-      display: block;
     }
   </style>
 </head>
 
 <body>
 
-<!-- NAVBAR -->
-<div class="navbar">
-  <div class="logo">FocusTube 🎯</div>
-
-  <div class="nav-btn" onclick="showPage('home')">Home</div>
-  <div class="nav-btn" onclick="showPage('subscriptions')">Subscriptions</div>
-  <div class="nav-btn" onclick="showPage('history')">History</div>
-
-  <button class="login-btn" onclick="login()">Login</button>
+<!-- LOGIN PAGE -->
+<div id="loginScreen" class="login-screen">
+  <div class="logo-big">Focused <span style="color:red;">Tube</span></div>
+  <button class="login-btn" onclick="login()">Sign in with Google</button>
 </div>
 
-<div class="container">
+<!-- MAIN APP -->
+<div id="app" class="app">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar" id="channelList"></div>
+  <div class="navbar">FocusTube 🎯</div>
 
-  <!-- MAIN -->
-  <div class="main">
+  <div class="container">
 
-    <!-- HOME -->
-    <div id="home" class="page active">
-      <h2>Welcome to FocusTube</h2>
-      <p>Login and select a channel to start</p>
-    </div>
+    <div class="sidebar" id="channelList"></div>
 
-    <!-- SUBSCRIPTIONS -->
-    <div id="subscriptions" class="page">
+    <div class="main">
       <iframe id="player" class="player"></iframe>
       <div id="videos" class="videos"></div>
-    </div>
-
-    <!-- HISTORY -->
-    <div id="history" class="page">
-      <h2>History</h2>
-      <div id="historyList"></div>
     </div>
 
   </div>
@@ -168,13 +133,6 @@
 <script>
 
 let accessToken = "";
-let historyList = JSON.parse(localStorage.getItem("history")) || [];
-
-// PAGE SWITCH
-function showPage(page) {
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById(page).classList.add("active");
-}
 
 // LOGIN
 function login() {
@@ -183,6 +141,11 @@ function login() {
     scope: "https://www.googleapis.com/auth/youtube.readonly",
     callback: (res) => {
       accessToken = res.access_token;
+
+      // SWITCH UI
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("app").style.display = "block";
+
       loadSubscriptions();
     }
   }).requestAccessToken();
@@ -200,17 +163,14 @@ async function loadSubscriptions() {
   let data = await res.json();
 
   let list = document.getElementById("channelList");
-  list.innerHTML = "<h3>Channels</h3>";
+  list.innerHTML = "<h3>Subscriptions</h3>";
 
   data.items.forEach(item => {
     let div = document.createElement("div");
     div.className = "channel";
     div.innerText = item.snippet.title;
 
-    div.onclick = () => {
-      showPage("subscriptions");
-      loadVideos(item.snippet.resourceId.channelId);
-    };
+    div.onclick = () => loadVideos(item.snippet.resourceId.channelId);
 
     list.appendChild(div);
   });
@@ -233,49 +193,25 @@ async function loadVideos(channelId) {
 
   data.items.forEach((video, index) => {
     let vid = video.id.videoId;
-    let title = video.snippet.title;
     let thumb = video.snippet.thumbnails.medium.url;
 
     let div = document.createElement("div");
-    div.className = "video";
 
-    div.innerHTML = `
-      <img src="${thumb}">
-      <div class="video-title">${title}</div>
-    `;
+    div.innerHTML = `<img src="${thumb}">`;
 
-    div.onclick = () => playVideo(vid, title);
+    div.onclick = () => {
+      document.getElementById("player").src =
+        `https://www.youtube.com/embed/${vid}`;
+    };
 
     container.appendChild(div);
 
-    if (index === 0) playVideo(vid, title);
+    if (index === 0) {
+      document.getElementById("player").src =
+        `https://www.youtube.com/embed/${vid}`;
+    }
   });
 }
-
-// PLAY VIDEO + SAVE HISTORY
-function playVideo(id, title) {
-  document.getElementById("player").src =
-    `https://www.youtube.com/embed/${id}`;
-
-  historyList.unshift(title);
-  localStorage.setItem("history", JSON.stringify(historyList));
-
-  updateHistory();
-}
-
-// SHOW HISTORY
-function updateHistory() {
-  let list = document.getElementById("historyList");
-  list.innerHTML = "";
-
-  historyList.forEach(item => {
-    let div = document.createElement("div");
-    div.innerText = item;
-    list.appendChild(div);
-  });
-}
-
-updateHistory();
 
 </script>
 
