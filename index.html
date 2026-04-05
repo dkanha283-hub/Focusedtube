@@ -190,7 +190,6 @@ function loadData() {
 async function addItem(){
 
   let link = document.getElementById("linkInput").value.trim();
-
   let channelId = null;
 
   // normal channel link
@@ -198,7 +197,7 @@ async function addItem(){
     channelId = link.split("channel/")[1];
   }
 
-  // 🔥 @username support (YOUR BACKEND)
+  // @username via backend
   if(link.includes("@")){
     let handle = link.split("@")[1].split("?")[0];
 
@@ -206,15 +205,25 @@ async function addItem(){
       let res = await fetch("https://restless-brook-50e4.dkanha283.workers.dev/?handle=" + handle);
       let data = await res.json();
 
+      console.log("Backend response:", data);
+
       channelId = data.channelId;
     } catch (e) {
-      alert("Failed to fetch channel");
+      alert("Backend failed");
       return;
     }
   }
 
   if(!channelId){
-    alert("Invalid link");
+    alert("Invalid channel");
+    return;
+  }
+
+  // 🔥 IMPORTANT CLEAN FIX
+  channelId = channelId.trim();
+
+  if(!channelId.startsWith("UC")){
+    alert("Invalid channel ID");
     return;
   }
 
@@ -256,28 +265,29 @@ function deleteItem(i) {
 }
 
 // ===== VIDEO LOAD =====
-function loadVideos() {
+function loadVideos(){
+
   let container = document.getElementById("videos");
   container.innerHTML = "";
 
-  items.forEach(link => {
+  items.forEach(channelId => {
 
-    let videoId = null;
+    console.log("Loading channel:", channelId);
 
-    if (link.includes("watch?v=")) {
-      videoId = link.split("watch?v=")[1].split("&")[0];
-    }
+    // convert UC → UU
+    let playlistId = "UU" + channelId.substring(2);
 
-    if (link.includes("youtu.be/")) {
-      videoId = link.split("youtu.be/")[1].split("?")[0];
-    }
+    let iframe = document.createElement("iframe");
 
-    if (videoId) {
-      let iframe = document.createElement("iframe");
-      iframe.src = `https://www.youtube.com/embed/${videoId}`;
-      container.appendChild(iframe);
-    }
+    iframe.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
+    iframe.style.width = "100%";
+    iframe.style.height = "250px";
+    iframe.style.border = "none";
 
+    container.appendChild(iframe);
+
+  });
+}
   });
 }
 
