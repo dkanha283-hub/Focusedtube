@@ -46,20 +46,13 @@
       overflow:auto;
     }
 
-    .videos {
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-      gap:10px;
-    }
-
-    .video {
-      background:white;
+    iframe {
+      width:100%;
+      height:300px;
+      margin-bottom:15px;
       border-radius:10px;
-      overflow:hidden;
-      cursor:pointer;
+      border:none;
     }
-
-    .video img { width:100%; }
 
     .channel {
       padding:8px;
@@ -68,12 +61,6 @@
       border-radius:8px;
       display:flex;
       justify-content:space-between;
-    }
-
-    .note {
-      font-size:12px;
-      color:#666;
-      margin-top:8px;
     }
 
   </style>
@@ -101,22 +88,15 @@
 
     <div class="sidebar">
 
-      <input id="channelInput" placeholder="Paste channel ID or /channel link">
+      <input id="channelInput" placeholder="Paste channel ID or link">
       <button onclick="addChannel()">Add</button>
-
-      <div class="note">
-        ⚠ Use channel link like:<br>
-        youtube.com/channel/UCxxxx
-      </div>
 
       <h3>Subscriptions</h3>
       <div id="channelList"></div>
 
     </div>
 
-    <div class="main">
-      <div id="videos" class="videos"></div>
-    </div>
+    <div class="main" id="videos"></div>
 
   </div>
 
@@ -157,26 +137,17 @@ function loadChannels(){
 
 // EXTRACT CHANNEL ID
 function extractId(input){
-
-  if(input.includes("channel/")){
-    return input.split("channel/")[1];
-  }
-
-  if(input.startsWith("UC")){
-    return input;
-  }
-
+  if(input.includes("channel/")) return input.split("channel/")[1];
+  if(input.startsWith("UC")) return input;
   return null;
 }
 
 // ADD CHANNEL
 function addChannel(){
-
   let input=channelInput.value.trim();
-
   let id=extractId(input);
 
-  if(!id) return alert("Use channel link or UC ID");
+  if(!id) return alert("Invalid channel link");
 
   if(channels.includes(id)) return alert("Already added");
 
@@ -210,53 +181,20 @@ function deleteChannel(i){
   loadFeed();
 }
 
-// FEED
-async function loadFeed(){
+// 🚀 FEED (EMBED METHOD)
+function loadFeed(){
 
-  videos.innerHTML="Loading...";
+  let container=document.getElementById("videos");
+  container.innerHTML="";
 
-  let all=[];
+  channels.forEach(id=>{
 
-  for(let id of channels){
+    let iframe=document.createElement("iframe");
 
-    let rss=`https://www.youtube.com/feeds/videos.xml?channel_id=${id}`;
+    iframe.src=`https://www.youtube.com/embed?listType=user_uploads&list=${id}`;
 
-    try{
-      let proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(rss)}`;
-      let res=await fetch(proxy);
-      let data=await res.json();
+    container.appendChild(iframe);
 
-      let parser=new DOMParser();
-      let xml=parser.parseFromString(data.contents,"text/xml");
-
-      let entries=xml.getElementsByTagName("entry");
-
-      for(let i=0;i<entries.length;i++){
-
-        let vid=entries[i].getElementsByTagName("yt:videoId")[0].textContent;
-        let title=entries[i].getElementsByTagName("title")[0].textContent;
-
-        all.push({
-          id:vid,
-          title,
-          thumb:`https://img.youtube.com/vi/${vid}/mqdefault.jpg`
-        });
-      }
-
-    }catch(e){}
-  }
-
-  videos.innerHTML="";
-
-  all.forEach(v=>{
-    let div=document.createElement("div");
-    div.className="video";
-
-    div.innerHTML=`<img src="${v.thumb}"><div>${v.title}</div>`;
-
-    div.onclick=()=>window.open("https://youtube.com/watch?v="+v.id);
-
-    videos.appendChild(div);
   });
 }
 
