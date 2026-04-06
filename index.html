@@ -3,202 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FocusedTube | Pro Edition</title>
+    <title>FocusedTube Ultimate Pro</title>
     <style>
+        /* --- DYNAMIC THEME SYSTEM --- */
         :root {
-            --bg: #0a0a0a;
-            --panel: rgba(30, 30, 30, 0.85);
-            --card: #161616;
+            --bg: #0f0f0f;
+            --panel: rgba(24, 24, 24, 0.95);
+            --card: #1e1e1e;
             --text: #ffffff;
             --muted: #aaaaaa;
             --accent: #ff0000;
             --border: rgba(255, 255, 255, 0.1);
+            --shadow: 0 10px 40px rgba(0,0,0,0.6);
             --radius: 16px;
         }
 
+        body.light {
+            --bg: #f5f5f7;
+            --panel: rgba(255, 255, 255, 0.95);
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --muted: #86868b;
+            --border: rgba(0, 0, 0, 0.1);
+            --shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
         body {
-            margin: 0; background: var(--bg); color: var(--text);
-            font-family: 'Inter', sans-serif; overflow: hidden;
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, sans-serif;
+            overflow: hidden;
+            transition: background 0.3s ease;
         }
 
-        /* --- NAVIGATION --- */
-        .navbar {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 20px; background: var(--bg); border-bottom: 1px solid var(--border);
-            position: sticky; top: 0; z-index: 1000;
-        }
-        .logo { font-weight: 800; font-size: 1.3rem; cursor: pointer; }
-        .logo span { color: var(--accent); }
-        .nav-group { display: flex; gap: 10px; }
-        .nav-item { cursor: pointer; padding: 10px; border-radius: 12px; transition: 0.2s; }
-        .nav-item:hover { background: var(--panel); }
-
-        /* --- DRAWER --- */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 900; backdrop-filter: blur(5px); }
-        .drawer { 
-            position: fixed; top: -110%; left: 50%; transform: translateX(-50%); 
-            width: 95%; max-width: 500px; background: var(--panel); z-index: 1000; 
-            padding: 25px; border-radius: 0 0 20px 20px; transition: 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-            border: 1px solid var(--border);
-        }
-        .drawer.open { top: 0; }
-
-        /* --- MAIN CONTENT --- */
-        .main-content { height: calc(100vh - 65px); overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
-
-        /* --- VIDEO CARD --- */
-        .card { cursor: pointer; transition: 0.3s; }
-        .card:hover { transform: translateY(-5px); }
-        .thumb-wrap { width: 100%; aspect-ratio: 16/9; border-radius: var(--radius); overflow: hidden; position: relative; background: #222; }
-        .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .card-meta { display: flex; gap: 12px; padding: 12px 5px; }
-        .chan-logo { width: 36px; height: 36px; border-radius: 50%; background: #333; flex-shrink: 0; object-fit: cover; }
-        .v-title { font-weight: 600; font-size: 0.95rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .v-details { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
-
-        /* --- PRO PLAYER VIEW --- */
-        #player-view { display: none; flex-direction: column; gap: 15px; max-width: 1000px; margin: auto; animation: fadeIn 0.4s; }
-        .player-stage { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 20px; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        #video-frame { width: 100%; height: 100%; border: none; }
-        
-        /* Custom Controls Overlay */
-        .player-controls { display: flex; justify-content: center; gap: 20px; padding: 10px; }
-        .control-btn { background: var(--panel); border: 1px solid var(--border); color: white; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .control-btn:hover { background: var(--accent); border-color: var(--accent); }
-
-        /* --- CHANNEL PAGE --- */
-        #channel-header { display: none; align-items: center; gap: 20px; padding: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-        .ch-logo-lg { width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--accent); }
-
-        .hidden { display: none; }
+        /* --- UI ANIMATIONS --- */
+        @keyframes popIn { from { opacity: 0; transform: translate(-50%, -60%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- AUTH SYSTEM --- */
+        .auth-container { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
+        .auth-card { background: var(--panel); padding: 40px; border-radius: 24px; box-shadow: var(--shadow); width: 340px; text-align: center; border: 1px solid var(--border); }
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--border); background: rgba(128,128,128,0.1); color: var(--text); box-sizing: border-box; outline: none; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+
+        /* --- TOPBAR & NAVIGATION --- */
+        #app { display: none; height: 100vh; flex-direction: column; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 100; }
+        .logo { font-size: 1.4rem; font-weight: 900; cursor: pointer; }
+        .logo span { color: var(--accent); }
+        .nav-icons { display: flex; gap: 5px; align-items: center; }
+        .icon { font-size: 1.2rem; cursor: pointer; padding: 10px; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; }
+        .icon:hover { background: var(--panel); }
+        .profile-img { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); object-fit: cover; border: 2px solid var(--border); }
+
+        /* --- MODAL / POPUPS --- */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 900; backdrop-filter: blur(5px); animation: fadeIn 0.3s; }
+        .modal { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 90%; max-width: 450px; background: var(--panel); z-index: 1000; 
+            border-radius: 24px; padding: 25px; display: none; box-shadow: var(--shadow);
+            border: 1px solid var(--border); animation: popIn 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.27);
+        }
+
+        /* --- VIEWS --- */
+        .content-area { flex: 1; overflow-y: auto; padding: 20px; }
+        .view { display: none; animation: fadeIn 0.4s; }
+        .view.active { display: block; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+
+        /* --- VIDEO CARDS --- */
+        .card { cursor: pointer; transition: 0.3s; animation: slideUp 0.5s ease forwards; }
+        .card:hover { transform: translateY(-5px); }
+        .thumb-box { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: var(--radius); overflow: hidden; background: #222; }
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+        .card-meta { display: flex; gap: 12px; padding: 12px 5px; }
+        .v-logo { width: 36px; height: 36px; border-radius: 50%; background: #333; flex-shrink: 0; border: 1px solid var(--border); }
+        .v-title { font-weight: 600; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .v-sub { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+
+        /* --- PRO PLAYER --- */
+        #player-stage { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 20px; overflow: hidden; margin-bottom: 20px; }
+        .p-controls { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; }
+        .p-btn { background: var(--panel); border: 1px solid var(--border); color: white; padding: 12px 20px; border-radius: 14px; cursor: pointer; font-weight: bold; }
+        .p-btn:hover { background: var(--accent); }
+
+        /* --- LISTS --- */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); }
+        .list-item:hover { background: rgba(128,128,128,0.05); }
+
+        .loader { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 40px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="overlay" class="overlay" onclick="UI.closePanels()"></div>
+<div id="overlay" class="overlay" onclick="Modal.closeAll()"></div>
 
-<!-- APP WRAPPER -->
+<!-- AUTH VIEW -->
+<div id="auth-view" class="auth-container">
+    <div class="auth-card">
+        <h1 class="logo">Focused<span>Tube</span></h1>
+        <input id="u" placeholder="Username">
+        <input id="p" type="password" placeholder="Password">
+        <button onclick="Auth.action('login')">Login</button>
+        <p style="font-size:0.8rem; color:var(--muted); margin-top:15px; cursor:pointer;" onclick="Auth.action('reg')">Create Account</p>
+    </div>
+</div>
+
+<!-- MAIN APP -->
 <div id="app">
-    <nav class="navbar">
-        <div class="logo" onclick="App.setView('home')">Focused<span>Tube</span></div>
-        <div class="nav-group">
-            <div class="nav-item" onclick="UI.togglePanel('search-drawer')">🔍</div>
-            <div class="nav-item" onclick="UI.togglePanel('subs-drawer')">📺</div>
-            <div class="nav-item" onclick="App.setView('history')">⏱</div>
+    <nav class="topbar">
+        <div class="logo" onclick="Router.go('home')">Focused<span>Tube</span></div>
+        <div class="nav-icons">
+            <div class="icon" onclick="Modal.open('search-modal')">🔍</div>
+            <div class="icon" onclick="Modal.open('subs-modal')">📺</div>
+            <div class="icon" onclick="Modal.open('plist-modal')">📁</div>
+            <div class="icon" onclick="Router.go('history')">⏱</div>
+            <div class="icon" onclick="Modal.open('settings-modal')">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Kanha" class="profile-img">
+            </div>
         </div>
     </nav>
 
-    <!-- DRAWERS -->
-    <div id="search-drawer" class="drawer">
-        <h3 style="margin-top:0">Search</h3>
+    <!-- MODALS -->
+    <div id="search-modal" class="modal">
+        <h3>Search Distraction-Free</h3>
         <div style="display:flex; gap:10px;">
-            <input id="searchInput" style="flex:1; padding:12px; border-radius:10px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:white;" placeholder="Find videos...">
-            <button onclick="App.runSearch()" style="padding:10px 20px; background:var(--accent); border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer;">Go</button>
+            <input id="sq" placeholder="Keywords...">
+            <button onclick="App.search()" style="width:80px">Go</button>
         </div>
         <div id="search-results" class="video-grid" style="margin-top:20px; max-height:400px; overflow-y:auto;"></div>
     </div>
 
-    <div id="subs-drawer" class="drawer">
-        <h3 style="margin-top:0">Subscriptions</h3>
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <input id="chanInput" style="flex:1; padding:12px; border-radius:10px; border:1px solid var(--border); background:rgba(0,0,0,0.3); color:white;" placeholder="@handle or Channel ID">
-            <button onclick="App.addChannel()" style="padding:10px 20px; background:var(--accent); border:none; border-radius:10px; color:white; font-weight:bold; cursor:pointer;">Add</button>
+    <div id="subs-modal" class="modal">
+        <h3>My Subscriptions</h3>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <input id="chIn" placeholder="@handle or Channel ID">
+            <button onclick="App.addChannel()" style="width:80px">Add</button>
         </div>
-        <div id="subs-list"></div>
+        <div id="subs-list" style="max-height:300px; overflow-y:auto;"></div>
     </div>
 
-    <main class="main-content">
-        <!-- Channel Header (Hidden by default) -->
-        <div id="channel-header">
-            <img id="ch-logo-img" class="ch-logo-lg" src="">
-            <div>
-                <h1 id="ch-name-txt" style="margin:0">Channel Name</h1>
-                <p id="ch-stats-txt" style="color:var(--muted); margin:5px 0 0 0;"></p>
-            </div>
+    <div id="plist-modal" class="modal">
+        <h3>Playlists</h3>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <input id="plName" placeholder="New Playlist Name">
+            <button onclick="App.createPlaylist()" style="width:100px">Create</button>
+        </div>
+        <div id="plist-list"></div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <h3>In-App Settings</h3>
+        <div class="list-item" onclick="App.toggleTheme()">
+            <span>Dark / Light Mode</span>
+            <span>🌗</span>
+        </div>
+        <div class="list-item" onclick="App.clearCache()">
+            <span>Clear History</span>
+            <span>🗑</span>
+        </div>
+        <div class="list-item" onclick="Auth.logout()" style="color:var(--accent)">
+            <span>Logout</span>
+            <span>👤</span>
+        </div>
+        <button onclick="Modal.closeAll()" style="margin-top:20px; background:var(--panel); color:var(--text); border:1px solid var(--border)">Close</button>
+    </div>
+
+    <main class="content-area">
+        <!-- Home View -->
+        <div id="view-home" class="view">
+            <h2 id="home-title">Home Feed</h2>
+            <div id="home-loader" class="loader hidden"></div>
+            <div id="home-grid" class="video-grid"></div>
         </div>
 
-        <!-- Feed View -->
-        <div id="feed-view">
-            <h2 id="feed-title">Home Feed</h2>
-            <div id="main-grid" class="video-grid"></div>
+        <!-- Channel View -->
+        <div id="view-channel" class="view">
+            <div id="ch-header" style="display:flex; align-items:center; gap:20px; padding:20px; background:var(--panel); border-radius:20px; margin-bottom:20px;">
+                <img id="ch-lg" class="v-logo" style="width:80px; height:80px;">
+                <div>
+                    <h1 id="ch-name" style="margin:0">Channel Name</h1>
+                    <p id="ch-meta" style="color:var(--muted)"></p>
+                </div>
+            </div>
+            <div id="ch-grid" class="video-grid"></div>
         </div>
 
-        <!-- Pro Player View -->
-        <div id="player-view">
-            <button class="control-btn" style="width:fit-content" onclick="App.setView('home')">← Close Player</button>
-            <div class="player-stage">
-                <div id="player-iframe-container" style="width:100%; height:100%;"></div>
+        <!-- History View -->
+        <div id="view-history" class="view">
+            <h2>Watch History</h2>
+            <div id="history-grid" class="video-grid"></div>
+        </div>
+
+        <!-- Player View -->
+        <div id="view-player" class="view">
+            <button onclick="Router.go('home')" class="p-btn" style="margin-bottom:15px">← Back</button>
+            <div id="player-stage">
+                <div id="yt-iframe-container"></div>
             </div>
-            <div class="player-controls">
-                <button class="control-btn" onclick="Player.skip(-10)">-10s</button>
-                <button class="control-btn" onclick="Player.toggle()">Play/Pause</button>
-                <button class="control-btn" onclick="Player.skip(10)">+10s</button>
+            <div class="p-controls">
+                <button class="p-btn" onclick="Player.skip(-10)">-10s</button>
+                <button class="p-btn" onclick="Player.toggle()">Play/Pause</button>
+                <button class="p-btn" onclick="Player.skip(10)">+10s</button>
             </div>
-            <div style="padding:10px;">
-                <h2 id="p-title" style="margin:0">Video Title</h2>
-                <p id="p-chan" style="color:var(--accent); font-weight:bold; margin:5px 0; cursor:pointer;"></p>
-            </div>
+            <h2 id="p-title">Video Title</h2>
+            <p id="p-chan" style="color:var(--accent); font-weight:bold; cursor:pointer;"></p>
         </div>
     </main>
 </div>
 
-<!-- YouTube API -->
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-let ytPlayer;
+/* =========================
+   CONFIG & STATE
+========================= */
 const API = "https://restless-brook-50e4.dkanha283.workers.dev";
+let yt;
+
 const state = {
+    user: localStorage.getItem("login"),
     channels: JSON.parse(localStorage.getItem("channels") || "[]"),
-    history: JSON.parse(localStorage.getItem("history") || "[]")
+    history: JSON.parse(localStorage.getItem("history") || "[]"),
+    playlists: JSON.parse(localStorage.getItem("playlists") || "{}")
+};
+
+/* =========================
+   ROUTER SYSTEM
+========================= */
+const Router = {
+    go(viewId) {
+        Modal.closeAll();
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + viewId).classList.add('active');
+        if(viewId === 'home') App.loadHome();
+        if(viewId === 'history') App.renderGrid(state.history, 'history-grid');
+    }
+};
+
+/* =========================
+   MODAL SYSTEM
+========================= */
+const Modal = {
+    open(id) {
+        this.closeAll();
+        document.getElementById(id).style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+        if(id === 'subs-modal') this.renderSubs();
+        if(id === 'plist-modal') this.renderPlaylists();
+    },
+    closeAll() {
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        document.getElementById('overlay').style.display = 'none';
+    },
+    renderSubs() {
+        const list = document.getElementById('subs-list');
+        list.innerHTML = state.channels.map((c, i) => `
+            <div class="list-item">
+                <div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="App.openChannel('${c.channelId}')">
+                    <img src="${c.logo}" class="v-logo" style="width:30px; height:30px;">
+                    <span>${c.name}</span>
+                </div>
+                <span onclick="App.removeChannel(${i})" style="color:var(--accent); cursor:pointer;">✕</span>
+            </div>
+        `).join("");
+    },
+    renderPlaylists() {
+        const list = document.getElementById('plist-list');
+        list.innerHTML = Object.keys(state.playlists).map(name => `
+            <div class="list-item" onclick="App.viewPlaylist('${name}')">
+                <span>📁 ${name}</span>
+                <span>${state.playlists[name].length} videos</span>
+            </div>
+        `).join("");
+    }
 };
 
 /* =========================
    APP CORE
 ========================= */
 const App = {
-    setView(view, data = null) {
-        UI.closePanels();
-        document.getElementById("feed-view").style.display = (view === 'home' || view === 'history') ? 'block' : 'none';
-        document.getElementById("player-view").style.display = view === 'player' ? 'flex' : 'none';
-        document.getElementById("channel-header").style.display = view === 'channel' ? 'flex' : 'none';
-
-        if (view === 'home') this.loadHome();
-        if (view === 'history') this.renderGrid(state.history, "Watch History");
-    },
-
     async loadHome() {
-        if (state.channels.length === 0) return;
+        const grid = document.getElementById('home-grid');
+        const loader = document.getElementById('home-loader');
+        if(state.channels.length === 0) {
+            grid.innerHTML = "<p style='text-align:center; padding:50px;'>Subscribe to channels to see your feed!</p>";
+            return;
+        }
+        loader.classList.remove('hidden');
+        grid.innerHTML = "";
+        
         let all = [];
-        for (const ch of state.channels) {
+        for(const ch of state.channels) {
             try {
                 const r = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
                 const d = await r.json();
-                // Inject logo into video objects
-                const vids = (d.videos || []).map(v => ({...v, channelLogo: ch.logo, channelName: ch.name}));
+                const vids = (d.videos || []).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: ch.channelId}));
                 all.push(...vids);
             } catch(e){}
         }
         all.sort((a,b) => new Date(b.date) - new Date(a.date));
-        this.renderGrid(all, "Home Feed");
+        loader.classList.add('hidden');
+        this.renderGrid(all, 'home-grid');
     },
 
-    renderGrid(data, title) {
-        document.getElementById("feed-title").innerText = title;
-        const grid = document.getElementById("main-grid");
+    renderGrid(data, targetId) {
+        const grid = document.getElementById(targetId);
         grid.innerHTML = data.map(v => `
-            <div class="card" onclick='Player.load("${v.id}", "${encodeURIComponent(v.title)}", "${v.channelName}", "${v.channelId}")'>
-                <div class="thumb-wrap">
+            <div class="card" onclick='Player.load(${JSON.stringify(v).replace(/'/g, "&apos;")})'>
+                <div class="thumb-box">
                     <img src="${v.thumb}" loading="lazy">
                 </div>
                 <div class="card-meta">
-                    <img class="chan-logo" src="${v.channelLogo || 'https://via.placeholder.com/36'}" onclick="event.stopPropagation(); App.openChannel('${v.channelId}')">
-                    <div class="v-text">
+                    <img src="${v.chLogo || 'https://via.placeholder.com/36'}" class="v-logo" onclick="event.stopPropagation(); App.openChannel('${v.chId}')">
+                    <div>
                         <div class="v-title">${v.title}</div>
-                        <div class="v-details">${v.channelName} • ${v.date || ''}</div>
+                        <div class="v-sub">${v.chName || 'Channel'} • ${v.date || ''}</div>
                     </div>
                 </div>
             </div>
@@ -206,99 +331,109 @@ const App = {
     },
 
     async openChannel(id) {
-        this.setView('channel');
-        const grid = document.getElementById("main-grid");
+        Router.go('channel');
+        const grid = document.getElementById('ch-grid');
         grid.innerHTML = "Loading...";
-        
         try {
             const r = await fetch(`${API}?sections=1&channelId=${id}`);
             const d = await r.json();
-            const ch = state.channels.find(c => c.channelId === id) || {name: "Channel", logo: ""};
+            const ch = state.channels.find(c => c.channelId === id) || {name:"Channel", logo:""};
+            document.getElementById('ch-lg').src = ch.logo;
+            document.getElementById('ch-name').innerText = ch.name;
+            document.getElementById('ch-meta').innerText = `${d.counts.videos} Videos • ${d.counts.shorts} Shorts`;
             
-            document.getElementById("ch-logo-img").src = ch.logo;
-            document.getElementById("ch-name-txt").innerText = ch.name;
-            document.getElementById("ch-stats-txt").innerText = `${d.counts.videos} Videos • ${d.counts.shorts} Shorts`;
-            
-            const vids = [...(d.videos || []), ...(d.shorts || [])].map(v => ({...v, channelLogo: ch.logo, channelName: ch.name}));
-            this.renderGrid(vids, "Channel Content");
-            document.getElementById("feed-view").style.display = 'block'; 
-        } catch(e){ grid.innerHTML = "Error loading channel."; }
+            const vids = [...(d.videos||[]), ...(d.shorts||[])].map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: id}));
+            this.renderGrid(vids, 'ch-grid');
+        } catch(e){ grid.innerHTML = "Error."; }
     },
 
     async addChannel() {
-        const val = document.getElementById("chanInput").value.trim();
+        const val = document.getElementById('chIn').value.trim();
         const r = await fetch(`${API}?handle=${val.replace("@","")}`);
         const d = await r.json();
         if(d.channelId) {
             state.channels.unshift(d);
             localStorage.setItem("channels", JSON.stringify(state.channels));
-            UI.renderSubs();
+            Modal.renderSubs();
             this.loadHome();
         }
+    },
+
+    async search() {
+        const q = document.getElementById('sq').value;
+        const res = await fetch(`${API}?search=1&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        this.renderGrid(data, 'search-results');
+    },
+
+    toggleTheme() {
+        document.body.classList.toggle('light');
+        localStorage.setItem("theme", document.body.classList.contains('light') ? 'light' : 'dark');
+    },
+
+    clearCache() {
+        state.history = [];
+        localStorage.setItem("history", "[]");
+        alert("History cleared.");
+        Router.go('home');
     }
 };
 
 /* =========================
-   PRO PLAYER LOGIC
+   PRO PLAYER
 ========================= */
 const Player = {
-    load(id, title, channel, channelId) {
-        App.setView('player');
-        document.getElementById("p-title").innerText = decodeURIComponent(title);
-        document.getElementById("p-chan").innerText = channel;
-        document.getElementById("p-chan").onclick = () => App.openChannel(channelId);
+    load(video) {
+        Router.go('player');
+        document.getElementById('p-title').innerText = video.title;
+        document.getElementById('p-chan').innerText = video.chName || "Channel";
+        document.getElementById('p-chan').onclick = () => App.openChannel(video.chId);
 
-        if (ytPlayer) {
-            ytPlayer.loadVideoById(id);
+        if(yt) {
+            yt.loadVideoById(video.id);
         } else {
-            // Initialize Player
-            ytPlayer = new YT.Player('player-iframe-container', {
-                height: '100%',
-                width: '100%',
-                videoId: id,
+            yt = new YT.Player('yt-iframe-container', {
+                height: '100%', width: '100%', videoId: video.id,
                 playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1 },
                 events: { 'onReady': (e) => e.target.playVideo() }
             });
         }
+        // Save to history
+        state.history = [video, ...state.history.filter(v => v.id !== video.id)].slice(0, 50);
+        localStorage.setItem("history", JSON.stringify(state.history));
     },
-    skip(seconds) {
-        if (!ytPlayer) return;
-        const now = ytPlayer.getCurrentTime();
-        ytPlayer.seekTo(now + seconds, true);
+    skip(sec) {
+        if(yt) yt.seekTo(yt.getCurrentTime() + sec, true);
     },
     toggle() {
-        if (!ytPlayer) return;
-        const state = ytPlayer.getPlayerState();
-        if (state === 1) ytPlayer.pauseVideo();
-        else ytPlayer.playVideo();
+        if(!yt) return;
+        yt.getPlayerState() === 1 ? yt.pauseVideo() : yt.playVideo();
     }
 };
 
-const UI = {
-    togglePanel(id) {
-        document.getElementById(id).classList.toggle('open');
-        document.getElementById("overlay").style.display = 'block';
-        if(id === 'subs-drawer') this.renderSubs();
+/* =========================
+   AUTH LOGIC
+========================= */
+const Auth = {
+    action(type) {
+        const uVal = document.getElementById('u').value, pVal = document.getElementById('p').value;
+        let users = JSON.parse(localStorage.getItem("users") || "{}");
+        if(type === 'reg') {
+            users[uVal] = pVal; localStorage.setItem("users", JSON.stringify(users)); alert("Account created.");
+        } else {
+            if(users[uVal] === pVal) { localStorage.setItem("login", uVal); location.reload(); }
+            else alert("Error.");
+        }
     },
-    closePanels() {
-        document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
-        document.getElementById("overlay").style.display = 'none';
-    },
-    renderSubs() {
-        document.getElementById("subs-list").innerHTML = state.channels.map(c => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid var(--border);">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <img src="${c.logo}" style="width:30px; height:30px; border-radius:50%">
-                    <span>${c.name}</span>
-                </div>
-                <button onclick="App.openChannel('${c.channelId}')" style="background:none; border:1px solid var(--accent); color:var(--accent); border-radius:5px; cursor:pointer;">View</button>
-            </div>
-        `).join("");
-    }
+    logout() { localStorage.removeItem("login"); location.reload(); }
 };
 
-// Start App
-window.onload = () => { if(state.channels.length > 0) App.loadHome(); };
+if(state.user) {
+    document.getElementById('auth-view').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    Router.go('home');
+    if(localStorage.getItem("theme") === "light") document.body.classList.add('light');
+}
 </script>
 </body>
 </html>
