@@ -295,28 +295,30 @@ const state = {
     pendingVid: null
 };
 
+
 /* --- UTILITIES & TIME PARSING --- */
 const Utils = {
-    // Converts YouTube text like "3 days ago" into a mathematical timestamp for sorting
+    // Converts official ISO timestamp to milliseconds for perfect sorting
     parseRelativeDate(dateStr) {
-        if (!dateStr) return 0;
-        const now = Date.now();
-        const str = dateStr.toLowerCase();
-        const multipliers = {
-            second: 1000, minute: 60000, hour: 3600000, day: 86400000, week: 604800000, month: 2592000000, year: 31536000000
-        };
-        let amount = 1;
-        let unit = 'second';
-        for (const key in multipliers) {
-            if (str.includes(key)) {
-                unit = key;
-                const match = str.match(new RegExp(`(\\d+)\\s+${key}`));
-                if (match) amount = parseInt(match[1], 10);
-                break;
-            }
-        }
-        return now - (amount * multipliers[unit]);
+        if (!dateStr || dateStr === "Playlist") return 0;
+        return new Date(dateStr).getTime();
     },
+    // Checks if the official timestamp is within the last 30 days
+    isWithinOneMonth(dateStr) {
+        if (!dateStr || dateStr === "Playlist") return false; 
+        const videoTime = new Date(dateStr).getTime();
+        const oneMonthAgo = Date.now() - (30 * 24 * 60 * 60 * 1000); // 30 days in milliseconds
+        return videoTime > oneMonthAgo;
+    },
+    // Formats the ugly API date into a clean format for your video badges (e.g., "Apr 6, 2024")
+    formatDate(dateStr) {
+        if (!dateStr || dateStr === "Playlist" || dateStr === "Recent") return dateStr;
+        const d = new Date(dateStr);
+        if (isNaN(d)) return dateStr;
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+};
+
     // Checks if the string means 1 month or less
     isWithinOneMonth(dateStr) {
         if (!dateStr) return false; 
