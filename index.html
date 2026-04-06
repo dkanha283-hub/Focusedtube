@@ -307,7 +307,7 @@ const Router = {
         if(el) el.classList.add('active');
         
         if(view === 'home') App.initHome();
-        if(view === 'history') App.renderGrid(state.history, 'hist-grid');
+        if(view === 'history') App.renderGrid(state.history, 'hist-grid', 'history'); // Updated for History feature
         if(view === 'playlists') App.renderPlMaster();
     }
 };
@@ -369,15 +369,23 @@ const App = {
         document.getElementById('home-grid').insertAdjacentHTML('beforeend', this.buildCards(nextBatch));
     },
 
-    renderGrid(data, target) {
-        document.getElementById(target).innerHTML = this.buildCards(data);
+    // Updated to accept viewType
+    renderGrid(data, target, viewType = 'default') {
+        document.getElementById(target).innerHTML = this.buildCards(data, viewType);
     },
-    buildCards(data) {
+    // Updated to add delete button on history page
+    buildCards(data, viewType = 'default') {
         return data.map(v => {
             const safeObj = JSON.stringify(v).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
             const fLogo = v.chLogo || `https://api.dicebear.com/7.x/initials/svg?seed=${v.chName || 'C'}`;
+            
+            const deleteBtn = viewType === 'history' 
+                ? `<button class="add-p-btn" style="right: auto; left: 10px; background: rgba(255,0,0,0.8);" onclick="App.remHistoryItem(event, '${v.id}')" title="Remove from history">🗑️</button>` 
+                : '';
+
             return `
             <div class="card" onclick='Player.init(${safeObj})'>
+                ${deleteBtn}
                 <button class="add-p-btn" onclick="App.openAddPl(event, ${safeObj})">＋</button>
                 <div class="t-wrap"><img src="${v.thumb}" loading="lazy"></div>
                 <div class="meta">
@@ -538,7 +546,7 @@ const App = {
         this.renderGrid(state.playlists[name], 'pl-items-grid');
     },
 
-    /* Settings */
+    /* Settings & History */
     toggleTheme() {
         document.body.classList.toggle('light');
         localStorage.setItem("theme", document.body.classList.contains('light') ? 'light' : 'dark');
@@ -547,6 +555,14 @@ const App = {
         state.history = []; localStorage.setItem("history", "[]");
         UI.showToast("History Cleared");
         Modal.closeAll(); Router.go('home');
+    },
+    // New Feature: Remove specific item from history
+    remHistoryItem(e, videoId) {
+        e.stopPropagation(); 
+        state.history = state.history.filter(v => v.id !== videoId);
+        localStorage.setItem("history", JSON.stringify(state.history));
+        UI.showToast("Removed from history");
+        this.renderGrid(state.history, 'hist-grid', 'history');
     }
 };
 
