@@ -159,24 +159,27 @@
 <div id="player-wrapper">
     <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
         <button class="p-btn" onclick="Player.close()">✕ Close</button>
-        <button class="p-btn" onclick="Player.toggleFloat()">🔳 Mini-Player</button>
-    </div>
-    <div class="stage">
-        <!-- Gesture Shield -->
-        <div class="shield">
-            <div class="tap-zone tap-left" ondblclick="Player.seek(-10)" title="Double click to go back 10s"></div>
-            <div class="tap-zone tap-right" ondblclick="Player.seek(10)" title="Double click to go forward 10s"></div>
+        <div style="display:flex; gap: 10px;">
+            <button class="p-btn" onclick="Player.toggleFullScreen()" title="Full Screen">⛶ Full Screen</button>
+            <button class="p-btn" onclick="Player.toggleFloat()">🔳 Mini-Player</button>
         </div>
+    </div>
+    
+    <div class="stage">
+        <!-- The 'shield' has been removed so you can click the default YouTube controls! -->
         <!-- Iframe Container -->
         <div id="yt-player-host" style="width: 100%; height: 100%; border: none;"></div>
     </div>
+    
     <div class="hide-on-float" style="padding:15px 0 0 0;">
         <h2 id="p-title" style="margin:0; font-size:1.2rem; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;">Video Title</h2>
         <p id="p-chan" style="color:var(--accent); font-weight:800; cursor:pointer; margin:8px 0;"></p>
-        <div style="display:flex; justify-content:center; gap: 15px; margin-top:15px;">
-            <button class="p-btn" onclick="Player.seek(-10)">⏪ -10s</button>
-            <button class="p-btn" onclick="Player.togglePlay()">⏯ Play/Pause</button>
-            <button class="p-btn" onclick="Player.seek(10)">+10s ⏩</button>
+        
+        <!-- Updated Skip 10s Icons -->
+        <div style="display:flex; justify-content:center; gap: 20px; margin-top:15px;">
+            <button class="p-btn" style="font-size: 1.5rem; padding: 10px 25px;" onclick="Player.seek(-10)" title="Skip backward 10s">⏪</button>
+            <button class="p-btn" style="font-size: 1.5rem; padding: 10px 25px;" onclick="Player.togglePlay()" title="Play/Pause">⏯</button>
+            <button class="p-btn" style="font-size: 1.5rem; padding: 10px 25px;" onclick="Player.seek(10)" title="Skip forward 10s">⏩</button>
         </div>
     </div>
 </div>
@@ -536,29 +539,31 @@ const Player = {
     init(video) {
         const wrap = document.getElementById('player-wrapper');
         wrap.style.display = 'flex';
-        // Fixed BUG: Use 'floating' class consistently
         wrap.classList.remove('floating'); 
         
         document.getElementById('p-title').innerText = video.title;
         document.getElementById('p-chan').innerText = video.chName || 'Channel';
         document.getElementById('p-chan').onclick = () => { this.toggleFloat(); App.openChannel(video.chId); };
 
-        // Advanced Fix: Use the official YT API flag to ensure it's loaded safely
         if (ytPlayerObj && typeof ytPlayerObj.loadVideoById === 'function') {
             ytPlayerObj.loadVideoById(video.id);
         } else {
             if (isYTApiReady && window.YT && window.YT.Player) {
                 ytPlayerObj = new YT.Player('yt-player-host', {
                     height: '100%', width: '100%', videoId: video.id,
-                    playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1, 'origin': location.origin }
+                    playerVars: { 
+                        'autoplay': 1, 
+                        'rel': 0, 
+                        'modestbranding': 1, 
+                        'controls': 1, /* Explicitly enables default YouTube controls */
+                        'origin': location.origin 
+                    }
                 });
             } else {
-                // Failsafe iframe if YT Script is blocked or hasn't loaded yet
-                document.getElementById('yt-player-host').innerHTML = `<iframe style="width:100%;height:100%;border:none;" src="https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1" allow="autoplay; fullscreen"></iframe>`;
+                document.getElementById('yt-player-host').innerHTML = `<iframe style="width:100%;height:100%;border:none;" src="https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&controls=1" allow="autoplay; fullscreen"></iframe>`;
             }
         }
 
-        // Save History
         state.history = [video, ...state.history.filter(v => v.id !== video.id)].slice(0, 50);
         localStorage.setItem("history", JSON.stringify(state.history));
     },
@@ -574,26 +579,54 @@ const Player = {
     },
     toggleFloat() { 
         const wrap = document.getElementById('player-wrapper');
-        // Fixed BUG: Replaced .mini with .floating
         wrap.classList.toggle('floating');
         if(wrap.classList.contains('floating')) {
-            // Automatically return user to background feed to keep browsing
-            if (document.getElementById('view-channel').classList.contains('active')) {
-                 // stay on channel
-            } else {
+            // Automatically exit full screen if mini-player is triggered
+            if(document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            if (!document.getElementById('view-channel').classList.contains('active')) {
                 Router.go('home');
             }
         }
     },
+    toggleFullScreen() {
+        const wrap = document.getElementById('player-wrapper');
+        if (!document.fullscreenElement) {
+            // Request full screen on the entire wrapper so your custom buttons stay visible
+            if (wrap.requestFullscreen) {
+                wrap.requestFullscreen();
+            } else if (wrap.webkitRequestFullscreen) { /* Safari support */
+                wrap.webkitRequestFullscreen();
+            } else if (wrap.msRequestFullscreen) { /* IE11 support */
+                wrap.msRequestFullscreen();
+            }
+        } else {
+            // Exit full screen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { /* Safari support */
+                document.webkitExitFullscreen();
+            }
+        }
+    },
     close() { 
-        document.getElementById('player-wrapper').style.display = 'none';
+        const wrap = document.getElementById('player-wrapper');
+        wrap.style.display = 'none';
+        
+        // Ensure we exit full screen when closing the player
+        if(document.fullscreenElement) {
+            document.exitFullscreen();
+        }
+
         if(ytPlayerObj && typeof ytPlayerObj.stopVideo === 'function') {
             ytPlayerObj.stopVideo();
         } else {
-            document.getElementById('yt-player-host').innerHTML = ""; // Clear failsafe
+            document.getElementById('yt-player-host').innerHTML = ""; 
         }
     }
 };
+
 
 /* --- AUTH --- */
 const Auth = {
