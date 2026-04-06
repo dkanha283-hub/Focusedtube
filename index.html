@@ -42,6 +42,7 @@
         input:focus { border: 1px solid var(--accent); }
         button { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent); color: white; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 16px; }
         button:active { transform: scale(0.96); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* --- APP SHELL & TOPBAR --- */
         #app { display: none; height: 100vh; flex-direction: column; }
@@ -73,7 +74,7 @@
         .card:hover { transform: translateY(-6px); }
         .t-wrap { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: var(--radius); overflow: hidden; background: #222; }
         .t-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-        .card:hover .t-wrap img { transform: scale(1.05); } /* Advanced: slight image zoom on hover */
+        .card:hover .t-wrap img { transform: scale(1.05); } 
         
         .add-p-btn { 
             position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; 
@@ -95,17 +96,11 @@
             padding: 20px; z-index: 3000; display: none; flex-direction: column; 
             box-shadow: var(--shadow); border: 1px solid var(--border); transition: all 0.4s cubic-bezier(0.2, 0, 0, 1);
         }
-        /* Fixed BUG: Changed from .mini to .floating to match the JS toggle, or updated JS. Let's use .floating consistently */
         #player-wrapper.floating { 
             top: auto; left: auto; bottom: 20px; right: 20px; transform: none; 
             width: 320px; padding: 10px; border-radius: 16px; border: 2px solid var(--accent); background: var(--panel);
         }
         .stage { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 16px; overflow: hidden; position: relative; }
-        
-        .shield { position: absolute; inset: 0; z-index: 10; pointer-events: none; }
-        .tap-zone { position: absolute; top: 0; height: 100%; width: 30%; cursor: pointer; pointer-events: auto; }
-        .tap-left { left: 0; }
-        .tap-right { right: 0; }
 
         .p-btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .p-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
@@ -125,7 +120,6 @@
         .list-item:hover { background: rgba(128,128,128,0.08); }
         .loader { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 36px; height: 36px; animation: spin 0.8s linear infinite; margin: 40px auto; }
         
-        /* Advanced: Custom Toast Notifications */
         #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 4000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { background: var(--accent); color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; font-size: 14px; box-shadow: 0 5px 15px rgba(255,0,0,0.4); animation: toastFadeIn 0.3s ease forwards, toastFadeOut 0.3s ease 2.5s forwards; }
 
@@ -141,7 +135,7 @@
 
 <div id="overlay" class="overlay" onclick="Modal.closeAll()"></div>
 
-<!-- TOAST NOTIFICATIONS (Advanced Feature) -->
+<!-- TOAST NOTIFICATIONS -->
 <div id="toast-container"></div>
 
 <!-- AUTHENTICATION -->
@@ -166,7 +160,6 @@
     </div>
     
     <div class="stage">
-        <!-- The 'shield' has been removed so you can click the default YouTube controls! -->
         <!-- Iframe Container -->
         <div id="yt-player-host" style="width: 100%; height: 100%; border: none;"></div>
     </div>
@@ -175,7 +168,6 @@
         <h2 id="p-title" style="margin:0; font-size:1.2rem; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;">Video Title</h2>
         <p id="p-chan" style="color:var(--accent); font-weight:800; cursor:pointer; margin:8px 0;"></p>
         
-        <!-- Updated Skip 10s Icons -->
         <div style="display:flex; justify-content:center; gap: 20px; margin-top:15px;">
             <button class="p-btn" style="font-size: 1.5rem; padding: 10px 25px;" onclick="Player.seek(-10)" title="Skip backward 10s">⏪</button>
             <button class="p-btn" style="font-size: 1.5rem; padding: 10px 25px;" onclick="Player.togglePlay()" title="Play/Pause">⏯</button>
@@ -207,8 +199,8 @@
     <div id="subs-mod" class="modal">
         <h3 style="margin-top:0">Manage Subscriptions</h3>
         <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input id="chIn" placeholder="@handle or ID" style="margin:0;" onkeyup="if(event.key==='Enter') App.addChannel()">
-            <button onclick="App.addChannel()" style="width:80px; margin:0;">Add</button>
+            <input id="chIn" placeholder="Paste URL, @handle, or ID" style="margin:0;" onkeyup="if(event.key==='Enter') App.addChannel()">
+            <button id="add-ch-btn" onclick="App.addChannel()" style="width:80px; margin:0;">Add</button>
         </div>
         <div id="subs-list" style="max-height:300px; overflow-y:auto;"></div>
     </div>
@@ -277,7 +269,7 @@
 <script>
 const API = "https://restless-brook-50e4.dkanha283.workers.dev";
 
-// --- ADVANCED: Track if YouTube API has fully loaded
+// --- Track if YouTube API has fully loaded
 let isYTApiReady = false;
 function onYouTubeIframeAPIReady() {
     isYTApiReady = true;
@@ -302,7 +294,6 @@ const UI = {
         toast.className = 'toast';
         toast.innerText = message;
         container.appendChild(toast);
-        // Automatically remove the toast element from the DOM after animation completes
         setTimeout(() => { toast.remove(); }, 2800); 
     }
 };
@@ -328,7 +319,6 @@ const Modal = {
         document.getElementById(id).classList.add('active');
         if(id === 'subs-mod') this.renderSubs();
         
-        // Auto-focus inputs inside modals for better UX
         const input = document.getElementById(id).querySelector('input');
         if(input) setTimeout(() => input.focus(), 100);
     },
@@ -353,7 +343,6 @@ const App = {
     async initHome() {
         if(!state.channels.length) { document.getElementById('home-grid').innerHTML = "<p>No channels added. Use the 📺 icon to add some.</p>"; return; }
         
-        // Fetch and Shuffle logic
         if(state.homeFeedAll.length === 0) {
             document.getElementById('home-loader').classList.remove('hidden');
             let pool = [];
@@ -427,22 +416,63 @@ const App = {
     },
     async addChannel() {
         const inputEl = document.getElementById('chIn');
-        const val = inputEl.value.trim();
+        const btnEl = document.getElementById('add-ch-btn');
+        let val = inputEl.value.trim();
+        
         if(!val) return;
+
+        // Smart Parsing
+        if (val.includes('youtube.com/')) {
+            const urlParts = val.split('/');
+            val = urlParts.pop(); 
+            if (!val) val = urlParts.pop(); 
+        }
+        val = val.replace("@", "");
+
+        // Prevent Duplicates
+        const isDuplicate = state.channels.some(c => 
+            c.channelId === val || (c.handle && c.handle.toLowerCase() === val.toLowerCase())
+        );
+        if (isDuplicate) {
+            UI.showToast("You are already subscribed to this channel!");
+            inputEl.value = "";
+            return;
+        }
+
+        // UI Loading State
+        const originalBtnText = btnEl.innerText;
+        btnEl.innerText = "Adding...";
+        btnEl.disabled = true;
+
         try {
-            const r = await fetch(`${API}?handle=${val.replace("@","")}`);
+            const r = await fetch(`${API}?handle=${encodeURIComponent(val)}`);
             const d = await r.json();
-            if(d.channelId) { 
-                state.channels.unshift(d); 
+
+            if (d && (d.channelId || d.id)) { 
+                const newChannel = {
+                    channelId: d.channelId || d.id,
+                    name: d.name || d.title || val,
+                    logo: d.logo || d.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${val}`,
+                    handle: val
+                };
+
+                state.channels.unshift(newChannel); 
                 localStorage.setItem("channels", JSON.stringify(state.channels));
                 state.homeFeedAll = []; 
+                
                 Modal.closeAll(); 
                 inputEl.value = "";
-                UI.showToast("Channel Added Successfully!");
+                UI.showToast(`Subscribed to ${newChannel.name}!`);
                 Router.go('home'); 
+            } else {
+                UI.showToast("Could not find a channel with that handle.");
             }
         } catch (e) {
-            UI.showToast("Error finding channel.");
+            console.error("Subscription Error:", e);
+            UI.showToast("Network error. Please try again.");
+        } finally {
+            btnEl.innerText = originalBtnText;
+            btnEl.disabled = false;
         }
     },
     remChannel(i) {
@@ -555,7 +585,7 @@ const Player = {
                         'autoplay': 1, 
                         'rel': 0, 
                         'modestbranding': 1, 
-                        'controls': 1, /* Explicitly enables default YouTube controls */
+                        'controls': 1, 
                         'origin': location.origin 
                     }
                 });
@@ -581,7 +611,6 @@ const Player = {
         const wrap = document.getElementById('player-wrapper');
         wrap.classList.toggle('floating');
         if(wrap.classList.contains('floating')) {
-            // Automatically exit full screen if mini-player is triggered
             if(document.fullscreenElement) {
                 document.exitFullscreen();
             }
@@ -593,7 +622,6 @@ const Player = {
     toggleFullScreen() {
         const wrap = document.getElementById('player-wrapper');
         if (!document.fullscreenElement) {
-            // Request full screen on the entire wrapper so your custom buttons stay visible
             if (wrap.requestFullscreen) {
                 wrap.requestFullscreen();
             } else if (wrap.webkitRequestFullscreen) { /* Safari support */
@@ -602,7 +630,6 @@ const Player = {
                 wrap.msRequestFullscreen();
             }
         } else {
-            // Exit full screen
             if (document.exitFullscreen) {
                 document.exitFullscreen();
             } else if (document.webkitExitFullscreen) { /* Safari support */
@@ -614,7 +641,6 @@ const Player = {
         const wrap = document.getElementById('player-wrapper');
         wrap.style.display = 'none';
         
-        // Ensure we exit full screen when closing the player
         if(document.fullscreenElement) {
             document.exitFullscreen();
         }
@@ -626,7 +652,6 @@ const Player = {
         }
     }
 };
-
 
 /* --- AUTH --- */
 const Auth = {
