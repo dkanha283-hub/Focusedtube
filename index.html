@@ -3,418 +3,533 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FocusedTube | Premium Edition</title>
+    <title>FocusedTube | Ultimate Engine</title>
     <style>
-        /* --- THEME ENGINE --- */
+        /* --- CORE DESIGN & THEMES --- */
         :root {
             --bg: #000000;
-            --panel: rgba(20, 20, 20, 0.95);
-            --card: #111111;
+            --panel: rgba(22, 22, 22, 0.95);
+            --card: #151515;
             --text: #ffffff;
-            --muted: #888888;
+            --muted: #999999;
             --accent: #ff0000;
             --border: rgba(255, 255, 255, 0.1);
-            --shadow: 0 10px 40px rgba(0,0,0,0.8);
-            --radius: 20px;
+            --shadow: 0 15px 40px rgba(0,0,0,0.8);
+            --radius: 18px;
         }
 
         body.light {
-            --bg: #f5f5f7;
+            --bg: #f2f2f7;
             --panel: rgba(255, 255, 255, 0.95);
             --card: #ffffff;
             --text: #1d1d1f;
             --muted: #86868b;
-            --border: rgba(0, 0, 0, 0.1);
+            --border: rgba(0, 0, 0, 0.08);
+            --shadow: 0 10px 30px rgba(0,0,0,0.06);
         }
 
         body {
             margin: 0; background: var(--bg); color: var(--text);
             font-family: 'Inter', -apple-system, sans-serif;
             overflow: hidden; -webkit-font-smoothing: antialiased;
+            transition: background 0.3s ease;
         }
-
-        /* --- UI ANIMATIONS --- */
-        @keyframes viewIn { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        @keyframes popUp { from { opacity: 0; transform: translate(-50%, -45%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 
         /* --- AUTH SCREEN --- */
         #auth-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .auth-card { background: var(--panel); padding: 40px; border-radius: 30px; width: 340px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
-        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--border); background: rgba(128,128,128,0.1); color: var(--text); box-sizing: border-box; outline: none; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.95); }
+        .auth-card { background: var(--panel); padding: 40px; border-radius: 24px; width: 320px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--border); background: rgba(128,128,128,0.1); color: var(--text); box-sizing: border-box; outline: none; font-size: 16px; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 12px; background: var(--accent); color: white; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 16px; }
+        button:active { transform: scale(0.96); }
 
-        /* --- APP STRUCTURE --- */
+        /* --- APP SHELL & TOPBAR --- */
         #app { display: none; height: 100vh; flex-direction: column; }
-        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 1000; }
-        .logo { font-weight: 900; font-size: 1.4rem; cursor: pointer; letter-spacing: -1px; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 1000; position: relative; }
+        .logo { font-weight: 900; font-size: 1.5rem; cursor: pointer; letter-spacing: -1px; }
         .logo span { color: var(--accent); }
-        
-        .nav-icons { display: flex; gap: 8px; align-items: center; }
-        .icon-btn { font-size: 1.3rem; padding: 10px; cursor: pointer; border-radius: 14px; transition: 0.2s; }
-        .icon-btn:hover { background: var(--panel); transform: translateY(-2px); }
+        .nav-icons { display: flex; gap: 6px; align-items: center; }
+        .icon-btn { font-size: 1.3rem; padding: 10px; cursor: pointer; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+        .icon-btn:hover { background: var(--border); }
 
-        /* --- MODALS --- */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; z-index: 2000; backdrop-filter: blur(15px); }
+        /* --- POPUPS & OVERLAYS --- */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 2000; backdrop-filter: blur(10px); }
         .modal { 
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            width: 90%; max-width: 480px; background: var(--panel); z-index: 2100; 
-            padding: 30px; border-radius: 32px; display: none; border: 1px solid var(--border);
-            box-shadow: var(--shadow); animation: popUp 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.28);
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); 
+            width: 90%; max-width: 450px; background: var(--panel); z-index: 2100; 
+            padding: 25px; border-radius: 24px; border: 1px solid var(--border);
+            box-shadow: var(--shadow); opacity: 0; visibility: hidden; transition: 0.3s cubic-bezier(0.2, 0, 0, 1);
         }
-        .modal.active { display: block; }
+        .modal.active { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
 
-        /* --- CONTENT VIEWS --- */
-        .viewport { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
-        .view { display: none; animation: viewIn 0.4s ease-out forwards; }
+        /* --- MAIN CONTENT & VIEWS --- */
+        .viewport { flex: 1; overflow-y: auto; padding: 20px; position: relative; scroll-behavior: smooth; }
+        .view { display: none; animation: fadeIn 0.4s cubic-bezier(0.2, 0, 0, 1); }
         .view.active { display: block; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 28px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
 
-        /* --- VIDEO CARDS --- */
-        .card { cursor: pointer; transition: 0.3s cubic-bezier(0.2, 0, 0, 1); }
-        .card:hover { transform: translateY(-8px); }
-        .thumb-box { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: var(--radius); overflow: hidden; background: #111; }
-        .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+        /* --- VIDEO CARDS (Fixed Image Bug) --- */
+        .card { cursor: pointer; transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1); position: relative; }
+        .card:hover { transform: translateY(-6px); }
+        .t-wrap { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: var(--radius); overflow: hidden; background: #222; }
+        .t-wrap img { width: 100%; height: 100%; object-fit: cover; }
         
-        .card-add-btn { 
-            position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.8); color: white; 
+        .add-p-btn { 
+            position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; 
             border: none; border-radius: 12px; width: 36px; height: 36px; font-size: 1.4rem; 
-            cursor: pointer; opacity: 0; transition: 0.2s; z-index: 10;
+            cursor: pointer; opacity: 0; transition: 0.2s; z-index: 10; backdrop-filter: blur(4px);
         }
-        .card:hover .card-add-btn { opacity: 1; }
+        .card:hover .add-p-btn { opacity: 1; }
 
-        .meta { display: flex; gap: 14px; padding: 14px 5px; }
-        .chan-img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); background: #222; }
+        .meta { display: flex; gap: 12px; padding: 12px 4px; }
+        /* STRICT LOGO CSS to prevent Giant Icon Bug */
+        .c-logo { width: 38px !important; height: 38px !important; min-width: 38px; max-width: 38px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); background: #333; }
         .v-title { font-weight: 700; font-size: 1rem; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .v-sub { color: var(--muted); font-size: 0.85rem; margin-top: 5px; }
+        .v-sub { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
 
-        /* --- PRO PLAYER (GLOBAL) --- */
-        #player-wrap { 
+        /* --- GLOBAL PRO PLAYER (Fixed Stable Engine) --- */
+        #player-wrapper { 
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 90%; max-width: 1000px; background: var(--panel); border-radius: 30px; 
+            width: 95%; max-width: 1100px; background: var(--bg); border-radius: 24px; 
             padding: 20px; z-index: 3000; display: none; flex-direction: column; 
-            box-shadow: var(--shadow); border: 1px solid var(--border);
+            box-shadow: var(--shadow); border: 1px solid var(--border); transition: 0.4s cubic-bezier(0.2, 0, 0, 1);
         }
-        #player-wrap.mini { 
+        /* Floating Mini Player */
+        #player-wrapper.floating { 
             top: auto; left: auto; bottom: 20px; right: 20px; transform: none; 
-            width: 320px; padding: 10px; border-radius: 20px; border: 2px solid var(--accent);
+            width: 320px; padding: 10px; border-radius: 16px; border: 2px solid var(--accent); background: var(--panel);
         }
-        .stage { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 20px; overflow: hidden; position: relative; }
+        .stage { width: 100%; aspect-ratio: 16/9; background: #000; border-radius: 16px; overflow: hidden; position: relative; }
         
-        /* Gesture Layer */
-        .shield { position: absolute; inset: 0; display: flex; z-index: 10; cursor: pointer; }
-        .shield-half { flex: 1; height: 100%; }
+        /* Double Tap Zones (Left 30% / Right 30%) */
+        .tap-zone { position: absolute; top: 0; height: 100%; width: 30%; z-index: 50; cursor: pointer; }
+        .tap-left { left: 0; }
+        .tap-right { right: 0; }
 
-        .p-controls { display: flex; justify-content: center; gap: 15px; padding: 15px 0 0 0; }
-        .p-btn { background: var(--card); border: 1px solid var(--border); color: white; padding: 12px 20px; border-radius: 14px; cursor: pointer; font-weight: 800; }
+        .p-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 18px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .p-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .floating .hide-on-float { display: none; }
+
+        /* --- CHANNEL HEADER --- */
+        .ch-header { display: flex; align-items: center; gap: 20px; padding: 25px; background: var(--panel); border-radius: 24px; margin-bottom: 25px; border: 1px solid var(--border); }
+        .ch-header img { width: 80px !important; height: 80px !important; border-radius: 50%; border: 2px solid var(--accent); object-fit: cover; }
         
-        .mini .p-controls, .mini #p-details { display: none; }
+        /* Channel Tabs */
+        .tabs { display: flex; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .tab { padding: 10px 0; cursor: pointer; font-weight: 600; color: var(--muted); position: relative; }
+        .tab.active { color: var(--text); }
+        .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--accent); }
 
         /* --- UTILS --- */
-        .loader { border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 60px auto; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+        .list-item:hover { background: rgba(128,128,128,0.08); }
+        .loader { border: 3px solid var(--border); border-top: 3px solid var(--accent); border-radius: 50%; width: 36px; height: 36px; animation: spin 0.8s linear infinite; margin: 40px auto; }
+        
         @keyframes spin { to { transform: rotate(360deg); } }
-        .hidden { display: none; }
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; border-radius: 12px; }
-        .row:hover { background: rgba(128,128,128,0.1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="overlay" class="overlay" onclick="Modal.closeAll()"></div>
 
-<!-- AUTH -->
+<!-- AUTHENTICATION -->
 <div id="auth-screen">
     <div class="auth-card">
         <h1 class="logo">Focused<span>Tube</span></h1>
-        <p style="color:var(--muted); margin-bottom: 20px;">Welcome Back, Kanha</p>
+        <p style="color:var(--muted); margin-bottom:25px;">Secure Distraction-Free Access</p>
         <input id="uIn" placeholder="Username">
         <input id="pIn" type="password" placeholder="Password">
-        <button onclick="Auth.login()">Launch Experience</button>
+        <button onclick="Auth.login()">Enter Session</button>
     </div>
 </div>
 
-<!-- GLOBAL PLAYER -->
-<div id="player-wrap">
+<!-- GLOBAL STABLE PLAYER -->
+<div id="player-wrapper">
     <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
         <button class="p-btn" onclick="Player.close()">✕ Close</button>
-        <button class="p-btn" onclick="Player.toggleMini()">🔳 Mini-Player</button>
+        <button class="p-btn" onclick="Player.toggleFloat()">🔳 Mini-Player</button>
     </div>
     <div class="stage">
-        <div class="shield">
-            <div class="shield-half" ondblclick="Player.seek(-10)"></div>
-            <div class="shield-half" ondblclick="Player.seek(10)"></div>
-        </div>
-        <div id="yt-frame" style="width:100%; height:100%;"></div>
+        <!-- Tap Zones (Don't cover center to allow native clicks) -->
+        <div class="tap-zone tap-left" ondblclick="Player.seek(-10)"></div>
+        <div class="tap-zone tap-right" ondblclick="Player.seek(10)"></div>
+        <!-- Iframe Base -->
+        <iframe id="yt-frame" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen" allowfullscreen></iframe>
     </div>
-    <div id="p-details" style="padding:15px 0;">
-        <h2 id="p-title" style="margin:0; font-size:1.2rem;">Video Title</h2>
-        <p id="p-chan" style="color:var(--accent); font-weight:900; cursor:pointer; margin:8px 0;"></p>
+    <div class="hide-on-float" style="padding:15px 0 0 0;">
+        <h2 id="p-title" style="margin:0; font-size:1.2rem; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden;">Video Title</h2>
+        <p id="p-chan" style="color:var(--accent); font-weight:800; cursor:pointer; margin:8px 0;"></p>
         <div class="p-controls">
-            <button class="p-btn" onclick="Player.seek(-10)">-10s</button>
-            <button class="p-btn" onclick="Player.toggleState()">Play/Pause</button>
-            <button class="p-btn" onclick="Player.seek(10)">+10s</button>
+            <button class="p-btn" onclick="Player.seek(-10)">⏪ -10s</button>
+            <button class="p-btn" onclick="Player.togglePlay()">⏯ Play/Pause</button>
+            <button class="p-btn" onclick="Player.seek(10)">+10s ⏩</button>
         </div>
     </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- MAIN APP SHELL -->
 <div id="app">
-    <nav class="navbar">
+    <nav class="topbar">
         <div class="logo" onclick="Router.go('home')">Focused<span>Tube</span></div>
         <div class="nav-icons">
-            <div class="icon-btn" onclick="Modal.open('search-modal')">🔍</div>
-            <div class="icon-btn" onclick="Modal.open('subs-modal')">📺</div>
+            <div class="icon-btn" onclick="Modal.open('search-mod')">🔍</div>
+            <div class="icon-btn" onclick="Modal.open('subs-mod')">📺</div>
             <div class="icon-btn" onclick="Router.go('playlists')">📁</div>
             <div class="icon-btn" onclick="Router.go('history')">⏱</div>
-            <div class="icon-btn" onclick="Modal.open('settings-modal')">⚙️</div>
+            <div class="icon-btn" onclick="Modal.open('settings-mod')">⚙️</div>
         </div>
     </nav>
 
-    <main class="viewport">
-        <!-- VIEWS -->
-        <div id="view-home" class="view">
-            <h2>Recommended For You</h2>
-            <div id="home-loader" class="loader hidden"></div>
-            <div id="home-grid" class="grid"></div>
-        </div>
-
-        <div id="view-channel" class="view">
-            <div id="ch-header" style="display:flex; align-items:center; gap:25px; padding:30px; background:var(--panel); border-radius:30px; margin-bottom:30px; border:1px solid var(--border);">
-                <img id="ch-img-big" style="width:80px; height:80px; border-radius:50%; border:2px solid var(--accent);">
-                <div>
-                    <h1 id="ch-name-big" style="margin:0">Channel Name</h1>
-                    <p id="ch-meta-big" style="color:var(--muted); font-weight:700;"></p>
-                </div>
-            </div>
-            <div id="ch-grid" class="grid"></div>
-        </div>
-
-        <div id="view-playlists" class="view">
-            <h2>My Playlists</h2>
-            <div id="plist-grid" class="grid"></div>
-        </div>
-
-        <div id="view-plist-items" class="view">
-            <button class="p-btn" onclick="Router.go('playlists')">← All Playlists</button>
-            <h2 id="cur-plist-name" style="margin-top:20px;">Playlist</h2>
-            <div id="plist-items-grid" class="grid"></div>
-        </div>
-
-        <div id="view-history" class="view">
-            <h2>Watch History</h2>
-            <div id="history-grid" class="grid"></div>
-        </div>
-    </main>
-
-    <!-- MODALS -->
-    <div id="search-modal" class="modal">
-        <h3>Global Search</h3>
-        <input id="sq" style="width:100%; box-sizing:border-box; padding:14px; border-radius:15px; background:#000; color:white; border:1px solid var(--border);" placeholder="Search YouTube..." onkeyup="if(event.key==='Enter') App.search()">
-        <div id="search-results" class="grid" style="margin-top:20px; max-height:400px; overflow-y:auto;"></div>
+    <!-- MODALS (Z-INDEX LAYERED) -->
+    <div id="search-mod" class="modal">
+        <h3 style="margin-top:0">Search Engine</h3>
+        <input id="sq" placeholder="Type and hit enter..." onkeyup="if(event.key==='Enter') App.search()" style="width:100%; margin-bottom:15px;">
+        <div id="search-res" class="grid" style="max-height:350px; overflow-y:auto; gap:15px;"></div>
     </div>
 
-    <div id="subs-modal" class="modal">
-        <h3>Subscriptions</h3>
-        <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <input id="chIn" placeholder="@handle" style="flex:1;">
-            <button onclick="App.addChannel()" class="p-btn" style="width:80px;">Add</button>
+    <div id="subs-mod" class="modal">
+        <h3 style="margin-top:0">Manage Subscriptions</h3>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <input id="chIn" placeholder="@handle or ID" style="margin:0;">
+            <button onclick="App.addChannel()" style="width:80px; margin:0;">Add</button>
         </div>
         <div id="subs-list" style="max-height:300px; overflow-y:auto;"></div>
     </div>
 
-    <div id="add-plist-modal" class="modal">
-        <h3>Save to Playlist</h3>
-        <div id="plist-options" style="max-height:250px; overflow-y:auto;"></div>
-        <hr style="border:0; border-top:1px solid var(--border); margin:15px 0;">
-        <input id="newPlName" placeholder="New Playlist Name">
-        <button onclick="App.createAndSavePlaylist()" class="p-btn" style="width:100%; margin-top:10px;">Create & Save</button>
+    <div id="plist-add-mod" class="modal">
+        <h3 style="margin-top:0">Save Video</h3>
+        <div id="plist-ops" style="max-height:200px; overflow-y:auto; margin-bottom:15px;"></div>
+        <input id="newPlIn" placeholder="Create new playlist..." style="margin:0 0 10px 0;">
+        <button onclick="App.createAndSave()">Create & Add</button>
     </div>
 
-    <div id="settings-modal" class="modal">
-        <h3>Settings</h3>
-        <div class="row" onclick="App.toggleTheme()"><span>🌗 Dark / Light Mode</span></div>
-        <div class="row" onclick="Auth.logout()" style="color:var(--accent)"><span>👤 Logout</span></div>
+    <div id="settings-mod" class="modal">
+        <h3 style="margin-top:0">Preferences</h3>
+        <div class="list-item" onclick="App.toggleTheme()"><span>🌗 Toggle Dark/Light</span></div>
+        <div class="list-item" onclick="App.clearHistory()"><span>🗑 Clear History</span></div>
+        <div class="list-item" onclick="Auth.logout()" style="color:var(--accent)"><span>👤 Sign Out</span></div>
     </div>
+
+    <!-- VIEWPORT (Dynamic Content) -->
+    <main class="viewport" id="scroll-area">
+        <!-- HOME (Infinite Scroll + Shuffle) -->
+        <div id="view-home" class="view">
+            <h2>For You</h2>
+            <div id="home-grid" class="grid"></div>
+            <div id="home-loader" class="loader hidden"></div>
+        </div>
+
+        <!-- CHANNEL PAGE (Tabs Working) -->
+        <div id="view-channel" class="view">
+            <div class="ch-header">
+                <img id="ch-page-img" src="">
+                <div>
+                    <h1 id="ch-page-name" style="margin:0; font-size:1.8rem;">Channel</h1>
+                    <p id="ch-page-stats" style="margin:5px 0 0 0; color:var(--muted);"></p>
+                </div>
+            </div>
+            <div class="tabs">
+                <div class="tab active" id="tab-vids" onclick="App.switchTab('videos')">Videos</div>
+                <div class="tab" id="tab-shorts" onclick="App.switchTab('shorts')">Shorts</div>
+            </div>
+            <div id="ch-grid" class="grid"></div>
+        </div>
+
+        <!-- PLAYLIST MASTER -->
+        <div id="view-playlists" class="view">
+            <h2>My Collections</h2>
+            <div id="pl-master-grid" class="grid"></div>
+        </div>
+
+        <!-- PLAYLIST ITEMS -->
+        <div id="view-pl-items" class="view">
+            <button class="p-btn" onclick="Router.go('playlists')">← Back</button>
+            <h2 id="cur-pl-title" style="margin-top:20px;">Folder</h2>
+            <div id="pl-items-grid" class="grid"></div>
+        </div>
+
+        <!-- HISTORY -->
+        <div id="view-history" class="view">
+            <h2>History</h2>
+            <div id="hist-grid" class="grid"></div>
+        </div>
+    </main>
 </div>
 
+<!-- YT API -->
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
+/* =========================
+   CORE CONFIG & DATA
+========================= */
 const API = "https://restless-brook-50e4.dkanha283.workers.dev";
-let yt;
-let lastTap = 0;
 
 const state = {
     user: localStorage.getItem("login"),
     channels: JSON.parse(localStorage.getItem("channels") || "[]"),
     history: JSON.parse(localStorage.getItem("history") || "[]"),
     playlists: JSON.parse(localStorage.getItem("playlists") || "{}"),
-    pendingVideo: null
+    homeFeedAll: [],
+    visibleHomeItems: 0,
+    curChannelData: null,
+    pendingVid: null
 };
 
-/* --- ROUTER --- */
+/* =========================
+   ROUTER & MODALS
+========================= */
 const Router = {
-    go(viewId) {
+    go(view) {
         Modal.closeAll();
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        const t = document.getElementById('view-' + viewId);
-        if(t) t.classList.add('active');
-        if(viewId === 'home') App.loadHome();
-        if(viewId === 'history') App.renderGrid(state.history, 'history-grid');
-        if(viewId === 'playlists') App.renderPlaylistMaster();
+        const el = document.getElementById('view-' + view);
+        if(el) el.classList.add('active');
+        
+        if(view === 'home') App.initHome();
+        if(view === 'history') App.renderGrid(state.history, 'hist-grid');
+        if(view === 'playlists') App.renderPlMaster();
     }
 };
 
-/* --- MODALS --- */
 const Modal = {
     open(id) {
         this.closeAll();
-        document.getElementById(id).classList.add('active');
         document.getElementById('overlay').style.display = 'block';
+        document.getElementById(id).classList.add('active');
+        if(id === 'subs-mod') this.renderSubs();
     },
     closeAll() {
         document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
         document.getElementById('overlay').style.display = 'none';
+    },
+    renderSubs() {
+        document.getElementById('subs-list').innerHTML = state.channels.map((c, i) => `
+            <div class="list-item">
+                <div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="App.openChannel('${c.channelId}')">
+                    <img src="${c.logo}" class="c-logo" style="width:30px!important;height:30px!important;">
+                    <span style="font-weight:600;">${c.name}</span>
+                </div>
+                <span onclick="App.remChannel(${i})" style="color:var(--accent); font-weight:bold;">✕</span>
+            </div>`).join("");
     }
 };
 
-/* --- APP ENGINE --- */
+/* =========================
+   APP ENGINE
+========================= */
 const App = {
-    async loadHome() {
-        const grid = document.getElementById('home-grid');
-        const loader = document.getElementById('home-loader');
-        if(!state.channels.length) { grid.innerHTML = "<p style='text-align:center;'>Add channels to start.</p>"; return; }
-        
-        loader.classList.remove('hidden'); grid.innerHTML = "";
-        let all = [];
-        for(let ch of state.channels) {
-            try {
-                const r = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
-                const d = await r.json();
-                const vids = (d.videos || []).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: ch.channelId}));
-                all.push(...vids);
-            } catch(e){}
+    /* Home Feed & Infinite Scroll */
+    async initHome() {
+        if(!state.channels.length) { document.getElementById('home-grid').innerHTML = "<p>No channels. Add some to start!</p>"; return; }
+        if(state.homeFeedAll.length === 0) {
+            document.getElementById('home-loader').classList.remove('hidden');
+            let pool = [];
+            for(let ch of state.channels) {
+                try {
+                    const r = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
+                    const d = await r.json();
+                    const vids = (d.videos || []).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: ch.channelId}));
+                    pool.push(...vids);
+                } catch(e){}
+            }
+            // Shuffle Engine
+            state.homeFeedAll = pool.sort(() => Math.random() - 0.5);
+            document.getElementById('home-loader').classList.add('hidden');
         }
-        // Shuffle Mixture Logic
-        all.sort(() => Math.random() - 0.5);
-        loader.classList.add('hidden');
-        this.renderGrid(all, 'home-grid');
+        
+        document.getElementById('home-grid').innerHTML = "";
+        state.visibleHomeItems = 0;
+        this.loadMoreHome();
+    },
+    loadMoreHome() {
+        const nextBatch = state.homeFeedAll.slice(state.visibleHomeItems, state.visibleHomeItems + 20);
+        if(nextBatch.length === 0) return;
+        state.visibleHomeItems += 20;
+        const grid = document.getElementById('home-grid');
+        grid.insertAdjacentHTML('beforeend', this.buildCards(nextBatch));
     },
 
+    /* Universal Renderer */
     renderGrid(data, target) {
-        const grid = document.getElementById(target);
-        grid.innerHTML = data.map(v => `
-            <div class="card" onclick='Player.init(${JSON.stringify(v).replace(/'/g, "&apos;")})'>
-                <button class="card-add-btn" onclick="App.openAddPlaylist(event, ${JSON.stringify(v).replace(/'/g, "&apos;")})">＋</button>
-                <div class="thumb-box"><img src="${v.thumb}" onerror="this.src='https://via.placeholder.com/300x168?text=Focus+Tube'"></div>
+        document.getElementById(target).innerHTML = this.buildCards(data);
+    },
+    buildCards(data) {
+        return data.map(v => {
+            const safeObj = JSON.stringify(v).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+            // Dicebear Fallback to prevent Giant Icon Bug
+            const fLogo = v.chLogo || `https://api.dicebear.com/7.x/initials/svg?seed=${v.chName || 'C'}`;
+            return `
+            <div class="card" onclick='Player.init(${safeObj})'>
+                <button class="add-p-btn" onclick="App.openAddPl(event, ${safeObj})">＋</button>
+                <div class="t-wrap"><img src="${v.thumb}"></div>
                 <div class="meta">
-                    <img src="${v.chLogo || 'https://api.dicebear.com/7.x/initials/svg?seed='+v.chName}" class="chan-img">
+                    <img src="${fLogo}" class="c-logo" onclick="event.stopPropagation(); App.openChannel('${v.chId}')">
                     <div>
                         <div class="v-title">${v.title}</div>
-                        <div class="v-sub">${v.chName} • ${v.date || ''}</div>
+                        <div class="v-sub">${v.chName || 'Channel'} • ${v.date || ''}</div>
                     </div>
                 </div>
-            </div>`).join("");
+            </div>`;
+        }).join("");
     },
 
+    /* Channels */
     async openChannel(id) {
         Router.go('channel');
-        const grid = document.getElementById('ch-grid'); grid.innerHTML = "Loading...";
+        document.getElementById('ch-grid').innerHTML = "<div class='loader'></div>";
         try {
             const r = await fetch(`${API}?sections=1&channelId=${id}`);
             const d = await r.json();
-            const ch = state.channels.find(c => c.channelId === id);
-            document.getElementById('ch-img-big').src = ch.logo;
-            document.getElementById('ch-name-big').innerText = ch.name;
-            document.getElementById('ch-meta-big').innerText = `${d.counts.videos} Videos • ${d.counts.shorts} Shorts`;
-            const vids = [...(d.videos||[]), ...(d.shorts||[])].map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: id}));
-            this.renderGrid(vids, 'ch-grid');
-        } catch(e){}
+            const ch = state.channels.find(c => c.channelId === id) || {name:"Channel", logo:""};
+            state.curChannelData = {
+                videos: (d.videos||[]).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: id})),
+                shorts: (d.shorts||[]).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: id}))
+            };
+            document.getElementById('ch-page-img').src = ch.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${ch.name}`;
+            document.getElementById('ch-page-name').innerText = ch.name;
+            document.getElementById('ch-page-stats').innerText = `${d.counts.videos} Videos • ${d.counts.shorts} Shorts`;
+            this.switchTab('videos');
+        } catch(e){ document.getElementById('ch-grid').innerHTML = "Error."; }
+    },
+    switchTab(type) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('tab-' + (type==='videos'?'vids':'shorts')).classList.add('active');
+        this.renderGrid(state.curChannelData[type], 'ch-grid');
+    },
+    async addChannel() {
+        const val = document.getElementById('chIn').value.trim();
+        if(!val) return;
+        const r = await fetch(`${API}?handle=${val.replace("@","")}`);
+        const d = await r.json();
+        if(d.channelId) { 
+            state.channels.unshift(d); 
+            localStorage.setItem("channels", JSON.stringify(state.channels));
+            state.homeFeedAll = []; // Reset feed cache
+            Modal.closeAll(); Router.go('home'); 
+        }
+    },
+    remChannel(i) {
+        state.channels.splice(i, 1);
+        localStorage.setItem("channels", JSON.stringify(state.channels));
+        state.homeFeedAll = [];
+        Modal.renderSubs();
     },
 
-    /* --- PLAYLISTS --- */
-    openAddPlaylist(e, video) {
-        e.stopPropagation();
-        state.pendingVideo = video;
-        const list = document.getElementById('plist-options');
-        const keys = Object.keys(state.playlists);
-        list.innerHTML = keys.length ? keys.map(k => `<div class="row" onclick="App.saveToPlaylist('${k}')">📁 ${k}</div>`).join("") : "<p>No playlists yet.</p>";
-        Modal.open('add-plist-modal');
+    /* Search */
+    async search() {
+        const q = document.getElementById('sq').value;
+        const r = await fetch(`${API}?search=1&q=${encodeURIComponent(q)}`);
+        const d = await r.json();
+        document.getElementById('search-res').innerHTML = this.buildCards(d);
     },
-    createAndSavePlaylist() {
-        const name = document.getElementById('newPlName').value.trim();
+
+    /* Playlists */
+    openAddPl(e, video) {
+        e.stopPropagation();
+        state.pendingVid = video;
+        const ops = document.getElementById('plist-ops');
+        const keys = Object.keys(state.playlists);
+        ops.innerHTML = keys.map(k => `<div class="list-item" onclick="App.saveToPl('${k}')">📁 ${k}</div>`).join("");
+        Modal.open('plist-add-mod');
+    },
+    createAndSave() {
+        const name = document.getElementById('newPlIn').value.trim();
         if(!name) return;
         if(!state.playlists[name]) state.playlists[name] = [];
-        this.saveToPlaylist(name);
-        document.getElementById('newPlName').value = "";
+        this.saveToPl(name);
+        document.getElementById('newPlIn').value = "";
     },
-    saveToPlaylist(name) {
-        if(!state.playlists[name].some(v => v.id === state.pendingVideo.id)) {
-            state.playlists[name].push(state.pendingVideo);
+    saveToPl(name) {
+        if(!state.playlists[name].some(v => v.id === state.pendingVid.id)) {
+            state.playlists[name].push(state.pendingVid);
             localStorage.setItem("playlists", JSON.stringify(state.playlists));
         }
         Modal.closeAll();
     },
-    renderPlaylistMaster() {
-        const grid = document.getElementById('plist-grid');
-        grid.innerHTML = Object.keys(state.playlists).map(k => `
-            <div class="card" onclick="App.viewPlaylist('${k}')">
-                <div class="thumb-box" style="background:#222; display:flex; align-items:center; justify-content:center; font-size:3rem;">📁</div>
+    renderPlMaster() {
+        const keys = Object.keys(state.playlists);
+        document.getElementById('pl-master-grid').innerHTML = keys.map(k => `
+            <div class="card" onclick="App.viewPl('${k}')">
+                <div class="t-wrap" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">📁</div>
                 <div class="meta"><div><div class="v-title">${k}</div><div class="v-sub">${state.playlists[k].length} videos</div></div></div>
             </div>`).join("");
     },
-    viewPlaylist(name) {
+    viewPl(name) {
         Router.go('plist-items');
-        document.getElementById('cur-plist-name').innerText = name;
-        this.renderGrid(state.playlists[name], 'plist-items-grid');
+        document.getElementById('cur-pl-title').innerText = name;
+        this.renderGrid(state.playlists[name], 'pl-items-grid');
     },
 
-    async addChannel() {
-        const val = document.getElementById('chIn').value.trim();
-        const r = await fetch(`${API}?handle=${val.replace("@","")}`);
-        const d = await r.json();
-        if(d.channelId) { state.channels.unshift(d); localStorage.setItem("channels", JSON.stringify(state.channels)); Router.go('home'); }
-    },
-    async search() {
-        const q = document.getElementById('sq').value;
-        const res = await fetch(`${API}?search=1&q=${encodeURIComponent(q)}`);
-        const data = await res.json();
-        this.renderGrid(data, 'search-results');
-    },
+    /* Settings */
     toggleTheme() {
         document.body.classList.toggle('light');
         localStorage.setItem("theme", document.body.classList.contains('light') ? 'light' : 'dark');
+    },
+    clearHistory() {
+        state.history = []; localStorage.setItem("history", "[]");
+        Modal.closeAll(); Router.go('home');
     }
 };
 
-/* --- PRO PLAYER --- */
+/* --- SCROLL LISTENER (Infinite Feed) --- */
+document.getElementById('scroll-area').addEventListener('scroll', (e) => {
+    const el = e.target;
+    if(el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+        if(document.getElementById('view-home').classList.contains('active')) {
+            App.loadMoreHome();
+        }
+    }
+});
+
+/* =========================
+   PRO PLAYER (Bulletproof)
+========================= */
+let ytPlayerObj;
+
 const Player = {
     init(video) {
         const wrap = document.getElementById('player-wrap');
-        wrap.style.display = 'flex';
-        wrap.classList.remove('mini');
+        wrap.style.display = 'flex'; wrap.classList.remove('mini');
         document.getElementById('p-title').innerText = video.title;
-        document.getElementById('p-chan').innerText = video.chName;
-        
-        if(yt) {
-            yt.loadVideoById(video.id);
-        } else {
-            yt = new YT.Player('yt-frame', {
-                height: '100%', width: '100%', videoId: video.id,
-                playerVars: { 'autoplay': 1, 'rel': 0, 'modestbranding': 1, 'origin': location.origin },
-                events: { 'onReady': (e) => e.target.playVideo() }
-            });
+        document.getElementById('p-chan').innerText = video.chName || 'Channel';
+        document.getElementById('p-chan').onclick = () => { this.toggleFloat(); App.openChannel(video.chId); };
+
+        // Hybrid Approach: Set iframe SRC immediately, then attach YT API to it
+        const srcUrl = `https://www.youtube.com/embed/${video.id}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&origin=${window.location.origin}`;
+        document.getElementById('yt-frame').src = srcUrl;
+
+        // Try binding YT API for JS Controls
+        if(window.YT && window.YT.Player && !ytPlayerObj) {
+            try { ytPlayerObj = new YT.Player('yt-frame'); } catch(e){}
         }
+
+        // History save
         state.history = [video, ...state.history.filter(v => v.id !== video.id)].slice(0, 50);
         localStorage.setItem("history", JSON.stringify(state.history));
     },
-    seek(sec) { if(yt) yt.seekTo(yt.getCurrentTime() + sec, true); },
-    toggleState() { if(yt) yt.getPlayerState() === 1 ? yt.pauseVideo() : yt.playVideo(); },
-    toggleMini() { 
-        document.getElementById('player-wrap').classList.toggle('mini');
-        if(document.getElementById('player-wrap').classList.contains('mini')) Router.go('home');
+    seek(sec) { 
+        if(ytPlayerObj && ytPlayerObj.getCurrentTime) {
+            ytPlayerObj.seekTo(ytPlayerObj.getCurrentTime() + sec, true);
+        }
     },
-    close() { if(yt) yt.stopVideo(); document.getElementById('player-wrap').style.display = 'none'; }
+    togglePlay() {
+        if(ytPlayerObj && ytPlayerObj.getPlayerState) {
+            ytPlayerObj.getPlayerState() === 1 ? ytPlayerObj.pauseVideo() : ytPlayerObj.playVideo();
+        }
+    },
+    toggleFloat() { 
+        const wrap = document.getElementById('player-wrap');
+        wrap.classList.toggle('mini');
+        if(wrap.classList.contains('mini') && !document.getElementById('view-channel').classList.contains('active')) {
+            Router.go('home'); 
+        }
+    },
+    close() { 
+        document.getElementById('player-wrap').style.display = 'none';
+        document.getElementById('yt-frame').src = ""; // stop video
+    }
 };
 
 /* --- AUTH --- */
@@ -423,6 +538,7 @@ const Auth = {
     logout() { localStorage.removeItem("login"); location.reload(); }
 };
 
+/* --- BOOTSTRAP --- */
 if(state.user) {
     document.getElementById('auth-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
