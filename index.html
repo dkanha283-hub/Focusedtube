@@ -31,152 +31,46 @@
             color: var(--text);
             font-family: 'Segoe UI', Roboto, Arial, sans-serif;
             transition: background 0.3s ease;
-            overflow: hidden; /* Controlled by sections */
+            overflow: hidden;
         }
 
-        /* --- AUTH SCREEN --- */
-        .auth-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .auth-card {
-            background: var(--panel);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            text-align: center;
-            width: 320px;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: rgba(255,255,255,0.05);
-            color: var(--text);
-            box-sizing: border-box;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            background: var(--accent);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
+        /* --- AUTH SYSTEM --- */
+        .auth-container { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
+        .auth-card { background: var(--panel); padding: 30px; border-radius: 15px; box-shadow: var(--shadow); text-align: center; width: 320px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); box-sizing: border-box; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; }
 
         /* --- LAYOUT --- */
-        #app { display: none; height: 100vh; display: flex; flex-direction: column; }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background: var(--bg);
-            border-bottom: 1px solid var(--border);
-            z-index: 100;
-        }
-
+        #app { display: none; height: 100vh; flex-direction: column; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 100; }
         .logo { font-size: 1.4rem; font-weight: bold; cursor: pointer; }
         .logo span { color: var(--accent); }
-
         .nav-icons { display: flex; gap: 10px; }
-        .icon { 
-            font-size: 1.2rem; 
-            cursor: pointer; 
-            padding: 10px; 
-            border-radius: 12px;
-            background: var(--panel);
-            transition: 0.2s;
-        }
+        .icon { font-size: 1.2rem; cursor: pointer; padding: 10px; border-radius: 12px; background: var(--panel); transition: 0.2s; }
         .icon:hover { transform: scale(1.1); background: var(--card); }
 
-        /* --- FLOATING PANEL (Drawer) --- */
-        .overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            z-index: 900;
-            backdrop-filter: blur(4px);
-        }
-
-        .floating-panel {
-            position: fixed;
-            top: -100%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 95%;
-            max-width: 500px;
-            background: var(--panel);
-            z-index: 1000;
-            border-radius: 0 0 24px 24px;
-            padding: 24px;
-            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: var(--shadow);
-        }
-
+        /* --- DRAWER / PANELS --- */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 900; backdrop-filter: blur(4px); }
+        .floating-panel { position: fixed; top: -100%; left: 50%; transform: translateX(-50%); width: 95%; max-width: 500px; background: var(--panel); z-index: 1000; border-radius: 0 0 24px 24px; padding: 24px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: var(--shadow); }
         .floating-panel.open { top: 0; }
 
-        /* --- CONTENT --- */
-        .content-area {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            max-width: 1400px;
-            margin: auto;
-            width: 100%;
-            box-sizing: border-box;
-        }
+        /* --- CHANNEL HEADER & TABS --- */
+        .channel-header { display: flex; align-items: center; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+        .channel-logo-lg { width: 60px; height: 60px; border-radius: 50%; background: #333; }
+        .tab-container { display: flex; gap: 25px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .tab { padding: 10px 0; cursor: pointer; color: var(--muted); font-weight: 500; position: relative; font-size: 0.9rem; }
+        .tab.active { color: var(--text); }
+        .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--text); }
 
-        .video-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: transparent;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
+        /* --- CONTENT GRID --- */
+        .content-area { flex: 1; padding: 20px; overflow-y: auto; max-width: 1400px; margin: auto; width: 100%; box-sizing: border-box; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: transparent; cursor: pointer; transition: 0.3s; }
         .card:hover { transform: translateY(-5px); }
-
-        .thumb-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16/9;
-            border-radius: 14px;
-            overflow: hidden;
-            background: #222;
-        }
-
+        .thumb-container { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 14px; overflow: hidden; background: #222; }
         .thumb { width: 100%; height: 100%; object-fit: cover; }
-
-        .v-info { padding: 12px 0; display: flex; gap: 12px; }
-        .v-text { flex: 1; }
-        .v-title { 
-            font-weight: 600; 
-            font-size: 1rem; 
-            margin-bottom: 4px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+        .v-info { padding: 12px 0; }
+        .v-title { font-weight: 600; font-size: 1rem; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .v-meta { color: var(--muted); font-size: 0.85rem; }
 
         /* --- UTILS --- */
@@ -195,7 +89,7 @@
         <input id="userIn" placeholder="Username">
         <input id="passIn" type="password" placeholder="Password">
         <button onclick="handleAuth('login')">Login</button>
-        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 15px; cursor:pointer;" onclick="handleAuth('reg')">Create Free Account</p>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 15px; cursor:pointer;" onclick="handleAuth('reg')">Create Account</p>
     </div>
 </div>
 
@@ -212,35 +106,32 @@
     </div>
 
     <div id="search-panel" class="floating-panel">
-        <h3 style="margin-top:0">Distraction-Free Search</h3>
+        <h3 style="margin:0 0 15px 0">Search</h3>
         <div style="display:flex; gap:10px;">
             <input id="searchInput" placeholder="Search YouTube..." onkeyup="if(event.key==='Enter') runSearch()">
             <button onclick="runSearch()" style="width:80px">Go</button>
         </div>
-        <div id="search-results" style="max-height:400px; overflow-y:auto; margin-top:15px;" class="video-grid" style="grid-template-columns: 1fr 1fr;"></div>
+        <div id="search-results" style="max-height:400px; overflow-y:auto; margin-top:15px;" class="video-grid"></div>
         <div id="search-loader" class="loader hidden"></div>
     </div>
 
     <div id="subs-panel" class="floating-panel">
-        <h3 style="margin-top:0">My Channels</h3>
+        <h3 style="margin:0 0 15px 0">Channels</h3>
         <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input id="chanInput" placeholder="@handle or ChannelID">
+            <input id="chanInput" placeholder="@handle or ID">
             <button onclick="addChannel()" style="width:80px">Add</button>
         </div>
         <div id="subs-list" style="max-height:300px; overflow-y:auto;"></div>
     </div>
 
     <main id="content" class="content-area">
-        <div id="page-header" style="margin-bottom: 20px;"></div>
+        <div id="page-header"></div>
         <div id="main-grid" class="video-grid"></div>
         <div id="main-loader" class="loader hidden"></div>
     </main>
 </div>
 
 <script>
-/* =========================
-   CORE CONFIG (Your Worker)
-========================= */
 const API = "https://restless-brook-50e4.dkanha283.workers.dev";
 const PLAYER = "https://dkanha283-hub.github.io/Player/";
 
@@ -249,13 +140,10 @@ let state = {
     channels: JSON.parse(localStorage.getItem("channels") || "[]"),
     history: JSON.parse(localStorage.getItem("history") || "[]"),
     currentPage: 'home',
-    visibleItems: 24,
-    currentData: []
+    currentData: [],
+    currentChannelData: null
 };
 
-/* =========================
-   INIT
-========================= */
 function init() {
     if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
     if (state.user) {
@@ -266,42 +154,30 @@ function init() {
 }
 init();
 
-/* =========================
-   NAVIGATION & RENDER
-========================= */
+/* --- NAVIGATION --- */
 function showPage(page) {
     state.currentPage = page;
-    state.visibleItems = 24;
     closePanels();
-    
-    const header = document.getElementById("page-header");
-    const grid = document.getElementById("main-grid");
-    grid.innerHTML = "";
+    document.getElementById("main-grid").innerHTML = "";
+    document.getElementById("page-header").innerHTML = "";
 
     if (page === 'home') {
-        header.innerHTML = "<h2>Home Feed</h2>";
+        document.getElementById("page-header").innerHTML = "<h2>Home Feed</h2>";
         loadHomeFeed();
     } else if (page === 'history') {
-        header.innerHTML = "<h2>Watch History</h2>";
+        document.getElementById("page-header").innerHTML = "<h2>History</h2>";
         state.currentData = state.history;
-        renderGrid();
+        renderGrid(state.currentData);
     }
 }
 
 async function loadHomeFeed() {
     if (state.channels.length === 0) {
-        document.getElementById("main-grid").innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:100px 20px; color:var(--muted);">
-            <h3>Your feed is empty</h3>
-            <p>Add your favorite channels to watch without distractions.</p>
-            <button onclick="togglePanel('subs-panel')" style="width:200px">Add Channels</button>
-        </div>`;
+        document.getElementById("main-grid").innerHTML = "<p style='grid-column:1/-1;text-align:center;padding:50px;'>Add channels to start.</p>";
         return;
     }
-
     document.getElementById("main-loader").classList.remove("hidden");
-    let allContent = [];
-
-    // Map each channel to a fetch request using your Worker's ?sections=1
+    let all = [];
     const promises = state.channels.map(async (ch) => {
         try {
             const res = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
@@ -309,116 +185,116 @@ async function loadHomeFeed() {
             return [...(data.videos || []), ...(data.shorts || [])];
         } catch (e) { return []; }
     });
-
     const results = await Promise.all(promises);
-    allContent = results.flat();
-
-    // Sort by Date (Worker provides "2 days ago", etc. This is a basic sort)
-    // Note: Since Worker dates are strings, true date sorting requires parsing, 
-    // but for now, we'll keep them as they arrive from the Worker.
-    
-    // Filter duplicates
-    state.currentData = Array.from(new Map(allContent.map(v => [v.id, v])).values());
-    
+    all = results.flat().sort((a,b) => new Date(b.date) - new Date(a.date));
+    state.currentData = Array.from(new Map(all.map(v => [v.id, v])).values());
     document.getElementById("main-loader").classList.add("hidden");
-    renderGrid();
+    renderGrid(state.currentData);
 }
 
-function renderGrid() {
+/* --- CHANNEL PAGE SYSTEM --- */
+async function openChannelView(channelId, channelName) {
+    state.currentPage = 'channel';
+    closePanels();
+    const header = document.getElementById("page-header");
     const grid = document.getElementById("main-grid");
-    const displayList = state.currentData.slice(0, state.visibleItems);
-    
-    grid.innerHTML = displayList.map(v => `
+    const loader = document.getElementById("main-loader");
+
+    grid.innerHTML = "";
+    loader.classList.remove("hidden");
+
+    try {
+        const res = await fetch(`${API}?sections=1&channelId=${channelId}`);
+        const data = await res.json();
+        state.currentChannelData = data;
+        loader.classList.add("hidden");
+
+        const channelLogo = state.channels.find(c => c.channelId === channelId)?.logo || "";
+
+        header.innerHTML = `
+            <div class="channel-header">
+                <img src="${channelLogo}" class="channel-logo-lg">
+                <div>
+                    <h2 style="margin:0">${channelName}</h2>
+                    <p style="color:var(--muted); font-size:0.8rem;">${data.counts.videos} Videos • ${data.counts.shorts} Shorts</p>
+                </div>
+            </div>
+            <div class="tab-container">
+                <div class="tab active" onclick="switchTab(this, 'videos')">Videos</div>
+                <div class="tab" onclick="switchTab(this, 'shorts')">Shorts</div>
+                <div class="tab" onclick="switchTab(this, 'playlists')">Playlists</div>
+            </div>
+        `;
+        renderGrid(data.videos);
+    } catch (e) { loader.classList.add("hidden"); }
+}
+
+function switchTab(el, type) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderGrid(state.currentChannelData[type] || []);
+}
+
+function renderGrid(data) {
+    const grid = document.getElementById("main-grid");
+    grid.innerHTML = data.map(v => `
         <div class="card" onclick="openVideo('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId || ''}')">
             <div class="thumb-container">
                 <img class="thumb" src="${v.thumb}" loading="lazy">
             </div>
             <div class="v-info">
-                <div class="v-text">
-                    <div class="v-title">${v.title}</div>
-                    <div class="v-meta">${v.date || ''} • ${v.channelName || 'Subscribed'}</div>
-                </div>
+                <div class="v-title">${v.title}</div>
+                <div class="v-meta">${v.date || ''} ${v.channelName ? '• ' + v.channelName : ''}</div>
             </div>
         </div>
     `).join("");
 }
 
-/* =========================
-   STEP 5: SEARCH SYSTEM
-========================= */
+/* --- UTILS --- */
 async function runSearch() {
     const q = document.getElementById("searchInput").value.trim();
     if (!q) return;
-
     const loader = document.getElementById("search-loader");
     const resultsBox = document.getElementById("search-results");
-    
     loader.classList.remove("hidden");
     resultsBox.innerHTML = "";
-
     try {
         const res = await fetch(`${API}?search=1&q=${encodeURIComponent(q)}`);
         const data = await res.json();
-        
         loader.classList.add("hidden");
-        if (data.length === 0) {
-            resultsBox.innerHTML = "<p>No results found.</p>";
-            return;
-        }
-
         resultsBox.innerHTML = data.map(v => `
             <div class="card" onclick="openVideo('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId || ''}')">
-                <div class="thumb-container" style="aspect-ratio: 16/9;">
-                    <img class="thumb" src="${v.thumb}">
-                </div>
-                <div class="v-title" style="font-size:0.8rem; -webkit-line-clamp:1; margin-top:5px;">${v.title}</div>
+                <div class="thumb-container"><img class="thumb" src="${v.thumb}"></div>
+                <div class="v-title" style="font-size:0.8rem;">${v.title}</div>
             </div>
         `).join("");
-    } catch (e) {
-        loader.classList.add("hidden");
-        alert("Search failed. Check your worker.");
-    }
+    } catch (e) { loader.classList.add("hidden"); }
 }
 
-/* =========================
-   CHANNEL MANAGEMENT
-========================= */
 async function addChannel() {
     const input = document.getElementById("chanInput");
     const val = input.value.trim();
     if (!val) return;
-
-    const btn = event.target;
-    btn.innerText = "...";
-
     let url = val.includes("@") ? `${API}?handle=${val.replace("@","")}` : `${API}?id=${val}`;
-    
-    try {
-        const res = await fetch(url);
-        const d = await res.json();
-        
-        if (d.channelId) {
-            state.channels.unshift({ channelId: d.channelId, name: d.name, logo: d.logo });
-            localStorage.setItem("channels", JSON.stringify(state.channels));
-            renderSubsList();
-            input.value = "";
-            showPage('home');
-        } else {
-            alert("Channel not found");
-        }
-    } catch (e) { alert("API Error"); }
-    btn.innerText = "Add";
+    const res = await fetch(url);
+    const d = await res.json();
+    if (d.channelId) {
+        state.channels.unshift({ channelId: d.channelId, name: d.name, logo: d.logo });
+        localStorage.setItem("channels", JSON.stringify(state.channels));
+        renderSubsList();
+        input.value = "";
+    }
 }
 
 function renderSubsList() {
     const list = document.getElementById("subs-list");
     list.innerHTML = state.channels.map((c, i) => `
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border);">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <img src="${c.logo}" style="width:32px; height:32px; border-radius:50%; background:#333;">
-                <span style="font-weight:500;">${c.name}</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);">
+            <div onclick="openChannelView('${c.channelId}', '${c.name}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
+                <img src="${c.logo}" style="width:30px; height:30px; border-radius:50%;">
+                <span>${c.name}</span>
             </div>
-            <span onclick="removeChannel(${i})" style="color:var(--accent); cursor:pointer; font-weight:bold;">✕</span>
+            <span onclick="removeChannel(${i})" style="color:var(--accent); cursor:pointer;">✕</span>
         </div>
     `).join("");
 }
@@ -429,9 +305,13 @@ function removeChannel(i) {
     renderSubsList();
 }
 
-/* =========================
-   UI & PLAYER
-========================= */
+function openVideo(id, title, channelId) {
+    const video = { id, title: decodeURIComponent(title), thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`, channelId };
+    state.history = [video, ...state.history.filter(x => x.id !== id)].slice(0, 50);
+    localStorage.setItem("history", JSON.stringify(state.history));
+    window.location.href = `${PLAYER}?videoId=${id}&title=${title}&channelId=${channelId}`;
+}
+
 function togglePanel(id) {
     const panel = document.getElementById(id);
     const isOpen = panel.classList.contains("open");
@@ -448,15 +328,6 @@ function closePanels() {
     document.getElementById("overlay").style.display = "none";
 }
 
-function openVideo(id, title, channelId) {
-    // Save to history state
-    const video = { id, title: decodeURIComponent(title), thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`, channelId };
-    state.history = [video, ...state.history.filter(x => x.id !== id)].slice(0, 50);
-    localStorage.setItem("history", JSON.stringify(state.history));
-    
-    window.location.href = `${PLAYER}?videoId=${id}&title=${title}&channelId=${channelId}`;
-}
-
 function toggleTheme() {
     document.body.classList.toggle("light");
     localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
@@ -466,35 +337,19 @@ function handleAuth(type) {
     const u = document.getElementById("userIn").value;
     const p = document.getElementById("passIn").value;
     let users = JSON.parse(localStorage.getItem("users") || "{}");
-
     if (type === 'reg') {
-        if (users[u]) return alert("Username taken");
         users[u] = p;
         localStorage.setItem("users", JSON.stringify(users));
-        alert("Account created! You can now login.");
+        alert("Account Created");
     } else {
         if (users[u] === p) {
             localStorage.setItem("login", u);
             location.reload();
-        } else alert("Invalid credentials");
+        } else alert("Error");
     }
 }
 
-function logout() {
-    localStorage.removeItem("login");
-    location.reload();
-}
-
-/* --- INFINITE SCROLL --- */
-document.getElementById("content").onscroll = function(e) {
-    const el = e.target;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
-        if (state.visibleItems < state.currentData.length) {
-            state.visibleItems += 24;
-            renderGrid();
-        }
-    }
-};
+function logout() { localStorage.removeItem("login"); location.reload(); }
 </script>
 </body>
 </html>
