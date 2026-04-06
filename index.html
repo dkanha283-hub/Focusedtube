@@ -1,471 +1,435 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FocusedTube Ultimate</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusedTube Ultimate</title>
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --panel: #1e1e1e;
+            --card: #282828;
+            --text: #ffffff;
+            --muted: #aaaaaa;
+            --accent: #ff0000;
+            --border: rgba(255,255,255,0.1);
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
 
-<style>
-:root{
---bg:#0f0f0f;
---panel:#181818;
---card:#262626;
---text:#fff;
---muted:#aaa;
---accent:#ff2d2d;
---border:#333;
-}
+        body.light {
+            --bg: #f9f9f9;
+            --panel: #ffffff;
+            --card: #ffffff;
+            --text: #0f0f0f;
+            --muted: #606060;
+            --border: #e5e5e5;
+        }
 
-body.light{
---bg:#f5f5f5;
---panel:#fff;
---card:#fff;
---text:#111;
---muted:#666;
---border:#ddd;
-}
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            transition: background 0.3s ease;
+        }
 
-body{
-margin:0;
-background:var(--bg);
-color:var(--text);
-font-family:sans-serif;
-}
+        /* --- AUTH SYSTEM --- */
+        .auth-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
 
-*{box-sizing:border-box}
+        .auth-card {
+            background: var(--panel);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            width: 320px;
+        }
 
-/* LOGIN */
-.auth{
-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-gap:10px;
-}
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #2a2a2a;
+            color: white;
+            box-sizing: border-box;
+        }
 
-.auth input,.auth button{
-width:260px;
-padding:12px;
-border-radius:10px;
-border:none;
-}
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
 
-.auth button{
-background:var(--accent);
-color:#fff;
-font-weight:bold;
-}
+        /* --- LAYOUT --- */
+        #app { display: none; }
 
-/* APP */
-.app{display:none;height:100vh;overflow:hidden}
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
 
-/* TOPBAR */
-.topbar{
-display:flex;
-justify-content:space-between;
-padding:10px;
-background:var(--panel);
-border-bottom:1px solid var(--border);
-}
+        .logo { font-size: 1.4rem; font-weight: bold; cursor: pointer; }
+        .logo span { color: var(--accent); }
 
-.icon{
-padding:8px;
-background:#222;
-border-radius:10px;
-cursor:pointer;
-}
+        .nav-icons { display: flex; gap: 15px; }
+        .icon { 
+            font-size: 1.3rem; 
+            cursor: pointer; 
+            padding: 8px; 
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+        .icon:hover { background: var(--card); }
 
-/* CONTENT */
-.content{
-height:calc(100vh - 50px);
-overflow:auto;
-padding:12px;
-}
+        /* --- FLOATING PANEL (The Drawer) --- */
+        .panel-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            z-index: 900;
+        }
 
-/* GRID */
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-gap:12px;
-}
+        .floating-panel {
+            position: fixed;
+            top: -100%; /* Hidden above */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 95%;
+            max-width: 500px;
+            background: var(--panel);
+            z-index: 1000;
+            border-radius: 0 0 20px 20px;
+            padding: 20px;
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: var(--shadow);
+        }
 
-/* CARD */
-.card{
-background:var(--card);
-border-radius:10px;
-overflow:hidden;
-cursor:pointer;
-transition:.2s;
-}
-.card:hover{transform:scale(1.03)}
+        .floating-panel.open { top: 0; }
 
-.thumb{
-width:100%;
-aspect-ratio:16/9;
-object-fit:cover;
-}
+        /* --- CONTENT GRID --- */
+        .content-area {
+            padding: 20px;
+            max-width: 1400px;
+            margin: auto;
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+        }
 
-.title{
-padding:8px;
-font-size:14px;
-}
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
 
-/* PANEL */
-.panel{
-position:fixed;
-top:60px;
-right:10px;
-width:300px;
-background:var(--panel);
-padding:10px;
-border-radius:10px;
-display:none;
-z-index:10;
-}
-.panel.open{display:block}
+        .card {
+            background: transparent;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
 
-.empty{
-text-align:center;
-color:var(--muted);
-margin-top:20px;
-}
-</style>
+        .card:hover { transform: translateY(-5px); }
+
+        .thumb {
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #333;
+        }
+
+        .v-info { padding: 10px 0; }
+        .v-title { 
+            font-weight: 600; 
+            font-size: 0.95rem; 
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .v-meta { color: var(--muted); font-size: 0.85rem; }
+
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    </style>
 </head>
-
 <body>
 
-<!-- LOGIN -->
-<div id="auth" class="auth">
-<h2>FocusedTube</h2>
-<input id="u" placeholder="Username">
-<input id="p" type="password" placeholder="Password">
-<button onclick="login()">Login</button>
-<button onclick="register()">Create Account</button>
+<div id="overlay" class="panel-overlay" onclick="closePanels()"></div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="auth-container">
+    <div class="auth-card">
+        <h2>Focused<span>Tube</span></h2>
+        <input id="userIn" placeholder="Username">
+        <input id="passIn" type="password" placeholder="Password">
+        <button onclick="handleAuth('login')">Login</button>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 15px;" onclick="handleAuth('reg')">New here? Create Account</p>
+    </div>
 </div>
 
-<!-- APP -->
-<div id="app" class="app">
+<!-- MAIN APP -->
+<div id="app">
+    <div class="topbar">
+        <div class="logo" onclick="showPage('home')">Focused<span>Tube</span></div>
+        <div class="nav-icons">
+            <span class="icon" onclick="togglePanel('search-panel')">🔍</span>
+            <span class="icon" onclick="togglePanel('subs-panel')">📺</span>
+            <span class="icon" onclick="showPage('history')">⏱</span>
+            <span class="icon" onclick="toggleTheme()">🌗</span>
+            <span class="icon" onclick="logout()">👤</span>
+        </div>
+    </div>
 
-<div class="topbar">
-<div>📌 FocusedTube</div>
-<div>
-<span class="icon" onclick="showHome()">🏠</span>
-<span class="icon" onclick="toggleSubs()">📺</span>
-<span class="icon" onclick="showHistory()">⏱</span>
-<span class="icon" onclick="toggleTheme()">🌗</span>
-<span class="icon" onclick="toggleSearch()">🔍</span>
-<span class="icon" onclick="logout()">👤</span>
-</div>
-</div>
+    <!-- SUBSCRIPTION PANEL -->
+    <div id="subs-panel" class="floating-panel">
+        <h3 style="margin-top:0">Subscribed Channels</h3>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <input id="chanInput" placeholder="@handle or ChannelID">
+            <button onclick="addChannel()" style="width:80px">Add</button>
+        </div>
+        <div id="subs-list" style="max-height:300px; overflow-y:auto;"></div>
+    </div>
 
-<div id="subs" class="panel"></div>
-<div id="searchPanel" class="panel"></div>
+    <!-- SEARCH PANEL -->
+    <div id="search-panel" class="floating-panel">
+        <h3 style="margin-top:0">Search Distraction-Free</h3>
+        <input id="searchInput" placeholder="Search YouTube..." onkeyup="if(event.key==='Enter') runSearch()">
+        <div id="search-results" style="max-height:300px; overflow-y:auto; margin-top:10px;"></div>
+    </div>
 
-<div id="content" class="content"></div>
-
+    <!-- MAIN CONTENT -->
+    <main id="content" class="content-area">
+        <div id="view-title"></div>
+        <div id="main-grid" class="video-grid"></div>
+        <div id="loader" style="text-align:center; padding:20px; display:none;">Loading...</div>
+    </main>
 </div>
 
 <script>
+/* =========================
+   STATE & CONSTANTS
+========================= */
+const API = "https://restless-brook-50e4.dkanha283.workers.dev";
+const PLAYER = "https://dkanha283-hub.github.io/Player/";
+
+let state = {
+    user: localStorage.getItem("login"),
+    channels: JSON.parse(localStorage.getItem("channels") || "[]"),
+    history: JSON.parse(localStorage.getItem("history") || "[]"),
+    currentPage: 'home',
+    visibleCount: 20,
+    currentData: []
+};
 
 /* =========================
-   GLOBAL STATE
+   INITIALIZATION
 ========================= */
-const API="https://restless-brook-50e4.dkanha283.workers.dev";
-const PLAYER="https://dkanha283-hub.github.io/Player/";
-
-let channels=[];
-let historyData=[];
-let homeData=[];
-let searchData=[];
-let visible=20;
-let page="home";
-
-/* =========================
-   INIT
-========================= */
-function init(){
-channels=JSON.parse(localStorage.getItem("channels")||"[]");
-historyData=JSON.parse(localStorage.getItem("history")||"[]");
-
-if(localStorage.getItem("theme")==="light"){
-document.body.classList.add("light");
-}
-
-if(localStorage.getItem("login")){
-auth.style.display="none";
-app.style.display="block";
-showHome();
-}else{
-auth.style.display="flex";
-app.style.display="none";
-}
+function init() {
+    if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+    
+    if (state.user) {
+        document.getElementById("auth-screen").style.display = "none";
+        document.getElementById("app").style.display = "block";
+        showPage('home');
+    }
 }
 init();
 
 /* =========================
-   AUTH SYSTEM
+   CORE FUNCTIONS
 ========================= */
-function register(){
-let users=JSON.parse(localStorage.getItem("users")||"{}");
-if(users[u.value]) return alert("User exists");
-users[u.value]=p.value;
-localStorage.setItem("users",JSON.stringify(users));
-alert("Account created");
+function showPage(page) {
+    state.currentPage = page;
+    state.visibleCount = 20;
+    closePanels();
+    
+    const grid = document.getElementById("main-grid");
+    grid.innerHTML = "";
+    
+    if (page === 'home') {
+        loadHomeFeed();
+    } else if (page === 'history') {
+        document.getElementById("view-title").innerHTML = "<h2>Watch History</h2>";
+        renderGrid(state.history);
+    }
 }
 
-function login(){
-let users=JSON.parse(localStorage.getItem("users")||"{}");
-if(users[u.value]===p.value){
-localStorage.setItem("login","1");
-init();
-}else alert("Invalid login");
+async function loadHomeFeed() {
+    if (state.channels.length === 0) {
+        document.getElementById("main-grid").innerHTML = "<div style='grid-column: 1/-1; text-align:center; padding:50px;'>Add channels to start your focused feed!</div>";
+        return;
+    }
+
+    document.getElementById("loader").style.display = "block";
+    let allVideos = [];
+
+    // Fetch from all subs
+    const fetchPromises = state.channels.map(async (ch) => {
+        try {
+            const r = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
+            const d = await r.json();
+            return [...(d.videos || []), ...(d.shorts || [])];
+        } catch (e) { return []; }
+    });
+
+    const results = await Promise.all(fetchPromises);
+    allVideos = results.flat();
+
+    // Sort by newest & Filter duplicates
+    allVideos.sort((a, b) => new Date(b.date) - new Date(a.date));
+    state.currentData = Array.from(new Map(allVideos.map(v => [v.id, v])).values());
+
+    document.getElementById("loader").style.display = "none";
+    renderGrid(state.currentData);
 }
 
-function logout(){
-localStorage.removeItem("login");
-location.reload();
+function renderGrid(data) {
+    const grid = document.getElementById("main-grid");
+    const items = data.slice(0, state.visibleCount);
+    
+    grid.innerHTML = items.map(v => `
+        <div class="card" onclick="openPlayer('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId}')">
+            <img class="thumb" src="${v.thumb}" loading="lazy">
+            <div class="v-info">
+                <div class="v-title">${v.title}</div>
+                <div class="v-meta">${v.channelName || 'Subscribed Channel'}</div>
+            </div>
+        </div>
+    `).join("");
+}
+
+function openPlayer(id, title, channelId) {
+    // Save to history
+    const videoObj = { id, title: decodeURIComponent(title), thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`, channelId };
+    state.history = [videoObj, ...state.history.filter(x => x.id !== id)].slice(0, 50);
+    localStorage.setItem("history", JSON.stringify(state.history));
+
+    window.location.href = `${PLAYER}?videoId=${id}&title=${title}&channelId=${channelId}`;
 }
 
 /* =========================
-   THEME
+   UI HELPERS
 ========================= */
-function toggleTheme(){
-document.body.classList.toggle("light");
-localStorage.setItem("theme",
-document.body.classList.contains("light")?"light":"dark");
+function togglePanel(id) {
+    const panel = document.getElementById(id);
+    const isOpening = !panel.classList.contains('open');
+    
+    closePanels();
+    if (isOpening) {
+        panel.classList.add('open');
+        document.getElementById("overlay").style.display = "block";
+        if (id === 'subs-panel') renderSubsList();
+    }
+}
+
+function closePanels() {
+    document.querySelectorAll('.floating-panel').forEach(p => p.classList.remove('open'));
+    document.getElementById("overlay").style.display = "none";
+}
+
+function renderSubsList() {
+    const list = document.getElementById("subs-list");
+    list.innerHTML = state.channels.map((c, i) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);">
+            <div onclick="openChannelView('${c.channelId}', '${c.name}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
+                <img src="${c.logo}" style="width:30px; height:30px; border-radius:50%;">
+                <span>${c.name}</span>
+            </div>
+            <span onclick="removeChannel(${i})" style="cursor:pointer; color:var(--accent)">✕</span>
+        </div>
+    `).join("");
+}
+
+async function addChannel() {
+    const val = document.getElementById("chanInput").value.trim();
+    if (!val) return;
+
+    const url = val.includes("@") ? `${API}?handle=${val.replace("@","")}` : `${API}?channelId=${val}`;
+    try {
+        const r = await fetch(url);
+        const d = await r.json();
+        state.channels.unshift({ channelId: d.channelId, name: d.name, logo: d.logo });
+        localStorage.setItem("channels", JSON.stringify(state.channels));
+        renderSubsList();
+        document.getElementById("chanInput").value = "";
+    } catch (e) { alert("Channel not found"); }
+}
+
+function removeChannel(i) {
+    state.channels.splice(i, 1);
+    localStorage.setItem("channels", JSON.stringify(state.channels));
+    renderSubsList();
+}
+
+function toggleTheme() {
+    document.body.classList.toggle("light");
+    localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
 }
 
 /* =========================
-   CARD RENDER
+   AUTH LOGIC
 ========================= */
-function card(v){
-let d=document.createElement("div");
-d.className="card";
+function handleAuth(type) {
+    const u = document.getElementById("userIn").value;
+    const p = document.getElementById("passIn").value;
+    let users = JSON.parse(localStorage.getItem("users") || "{}");
 
-d.innerHTML=`
-<img class="thumb" src="${v.thumb}">
-<div class="title">${v.title}</div>
-`;
-
-d.onclick=()=>openPlayer(v);
-return d;
+    if (type === 'reg') {
+        if (users[u]) return alert("Exists");
+        users[u] = p;
+        localStorage.setItem("users", JSON.stringify(users));
+        alert("Created!");
+    } else {
+        if (users[u] === p) {
+            localStorage.setItem("login", u);
+            location.reload();
+        } else alert("Error");
+    }
 }
 
-/* =========================
-   PLAYER
-========================= */
-function openPlayer(v){
-historyData=[v,...historyData.filter(x=>x.id!==v.id)].slice(0,50);
-localStorage.setItem("history",JSON.stringify(historyData));
-
-location.href=`${PLAYER}?videoId=${v.id}&title=${encodeURIComponent(v.title)}&channelId=${v.channelId}`;
-}
-
-/* =========================
-   HOME FEED
-========================= */
-async function showHome(){
-page="home";
-content.innerHTML="Loading...";
-
-let all=[];
-
-for(let ch of channels){
-try{
-let r=await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
-let d=await r.json();
-
-all.push(...(d.videos||[]).slice(0,200));
-all.push(...(d.shorts||[]).slice(0,100));
-
-}catch{}
-}
-
-all.sort((a,b)=>new Date(b.date)-new Date(a.date));
-
-homeData=all;
-renderHome();
-}
-
-function renderHome(){
-content.innerHTML="";
-let g=document.createElement("div");
-g.className="grid";
-
-homeData.slice(0,visible).forEach(v=>g.appendChild(card(v)));
-
-if(!homeData.length){
-content.innerHTML="<div class='empty'>No videos found</div>";
-}else{
-content.appendChild(g);
-}
-}
-
-/* =========================
-   HISTORY
-========================= */
-function showHistory(){
-page="history";
-content.innerHTML="";
-
-let g=document.createElement("div");
-g.className="grid";
-
-historyData.forEach(v=>g.appendChild(card(v)));
-
-content.appendChild(g);
-}
-
-/* =========================
-   SEARCH SYSTEM
-========================= */
-function toggleSearch(){
-searchPanel.classList.toggle("open");
-
-searchPanel.innerHTML=`
-<input id="searchInput" placeholder="Search YouTube">
-<button onclick="runSearch()">Search</button>
-<div id="searchResults"></div>
-`;
-}
-
-async function runSearch(){
-let q=searchInput.value.trim();
-if(!q) return;
-
-let res=await fetch(`${API}?search=1&q=${encodeURIComponent(q)}`);
-let data=await res.json();
-
-searchData=data;
-renderSearch();
-}
-
-function renderSearch(){
-let box=document.getElementById("searchResults");
-box.innerHTML="";
-
-searchData.forEach(v=>{
-let div=document.createElement("div");
-div.className="card";
-div.innerHTML=`<img class="thumb" src="${v.thumb}"><div class="title">${v.title}</div>`;
-div.onclick=()=>openPlayer(v);
-box.appendChild(div);
-});
-}
-
-/* =========================
-   CHANNELS SYSTEM
-========================= */
-function toggleSubs(){
-subs.classList.toggle("open");
-
-subs.innerHTML=`
-<input id="ch" placeholder="@handle or channelId">
-<button onclick="addChannel()">Add</button>
-${channels.map((c,i)=>`
-<div onclick="openChannel(${i})">${c.name}</div>
-<div onclick="removeCh(${i})">❌</div>
-`).join("")}
-`;
-}
-
-async function addChannel(){
-let val=ch.value.trim();
-
-let url=val.includes("@")
-?`${API}?handle=${val.replace("@","")}`
-:`${API}?id=${val}`;
-
-let r=await fetch(url);
-let d=await r.json();
-
-channels.unshift({
-channelId:d.channelId,
-name:d.name,
-logo:d.logo
-});
-
-localStorage.setItem("channels",JSON.stringify(channels));
-toggleSubs();
-}
-
-/* =========================
-   CHANNEL PAGE
-========================= */
-async function openChannel(i){
-page="channel";
-let ch=channels[i];
-
-content.innerHTML="Loading channel...";
-
-let r=await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
-let d=await r.json();
-
-let vids=[...(d.videos||[]).slice(0,200)];
-let shorts=[...(d.shorts||[]).slice(0,100)];
-
-content.innerHTML=`<h3>${ch.name}</h3>`;
-
-let g=document.createElement("div");
-g.className="grid";
-
-[...vids,...shorts].forEach(v=>g.appendChild(card(v)));
-
-content.appendChild(g);
-}
-
-/* =========================
-   REMOVE CHANNEL
-========================= */
-function removeCh(i){
-channels.splice(i,1);
-localStorage.setItem("channels",JSON.stringify(channels));
-toggleSubs();
+function logout() {
+    localStorage.removeItem("login");
+    location.reload();
 }
 
 /* =========================
    INFINITE SCROLL
 ========================= */
-content.addEventListener("scroll",()=>{
-if(content.scrollTop+content.clientHeight>=content.scrollHeight-100){
-visible+=20;
-
-if(page==="home") renderHome();
-}
+document.getElementById("content").addEventListener("scroll", (e) => {
+    const el = e.target;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+        if (state.visibleCount < state.currentData.length) {
+            state.visibleCount += 20;
+            renderGrid(state.currentData);
+        }
+    }
 });
-
-/* =========================
-   EXTRA FEATURES
-========================= */
-
-/* Resume system */
-function resumeVideo(){
-let last=JSON.parse(localStorage.getItem("history")||"[]")[0];
-if(last) openPlayer(last);
-}
-
-/* Duplicate filter */
-function uniqueVideos(arr){
-let seen=new Set();
-return arr.filter(v=>{
-if(seen.has(v.id)) return false;
-seen.add(v.id);
-return true;
-});
-}
-
-/* Auto clean history */
-function cleanHistory(){
-historyData=historyData.slice(0,50);
-localStorage.setItem("history",JSON.stringify(historyData));
-}
-
-/* Debug log */
-function log(msg){
-console.log("FocusedTube:",msg);
-}
-
 </script>
-
 </body>
 </html>
