@@ -31,9 +31,10 @@
             color: var(--text);
             font-family: 'Segoe UI', Roboto, Arial, sans-serif;
             transition: background 0.3s ease;
+            overflow: hidden; /* Controlled by sections */
         }
 
-        /* --- AUTH SYSTEM --- */
+        /* --- AUTH SCREEN --- */
         .auth-container {
             height: 100vh;
             display: flex;
@@ -58,8 +59,8 @@
             margin: 8px 0;
             border-radius: 8px;
             border: 1px solid var(--border);
-            background: #2a2a2a;
-            color: white;
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
             box-sizing: border-box;
         }
 
@@ -76,7 +77,7 @@
         }
 
         /* --- LAYOUT --- */
-        #app { display: none; }
+        #app { display: none; height: 100vh; display: flex; flex-direction: column; }
 
         .topbar {
             display: flex;
@@ -85,57 +86,59 @@
             padding: 10px 20px;
             background: var(--bg);
             border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
             z-index: 100;
         }
 
         .logo { font-size: 1.4rem; font-weight: bold; cursor: pointer; }
         .logo span { color: var(--accent); }
 
-        .nav-icons { display: flex; gap: 15px; }
+        .nav-icons { display: flex; gap: 10px; }
         .icon { 
-            font-size: 1.3rem; 
+            font-size: 1.2rem; 
             cursor: pointer; 
-            padding: 8px; 
-            border-radius: 50%;
-            transition: background 0.2s;
+            padding: 10px; 
+            border-radius: 12px;
+            background: var(--panel);
+            transition: 0.2s;
         }
-        .icon:hover { background: var(--card); }
+        .icon:hover { transform: scale(1.1); background: var(--card); }
 
-        /* --- FLOATING PANEL (The Drawer) --- */
-        .panel-overlay {
+        /* --- FLOATING PANEL (Drawer) --- */
+        .overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             display: none;
             z-index: 900;
+            backdrop-filter: blur(4px);
         }
 
         .floating-panel {
             position: fixed;
-            top: -100%; /* Hidden above */
+            top: -100%;
             left: 50%;
             transform: translateX(-50%);
             width: 95%;
             max-width: 500px;
             background: var(--panel);
             z-index: 1000;
-            border-radius: 0 0 20px 20px;
-            padding: 20px;
+            border-radius: 0 0 24px 24px;
+            padding: 24px;
             transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: var(--shadow);
         }
 
         .floating-panel.open { top: 0; }
 
-        /* --- CONTENT GRID --- */
+        /* --- CONTENT --- */
         .content-area {
+            flex: 1;
             padding: 20px;
+            overflow-y: auto;
             max-width: 1400px;
             margin: auto;
-            height: calc(100vh - 70px);
-            overflow-y: auto;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .video-grid {
@@ -147,24 +150,28 @@
         .card {
             background: transparent;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: 0.3s;
         }
 
         .card:hover { transform: translateY(-5px); }
 
-        .thumb {
+        .thumb-container {
+            position: relative;
             width: 100%;
             aspect-ratio: 16/9;
-            border-radius: 12px;
-            object-fit: cover;
-            background: #333;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #222;
         }
 
-        .v-info { padding: 10px 0; }
+        .thumb { width: 100%; height: 100%; object-fit: cover; }
+
+        .v-info { padding: 12px 0; display: flex; gap: 12px; }
+        .v-text { flex: 1; }
         .v-title { 
             font-weight: 600; 
-            font-size: 0.95rem; 
-            margin-bottom: 5px;
+            font-size: 1rem; 
+            margin-bottom: 4px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -172,28 +179,26 @@
         }
         .v-meta { color: var(--muted); font-size: 0.85rem; }
 
-        /* --- SCROLLBAR --- */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        /* --- UTILS --- */
+        .loader { border: 3px solid #333; border-top: 3px solid var(--accent); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="overlay" class="panel-overlay" onclick="closePanels()"></div>
+<div id="overlay" class="overlay" onclick="closePanels()"></div>
 
-<!-- AUTH SCREEN -->
 <div id="auth-screen" class="auth-container">
     <div class="auth-card">
         <h2>Focused<span>Tube</span></h2>
         <input id="userIn" placeholder="Username">
         <input id="passIn" type="password" placeholder="Password">
         <button onclick="handleAuth('login')">Login</button>
-        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 15px;" onclick="handleAuth('reg')">New here? Create Account</p>
+        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 15px; cursor:pointer;" onclick="handleAuth('reg')">Create Free Account</p>
     </div>
 </div>
 
-<!-- MAIN APP -->
 <div id="app">
     <div class="topbar">
         <div class="logo" onclick="showPage('home')">Focused<span>Tube</span></div>
@@ -206,9 +211,18 @@
         </div>
     </div>
 
-    <!-- SUBSCRIPTION PANEL -->
+    <div id="search-panel" class="floating-panel">
+        <h3 style="margin-top:0">Distraction-Free Search</h3>
+        <div style="display:flex; gap:10px;">
+            <input id="searchInput" placeholder="Search YouTube..." onkeyup="if(event.key==='Enter') runSearch()">
+            <button onclick="runSearch()" style="width:80px">Go</button>
+        </div>
+        <div id="search-results" style="max-height:400px; overflow-y:auto; margin-top:15px;" class="video-grid" style="grid-template-columns: 1fr 1fr;"></div>
+        <div id="search-loader" class="loader hidden"></div>
+    </div>
+
     <div id="subs-panel" class="floating-panel">
-        <h3 style="margin-top:0">Subscribed Channels</h3>
+        <h3 style="margin-top:0">My Channels</h3>
         <div style="display:flex; gap:10px; margin-bottom:15px;">
             <input id="chanInput" placeholder="@handle or ChannelID">
             <button onclick="addChannel()" style="width:80px">Add</button>
@@ -216,24 +230,16 @@
         <div id="subs-list" style="max-height:300px; overflow-y:auto;"></div>
     </div>
 
-    <!-- SEARCH PANEL -->
-    <div id="search-panel" class="floating-panel">
-        <h3 style="margin-top:0">Search Distraction-Free</h3>
-        <input id="searchInput" placeholder="Search YouTube..." onkeyup="if(event.key==='Enter') runSearch()">
-        <div id="search-results" style="max-height:300px; overflow-y:auto; margin-top:10px;"></div>
-    </div>
-
-    <!-- MAIN CONTENT -->
     <main id="content" class="content-area">
-        <div id="view-title"></div>
+        <div id="page-header" style="margin-bottom: 20px;"></div>
         <div id="main-grid" class="video-grid"></div>
-        <div id="loader" style="text-align:center; padding:20px; display:none;">Loading...</div>
+        <div id="main-loader" class="loader hidden"></div>
     </main>
 </div>
 
 <script>
 /* =========================
-   STATE & CONSTANTS
+   CORE CONFIG (Your Worker)
 ========================= */
 const API = "https://restless-brook-50e4.dkanha283.workers.dev";
 const PLAYER = "https://dkanha283-hub.github.io/Player/";
@@ -243,106 +249,195 @@ let state = {
     channels: JSON.parse(localStorage.getItem("channels") || "[]"),
     history: JSON.parse(localStorage.getItem("history") || "[]"),
     currentPage: 'home',
-    visibleCount: 20,
+    visibleItems: 24,
     currentData: []
 };
 
 /* =========================
-   INITIALIZATION
+   INIT
 ========================= */
 function init() {
     if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
-    
     if (state.user) {
         document.getElementById("auth-screen").style.display = "none";
-        document.getElementById("app").style.display = "block";
+        document.getElementById("app").style.display = "flex";
         showPage('home');
     }
 }
 init();
 
 /* =========================
-   CORE FUNCTIONS
+   NAVIGATION & RENDER
 ========================= */
 function showPage(page) {
     state.currentPage = page;
-    state.visibleCount = 20;
+    state.visibleItems = 24;
     closePanels();
     
+    const header = document.getElementById("page-header");
     const grid = document.getElementById("main-grid");
     grid.innerHTML = "";
-    
+
     if (page === 'home') {
+        header.innerHTML = "<h2>Home Feed</h2>";
         loadHomeFeed();
     } else if (page === 'history') {
-        document.getElementById("view-title").innerHTML = "<h2>Watch History</h2>";
-        renderGrid(state.history);
+        header.innerHTML = "<h2>Watch History</h2>";
+        state.currentData = state.history;
+        renderGrid();
     }
 }
 
 async function loadHomeFeed() {
     if (state.channels.length === 0) {
-        document.getElementById("main-grid").innerHTML = "<div style='grid-column: 1/-1; text-align:center; padding:50px;'>Add channels to start your focused feed!</div>";
+        document.getElementById("main-grid").innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding:100px 20px; color:var(--muted);">
+            <h3>Your feed is empty</h3>
+            <p>Add your favorite channels to watch without distractions.</p>
+            <button onclick="togglePanel('subs-panel')" style="width:200px">Add Channels</button>
+        </div>`;
         return;
     }
 
-    document.getElementById("loader").style.display = "block";
-    let allVideos = [];
+    document.getElementById("main-loader").classList.remove("hidden");
+    let allContent = [];
 
-    // Fetch from all subs
-    const fetchPromises = state.channels.map(async (ch) => {
+    // Map each channel to a fetch request using your Worker's ?sections=1
+    const promises = state.channels.map(async (ch) => {
         try {
-            const r = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
-            const d = await r.json();
-            return [...(d.videos || []), ...(d.shorts || [])];
+            const res = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
+            const data = await res.json();
+            return [...(data.videos || []), ...(data.shorts || [])];
         } catch (e) { return []; }
     });
 
-    const results = await Promise.all(fetchPromises);
-    allVideos = results.flat();
+    const results = await Promise.all(promises);
+    allContent = results.flat();
 
-    // Sort by newest & Filter duplicates
-    allVideos.sort((a, b) => new Date(b.date) - new Date(a.date));
-    state.currentData = Array.from(new Map(allVideos.map(v => [v.id, v])).values());
-
-    document.getElementById("loader").style.display = "none";
-    renderGrid(state.currentData);
+    // Sort by Date (Worker provides "2 days ago", etc. This is a basic sort)
+    // Note: Since Worker dates are strings, true date sorting requires parsing, 
+    // but for now, we'll keep them as they arrive from the Worker.
+    
+    // Filter duplicates
+    state.currentData = Array.from(new Map(allContent.map(v => [v.id, v])).values());
+    
+    document.getElementById("main-loader").classList.add("hidden");
+    renderGrid();
 }
 
-function renderGrid(data) {
+function renderGrid() {
     const grid = document.getElementById("main-grid");
-    const items = data.slice(0, state.visibleCount);
+    const displayList = state.currentData.slice(0, state.visibleItems);
     
-    grid.innerHTML = items.map(v => `
-        <div class="card" onclick="openPlayer('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId}')">
-            <img class="thumb" src="${v.thumb}" loading="lazy">
+    grid.innerHTML = displayList.map(v => `
+        <div class="card" onclick="openVideo('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId || ''}')">
+            <div class="thumb-container">
+                <img class="thumb" src="${v.thumb}" loading="lazy">
+            </div>
             <div class="v-info">
-                <div class="v-title">${v.title}</div>
-                <div class="v-meta">${v.channelName || 'Subscribed Channel'}</div>
+                <div class="v-text">
+                    <div class="v-title">${v.title}</div>
+                    <div class="v-meta">${v.date || ''} • ${v.channelName || 'Subscribed'}</div>
+                </div>
             </div>
         </div>
     `).join("");
 }
 
-function openPlayer(id, title, channelId) {
-    // Save to history
-    const videoObj = { id, title: decodeURIComponent(title), thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`, channelId };
-    state.history = [videoObj, ...state.history.filter(x => x.id !== id)].slice(0, 50);
-    localStorage.setItem("history", JSON.stringify(state.history));
+/* =========================
+   STEP 5: SEARCH SYSTEM
+========================= */
+async function runSearch() {
+    const q = document.getElementById("searchInput").value.trim();
+    if (!q) return;
 
-    window.location.href = `${PLAYER}?videoId=${id}&title=${title}&channelId=${channelId}`;
+    const loader = document.getElementById("search-loader");
+    const resultsBox = document.getElementById("search-results");
+    
+    loader.classList.remove("hidden");
+    resultsBox.innerHTML = "";
+
+    try {
+        const res = await fetch(`${API}?search=1&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        
+        loader.classList.add("hidden");
+        if (data.length === 0) {
+            resultsBox.innerHTML = "<p>No results found.</p>";
+            return;
+        }
+
+        resultsBox.innerHTML = data.map(v => `
+            <div class="card" onclick="openVideo('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId || ''}')">
+                <div class="thumb-container" style="aspect-ratio: 16/9;">
+                    <img class="thumb" src="${v.thumb}">
+                </div>
+                <div class="v-title" style="font-size:0.8rem; -webkit-line-clamp:1; margin-top:5px;">${v.title}</div>
+            </div>
+        `).join("");
+    } catch (e) {
+        loader.classList.add("hidden");
+        alert("Search failed. Check your worker.");
+    }
 }
 
 /* =========================
-   UI HELPERS
+   CHANNEL MANAGEMENT
+========================= */
+async function addChannel() {
+    const input = document.getElementById("chanInput");
+    const val = input.value.trim();
+    if (!val) return;
+
+    const btn = event.target;
+    btn.innerText = "...";
+
+    let url = val.includes("@") ? `${API}?handle=${val.replace("@","")}` : `${API}?id=${val}`;
+    
+    try {
+        const res = await fetch(url);
+        const d = await res.json();
+        
+        if (d.channelId) {
+            state.channels.unshift({ channelId: d.channelId, name: d.name, logo: d.logo });
+            localStorage.setItem("channels", JSON.stringify(state.channels));
+            renderSubsList();
+            input.value = "";
+            showPage('home');
+        } else {
+            alert("Channel not found");
+        }
+    } catch (e) { alert("API Error"); }
+    btn.innerText = "Add";
+}
+
+function renderSubsList() {
+    const list = document.getElementById("subs-list");
+    list.innerHTML = state.channels.map((c, i) => `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border);">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <img src="${c.logo}" style="width:32px; height:32px; border-radius:50%; background:#333;">
+                <span style="font-weight:500;">${c.name}</span>
+            </div>
+            <span onclick="removeChannel(${i})" style="color:var(--accent); cursor:pointer; font-weight:bold;">✕</span>
+        </div>
+    `).join("");
+}
+
+function removeChannel(i) {
+    state.channels.splice(i, 1);
+    localStorage.setItem("channels", JSON.stringify(state.channels));
+    renderSubsList();
+}
+
+/* =========================
+   UI & PLAYER
 ========================= */
 function togglePanel(id) {
     const panel = document.getElementById(id);
-    const isOpening = !panel.classList.contains('open');
-    
+    const isOpen = panel.classList.contains("open");
     closePanels();
-    if (isOpening) {
-        panel.classList.add('open');
+    if (!isOpen) {
+        panel.classList.add("open");
         document.getElementById("overlay").style.display = "block";
         if (id === 'subs-panel') renderSubsList();
     }
@@ -353,38 +448,13 @@ function closePanels() {
     document.getElementById("overlay").style.display = "none";
 }
 
-function renderSubsList() {
-    const list = document.getElementById("subs-list");
-    list.innerHTML = state.channels.map((c, i) => `
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);">
-            <div onclick="openChannelView('${c.channelId}', '${c.name}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
-                <img src="${c.logo}" style="width:30px; height:30px; border-radius:50%;">
-                <span>${c.name}</span>
-            </div>
-            <span onclick="removeChannel(${i})" style="cursor:pointer; color:var(--accent)">✕</span>
-        </div>
-    `).join("");
-}
-
-async function addChannel() {
-    const val = document.getElementById("chanInput").value.trim();
-    if (!val) return;
-
-    const url = val.includes("@") ? `${API}?handle=${val.replace("@","")}` : `${API}?channelId=${val}`;
-    try {
-        const r = await fetch(url);
-        const d = await r.json();
-        state.channels.unshift({ channelId: d.channelId, name: d.name, logo: d.logo });
-        localStorage.setItem("channels", JSON.stringify(state.channels));
-        renderSubsList();
-        document.getElementById("chanInput").value = "";
-    } catch (e) { alert("Channel not found"); }
-}
-
-function removeChannel(i) {
-    state.channels.splice(i, 1);
-    localStorage.setItem("channels", JSON.stringify(state.channels));
-    renderSubsList();
+function openVideo(id, title, channelId) {
+    // Save to history state
+    const video = { id, title: decodeURIComponent(title), thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`, channelId };
+    state.history = [video, ...state.history.filter(x => x.id !== id)].slice(0, 50);
+    localStorage.setItem("history", JSON.stringify(state.history));
+    
+    window.location.href = `${PLAYER}?videoId=${id}&title=${title}&channelId=${channelId}`;
 }
 
 function toggleTheme() {
@@ -392,24 +462,21 @@ function toggleTheme() {
     localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
 }
 
-/* =========================
-   AUTH LOGIC
-========================= */
 function handleAuth(type) {
     const u = document.getElementById("userIn").value;
     const p = document.getElementById("passIn").value;
     let users = JSON.parse(localStorage.getItem("users") || "{}");
 
     if (type === 'reg') {
-        if (users[u]) return alert("Exists");
+        if (users[u]) return alert("Username taken");
         users[u] = p;
         localStorage.setItem("users", JSON.stringify(users));
-        alert("Created!");
+        alert("Account created! You can now login.");
     } else {
         if (users[u] === p) {
             localStorage.setItem("login", u);
             location.reload();
-        } else alert("Error");
+        } else alert("Invalid credentials");
     }
 }
 
@@ -418,18 +485,16 @@ function logout() {
     location.reload();
 }
 
-/* =========================
-   INFINITE SCROLL
-========================= */
-document.getElementById("content").addEventListener("scroll", (e) => {
+/* --- INFINITE SCROLL --- */
+document.getElementById("content").onscroll = function(e) {
     const el = e.target;
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
-        if (state.visibleCount < state.currentData.length) {
-            state.visibleCount += 20;
-            renderGrid(state.currentData);
+        if (state.visibleItems < state.currentData.length) {
+            state.visibleItems += 24;
+            renderGrid();
         }
     }
-});
+};
 </script>
 </body>
 </html>
