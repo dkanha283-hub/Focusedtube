@@ -160,7 +160,6 @@
     </div>
     
     <div class="stage">
-        <!-- Iframe Container -->
         <div id="yt-player-host" style="width: 100%; height: 100%; border: none;"></div>
     </div>
     
@@ -222,7 +221,7 @@
     <main class="viewport" id="scroll-area">
         <!-- HOME -->
         <div id="view-home" class="view">
-            <h2>For You</h2>
+            <h2>Latest From Subscriptions</h2>
             <div id="home-grid" class="grid"></div>
             <div id="home-loader" class="loader hidden"></div>
         </div>
@@ -236,9 +235,11 @@
                     <p id="ch-page-stats" style="margin:5px 0 0 0; color:var(--muted);"></p>
                 </div>
             </div>
+            <!-- Added the Playlists tab here -->
             <div class="tabs">
                 <div class="tab active" id="tab-vids" onclick="App.switchTab('videos')">Videos</div>
                 <div class="tab" id="tab-shorts" onclick="App.switchTab('shorts')">Shorts</div>
+                <div class="tab" id="tab-playlists" onclick="App.switchTab('playlists')">Playlists</div>
             </div>
             <div id="ch-grid" class="grid"></div>
         </div>
@@ -269,7 +270,6 @@
 <script>
 const API = "https://restless-brook-50e4.dkanha283.workers.dev";
 
-// --- Track if YouTube API has fully loaded
 let isYTApiReady = false;
 function onYouTubeIframeAPIReady() {
     isYTApiReady = true;
@@ -307,7 +307,7 @@ const Router = {
         if(el) el.classList.add('active');
         
         if(view === 'home') App.initHome();
-        if(view === 'history') App.renderGrid(state.history, 'hist-grid', 'history'); // Updated for History feature
+        if(view === 'history') App.renderGrid(state.history, 'hist-grid', 'history'); 
         if(view === 'playlists') App.renderPlMaster();
     }
 };
@@ -345,16 +345,32 @@ const App = {
         
         if(state.homeFeedAll.length === 0) {
             document.getElementById('home-loader').classList.remove('hidden');
-            let pool = [];
+            let channelsData = [];
+            
+            // Fetch up to limit per channel (API dictating the actual max)
             for(let ch of state.channels) {
                 try {
                     const r = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
                     const d = await r.json();
-                    const vids = (d.videos || []).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: ch.channelId}));
-                    pool.push(...vids);
-                } catch(e){}
+                    if (d.videos) {
+                        channelsData.push((d.videos).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: ch.channelId})));
+                    }
+                } catch(e){ console.error("Error fetching", ch.name) }
             }
-            state.homeFeedAll = pool.sort(() => Math.random() - 0.5);
+            
+            // ROUND ROBIN SORTING: Interleave to create a "Latest from all" feed
+            let interleavedPool = [];
+            let maxLength = Math.max(...channelsData.map(arr => arr.length), 0);
+            
+            for (let i = 0; i < maxLength; i++) {
+                for (let channelVideos of channelsData) {
+                    if (channelVideos[i]) {
+                        interleavedPool.push(channelVideos[i]);
+                    }
+                }
+            }
+            
+            state.homeFeedAll = interleavedPool;
             document.getElementById('home-loader').classList.add('hidden');
         }
         
@@ -369,11 +385,13 @@ const App = {
         document.getElementById('home-grid').insertAdjacentHTML('beforeend', this.buildCards(nextBatch));
     },
 
-    // Updated to accept viewType
     renderGrid(data, target, viewType = 'default') {
+        if (!data || data.length === 0) {
+            document.getElementById(target).innerHTML = "<p style='color:var(--muted); padding:20px;'>No items found in this category.</p>";
+            return;
+        }
         document.getElementById(target).innerHTML = this.buildCards(data, viewType);
     },
-    // Updated to add delete button on history page
     buildCards(data, viewType = 'default') {
         return data.map(v => {
             const safeObj = JSON.stringify(v).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
@@ -383,8 +401,14 @@ const App = {
                 ? `<button class="add-p-btn" style="right: auto; left: 10px; background: rgba(255,0,0,0.8);" onclick="App.remHistoryItem(event, '${v.id}')" title="Remove from history">🗑️</button>` 
                 : '';
 
+            // Handle API playlists which might lack standard video IDs
+            const isApiPlaylist = !v.id && v.playlistId; 
+            const clickAction = isApiPlaylist 
+                ? `UI.showToast('External playlist viewing coming in next update!')` 
+                : `Player.init(${safeObj})`;
+
             return `
-            <div class="card" onclick='Player.init(${safeObj})'>
+            <div class="card" onclick="${clickAction}">
                 ${deleteBtn}
                 <button class="add-p-btn" onclick="App.openAddPl(event, ${safeObj})">＋</button>
                 <div class="t-wrap"><img src="${v.thumb}" loading="lazy"></div>
@@ -392,7 +416,7 @@ const App = {
                     <img src="${fLogo}" class="c-logo" onclick="event.stopPropagation(); App.openChannel('${v.chId}')">
                     <div>
                         <div class="v-title">${v.title}</div>
-                        <div class="v-sub">${v.chName || 'Channel'} • ${v.date || ''}</div>
+                        <div class="v-sub">${v.chName || 'Channel'} • ${v.date || 'Playlist'}</div>
                     </div>
                 </div>
             </div>`;
@@ -407,19 +431,30 @@ const App = {
             const r = await fetch(`${API}?sections=1&channelId=${id}`);
             const d = await r.json();
             const ch = state.channels.find(c => c.channelId === id) || {name:"Channel", logo:""};
+            
+            // Updated to safely parse videos, shorts, and PLAYLISTS from the API
             state.curChannelData = {
                 videos: (d.videos||[]).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: id})),
-                shorts: (d.shorts||[]).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: id}))
+                shorts: (d.shorts||[]).map(v => ({...v, chLogo: ch.logo, chName: ch.name, chId: id})),
+                playlists: (d.playlists||[]).map(p => ({...p, chLogo: ch.logo, chName: ch.name, chId: id}))
             };
+            
             document.getElementById('ch-page-img').src = ch.logo || `https://api.dicebear.com/7.x/initials/svg?seed=${ch.name}`;
             document.getElementById('ch-page-name').innerText = ch.name;
-            document.getElementById('ch-page-stats').innerText = `${d.counts.videos} Videos • ${d.counts.shorts} Shorts`;
+            document.getElementById('ch-page-stats').innerText = `${state.curChannelData.videos.length} Videos • ${state.curChannelData.shorts.length} Shorts`;
+            
             this.switchTab('videos');
         } catch(e){ document.getElementById('ch-grid').innerHTML = "Error loading channel."; }
     },
     switchTab(type) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('tab-' + (type==='videos'?'vids':'shorts')).classList.add('active');
+        
+        // Match the correct tab ID dynamically
+        let tabId = 'tab-vids';
+        if (type === 'shorts') tabId = 'tab-shorts';
+        if (type === 'playlists') tabId = 'tab-playlists';
+        
+        document.getElementById(tabId).classList.add('active');
         this.renderGrid(state.curChannelData[type] || [], 'ch-grid');
     },
     async addChannel() {
@@ -429,7 +464,6 @@ const App = {
         
         if(!val) return;
 
-        // Smart Parsing
         if (val.includes('youtube.com/')) {
             const urlParts = val.split('/');
             val = urlParts.pop(); 
@@ -437,7 +471,6 @@ const App = {
         }
         val = val.replace("@", "");
 
-        // Prevent Duplicates
         const isDuplicate = state.channels.some(c => 
             c.channelId === val || (c.handle && c.handle.toLowerCase() === val.toLowerCase())
         );
@@ -447,7 +480,6 @@ const App = {
             return;
         }
 
-        // UI Loading State
         const originalBtnText = btnEl.innerText;
         btnEl.innerText = "Adding...";
         btnEl.disabled = true;
@@ -556,7 +588,6 @@ const App = {
         UI.showToast("History Cleared");
         Modal.closeAll(); Router.go('home');
     },
-    // New Feature: Remove specific item from history
     remHistoryItem(e, videoId) {
         e.stopPropagation(); 
         state.history = state.history.filter(v => v.id !== videoId);
@@ -640,15 +671,15 @@ const Player = {
         if (!document.fullscreenElement) {
             if (wrap.requestFullscreen) {
                 wrap.requestFullscreen();
-            } else if (wrap.webkitRequestFullscreen) { /* Safari support */
+            } else if (wrap.webkitRequestFullscreen) {
                 wrap.webkitRequestFullscreen();
-            } else if (wrap.msRequestFullscreen) { /* IE11 support */
+            } else if (wrap.msRequestFullscreen) {
                 wrap.msRequestFullscreen();
             }
         } else {
             if (document.exitFullscreen) {
                 document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { /* Safari support */
+            } else if (document.webkitExitFullscreen) {
                 document.webkitExitFullscreen();
             }
         }
