@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FocusedTube Ultimate</title>
     <style>
         :root {
@@ -14,6 +14,7 @@
             --accent: #ff0000;
             --border: rgba(255,255,255,0.1);
             --shadow: 0 10px 30px rgba(0,0,0,0.5);
+            --safe-top: env(safe-area-inset-top);
         }
 
         body.light {
@@ -29,124 +30,138 @@
             margin: 0;
             background: var(--bg);
             color: var(--text);
-            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             transition: background 0.3s ease;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* --- AUTH SYSTEM --- */
         .auth-container { height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
-        .auth-card { background: var(--panel); padding: 30px; border-radius: 15px; box-shadow: var(--shadow); text-align: center; width: 320px; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); box-sizing: border-box; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; }
+        .auth-card { background: var(--panel); padding: 30px; border-radius: 20px; box-shadow: var(--shadow); text-align: center; width: 320px; animation: fadeIn 0.5s ease; }
+        input { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); color: var(--text); font-size: 16px; outline: none; }
+        input:focus { border-color: var(--accent); }
+        button { width: 100%; padding: 14px; border: none; border-radius: 10px; background: var(--accent); color: white; font-weight: bold; cursor: pointer; active { opacity: 0.8; } }
 
-        /* --- LAYOUT --- */
+        /* --- NAVIGATION --- */
         #app { display: none; height: 100vh; flex-direction: column; }
         .topbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: var(--bg); border-bottom: 1px solid var(--border); z-index: 100; }
-        .logo { font-size: 1.4rem; font-weight: bold; cursor: pointer; }
+        .logo { font-size: 1.4rem; font-weight: bold; cursor: pointer; letter-spacing: -0.5px; }
         .logo span { color: var(--accent); }
-        .nav-icons { display: flex; gap: 10px; }
-        .icon { font-size: 1.2rem; cursor: pointer; padding: 10px; border-radius: 12px; background: var(--panel); transition: 0.2s; }
-        .icon:hover { transform: scale(1.1); background: var(--card); }
+        .nav-icons { display: flex; gap: 8px; }
+        .icon { font-size: 1.2rem; cursor: pointer; padding: 10px; border-radius: 12px; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .icon.active { color: var(--accent); background: rgba(255,0,0,0.1); }
 
-        /* --- DRAWER / PANELS --- */
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 900; backdrop-filter: blur(4px); }
-        .floating-panel { position: fixed; top: -100%; left: 50%; transform: translateX(-50%); width: 95%; max-width: 500px; background: var(--panel); z-index: 1000; border-radius: 0 0 24px 24px; padding: 24px; transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: var(--shadow); }
+        /* --- FLOATING PANELS --- */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; z-index: 900; backdrop-filter: blur(8px); animation: fadeIn 0.3s ease; }
+        .floating-panel { position: fixed; top: -110%; left: 50%; transform: translateX(-50%); width: 95%; max-width: 550px; background: var(--panel); z-index: 1000; border-radius: 0 0 24px 24px; padding: 24px; transition: top 0.5s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: var(--shadow); border: 1px solid var(--border); border-top: none; }
         .floating-panel.open { top: 0; }
 
-        /* --- CHANNEL HEADER & TABS --- */
+        /* --- CHANNEL UI --- */
         .channel-header { display: flex; align-items: center; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
-        .channel-logo-lg { width: 60px; height: 60px; border-radius: 50%; background: #333; }
-        .tab-container { display: flex; gap: 25px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
-        .tab { padding: 10px 0; cursor: pointer; color: var(--muted); font-weight: 500; position: relative; font-size: 0.9rem; }
-        .tab.active { color: var(--text); }
-        .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--text); }
+        .channel-logo-lg { width: 70px; height: 70px; border-radius: 50%; background: #333; object-fit: cover; border: 2px solid var(--border); }
+        .tab-container { display: flex; gap: 25px; margin-bottom: 20px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+        .tab { padding: 12px 0; cursor: pointer; color: var(--muted); font-weight: 600; position: relative; font-size: 0.9rem; white-space: nowrap; }
+        .tab.active { color: var(--accent); }
+        .tab.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background: var(--accent); border-radius: 3px 3px 0 0; }
 
-        /* --- CONTENT GRID --- */
-        .content-area { flex: 1; padding: 20px; overflow-y: auto; max-width: 1400px; margin: auto; width: 100%; box-sizing: border-box; }
-        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: transparent; cursor: pointer; transition: 0.3s; position: relative; }
-        .card:hover { transform: translateY(-5px); }
-        .thumb-container { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 14px; overflow: hidden; background: #222; }
-        .thumb { width: 100%; height: 100%; object-fit: cover; }
-        .v-info { padding: 12px 0; }
-        .v-title { font-weight: 600; font-size: 1rem; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .v-meta { color: var(--muted); font-size: 0.85rem; }
+        /* --- GRID & CARDS --- */
+        .content-area { flex: 1; padding: 20px; overflow-y: auto; max-width: 1600px; margin: auto; width: 100%; box-sizing: border-box; }
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+        .card { background: transparent; cursor: pointer; transition: 0.3s; position: relative; animation: slideUp 0.4s ease forwards; }
+        .card:hover { transform: translateY(-6px); }
+        .thumb-container { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 16px; overflow: hidden; background: #222; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .thumb { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .card:hover .thumb { transform: scale(1.05); }
+        .v-info { padding: 14px 0; display: flex; gap: 12px; }
+        .v-title { font-weight: 600; font-size: 1.05rem; line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .v-meta { color: var(--muted); font-size: 0.9rem; }
 
-        /* --- PLAYLIST ADD BUTTON --- */
-        .add-to-plist { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; z-index: 5; transition: 0.2s; }
-        .add-to-plist:hover { background: var(--accent); transform: scale(1.1); }
+        /* --- ADD BUTTON --- */
+        .add-to-plist { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.8); color: white; border: none; border-radius: 12px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; z-index: 5; opacity: 0; transition: 0.3s; backdrop-filter: blur(4px); }
+        .card:hover .add-to-plist { opacity: 1; }
 
-        /* --- UTILS --- */
-        .loader { border: 3px solid #333; border-top: 3px solid var(--accent); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader { border: 3px solid #333; border-top: 3px solid var(--accent); border-radius: 50%; width: 28px; height: 28px; animation: spin 0.8s linear infinite; margin: 40px auto; }
         .hidden { display: none; }
+
+        /* iPad / Tablet Tweaks */
+        @media (max-width: 1024px) { .video-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); } }
+        @media (max-width: 600px) { 
+            .video-grid { grid-template-columns: 1fr; }
+            .topbar { padding: 10px 12px; }
+            .floating-panel { width: 100%; border-radius: 0 0 20px 20px; }
+        }
     </style>
 </head>
 <body>
 
 <div id="overlay" class="overlay" onclick="closePanels()"></div>
 
+<!-- AUTH -->
 <div id="auth-screen" class="auth-container">
     <div class="auth-card">
-        <h2>Focused<span>Tube</span></h2>
+        <h2 style="font-size: 2rem;">Focused<span>Tube</span></h2>
+        <p style="color: var(--muted); margin-bottom: 20px;">Distraction-free learning.</p>
         <input id="userIn" placeholder="Username">
         <input id="passIn" type="password" placeholder="Password">
         <button onclick="handleAuth('login')">Login</button>
-        <p style="font-size: 0.8rem; color: var(--muted); margin-top: 15px; cursor:pointer;" onclick="handleAuth('reg')">Create Account</p>
+        <p style="font-size: 0.85rem; color: var(--muted); margin-top: 20px; cursor:pointer;" onclick="handleAuth('reg')">New user? <b>Create Account</b></p>
     </div>
 </div>
 
+<!-- MAIN APP -->
 <div id="app">
     <div class="topbar">
         <div class="logo" onclick="showPage('home')">Focused<span>Tube</span></div>
         <div class="nav-icons">
-            <span class="icon" onclick="togglePanel('search-panel')">🔍</span>
-            <span class="icon" onclick="togglePanel('subs-panel')">📺</span>
-            <span class="icon" onclick="togglePanel('plist-panel')">📁</span>
-            <span class="icon" onclick="showPage('history')">⏱</span>
+            <span class="icon" id="nav-search" onclick="togglePanel('search-panel')">🔍</span>
+            <span class="icon" id="nav-subs" onclick="togglePanel('subs-panel')">📺</span>
+            <span class="icon" id="nav-plist" onclick="togglePanel('plist-panel')">📁</span>
+            <span class="icon" id="nav-history" onclick="showPage('history')">⏱</span>
             <span class="icon" onclick="toggleTheme()">🌗</span>
             <span class="icon" onclick="logout()">👤</span>
         </div>
     </div>
 
-    <!-- SEARCH PANEL -->
+    <!-- PANELS -->
     <div id="search-panel" class="floating-panel">
-        <h3 style="margin:0 0 15px 0">Search</h3>
+        <h3 style="margin:0 0 15px 0">Quick Search</h3>
         <div style="display:flex; gap:10px;">
-            <input id="searchInput" placeholder="Search YouTube..." onkeyup="if(event.key==='Enter') runSearch()">
-            <button onclick="runSearch()" style="width:80px">Go</button>
+            <input id="searchInput" placeholder="Enter keyword..." onkeyup="if(event.key==='Enter') runSearch()">
+            <button onclick="runSearch()" style="width:100px">Search</button>
         </div>
-        <div id="search-results" style="max-height:400px; overflow-y:auto; margin-top:15px;" class="video-grid"></div>
+        <div id="search-results" style="max-height:450px; overflow-y:auto; margin-top:15px;" class="video-grid"></div>
         <div id="search-loader" class="loader hidden"></div>
     </div>
 
-    <!-- CHANNELS PANEL -->
     <div id="subs-panel" class="floating-panel">
-        <h3 style="margin:0 0 15px 0">Channels</h3>
+        <h3 style="margin:0 0 15px 0">Subscribed Channels</h3>
         <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input id="chanInput" placeholder="@handle or ID">
+            <input id="chanInput" placeholder="@handle or Channel ID">
             <button onclick="addChannel()" style="width:80px">Add</button>
         </div>
-        <div id="subs-list" style="max-height:300px; overflow-y:auto;"></div>
+        <div id="subs-list" style="max-height:350px; overflow-y:auto;"></div>
     </div>
 
-    <!-- PLAYLISTS PANEL -->
     <div id="plist-panel" class="floating-panel">
-        <h3 style="margin:0 0 15px 0">My Playlists</h3>
+        <h3 style="margin:0 0 15px 0">My Collections</h3>
         <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input id="plistInput" placeholder="Playlist Name">
-            <button onclick="createPlaylist()" style="width:80px">Create</button>
+            <input id="plistInput" placeholder="Playlist Name (e.g. Science)">
+            <button onclick="createPlaylist()" style="width:90px">Create</button>
         </div>
-        <div id="plist-list" style="max-height:300px; overflow-y:auto;"></div>
+        <div id="plist-list" style="max-height:350px; overflow-y:auto;"></div>
     </div>
 
-    <!-- PLAYLIST SELECTION POPUP -->
     <div id="add-to-plist-panel" class="floating-panel" style="z-index: 1100;">
-        <h3 id="plist-video-title" style="font-size: 0.9rem; margin: 0 0 15px 0; color: var(--muted);"></h3>
-        <div id="plist-selection-list" style="max-height: 250px; overflow-y: auto;"></div>
+        <h3 id="plist-video-title" style="font-size: 0.95rem; margin-bottom: 15px; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 10px;"></h3>
+        <div id="plist-selection-list" style="max-height: 300px; overflow-y: auto;"></div>
     </div>
 
+    <!-- MAIN GRID -->
     <main id="content" class="content-area">
         <div id="page-header"></div>
         <div id="main-grid" class="video-grid"></div>
@@ -155,6 +170,9 @@
 </div>
 
 <script>
+/* =========================
+   STATE & API
+========================= */
 const API = "https://restless-brook-50e4.dkanha283.workers.dev";
 const PLAYER = "https://dkanha283-hub.github.io/Player/";
 
@@ -162,11 +180,11 @@ let state = {
     user: localStorage.getItem("login"),
     channels: JSON.parse(localStorage.getItem("channels") || "[]"),
     history: JSON.parse(localStorage.getItem("history") || "[]"),
-    playlists: JSON.parse(localStorage.getItem("playlists") || "{}"), // format: { name: [videoObjs] }
+    playlists: JSON.parse(localStorage.getItem("playlists") || "{}"),
     currentPage: 'home',
     currentData: [],
     currentChannelData: null,
-    pendingVideo: null // For adding to playlist
+    pendingVideo: null
 };
 
 function init() {
@@ -179,52 +197,72 @@ function init() {
 }
 init();
 
-/* --- NAVIGATION --- */
+/* =========================
+   NAVIGATION LOGIC
+========================= */
+function updateActiveNav(id) {
+    document.querySelectorAll('.icon').forEach(el => el.classList.remove('active'));
+    if (id) {
+        const target = document.getElementById(`nav-${id}`);
+        if (target) target.classList.add('active');
+    }
+}
+
 function showPage(page, data = null) {
     state.currentPage = page;
     closePanels();
-    document.getElementById("main-grid").innerHTML = "";
-    document.getElementById("page-header").innerHTML = "";
+    updateActiveNav(page === 'home' ? null : page);
+    
+    const header = document.getElementById("page-header");
+    const grid = document.getElementById("main-grid");
+    grid.innerHTML = "";
+    header.innerHTML = "";
 
     if (page === 'home') {
-        document.getElementById("page-header").innerHTML = "<h2>Home Feed</h2>";
+        header.innerHTML = "<h2>Recommended for You</h2>";
         loadHomeFeed();
     } else if (page === 'history') {
-        document.getElementById("page-header").innerHTML = "<h2>History</h2>";
+        header.innerHTML = "<h2>Watch History</h2>";
         state.currentData = state.history;
         renderGrid(state.currentData);
     } else if (page === 'playlist-view') {
-        const pName = data;
-        document.getElementById("page-header").innerHTML = `<h2>Playlist: ${pName}</h2>`;
-        renderGrid(state.playlists[pName] || []);
+        header.innerHTML = `<h2>📁 ${data}</h2>`;
+        renderGrid(state.playlists[data] || []);
     }
 }
 
 async function loadHomeFeed() {
     if (state.channels.length === 0) {
-        document.getElementById("main-grid").innerHTML = "<p style='grid-column:1/-1;text-align:center;padding:50px;'>Add channels to start.</p>";
+        document.getElementById("main-grid").innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:80px 20px;">
+                <p style="color:var(--muted);font-size:1.2rem;">Your feed is empty.</p>
+                <button onclick="togglePanel('subs-panel')" style="width:200px;margin-top:20px;">Subscribe to Channels</button>
+            </div>`;
         return;
     }
     document.getElementById("main-loader").classList.remove("hidden");
     let all = [];
-    const promises = state.channels.map(async (ch) => {
-        try {
+    try {
+        const promises = state.channels.map(async (ch) => {
             const res = await fetch(`${API}?sections=1&channelId=${ch.channelId}`);
-            const data = await res.json();
-            return [...(data.videos || []), ...(data.shorts || [])];
-        } catch (e) { return []; }
-    });
-    const results = await Promise.all(promises);
-    all = results.flat().sort((a,b) => new Date(b.date) - new Date(a.date));
-    state.currentData = Array.from(new Map(all.map(v => [v.id, v])).values());
+            const d = await res.json();
+            return [...(d.videos || []), ...(d.shorts || [])];
+        });
+        const results = await Promise.all(promises);
+        all = results.flat().sort((a,b) => new Date(b.date) - new Date(a.date));
+        state.currentData = Array.from(new Map(all.map(v => [v.id, v])).values());
+    } catch (e) { console.error(e); }
     document.getElementById("main-loader").classList.add("hidden");
     renderGrid(state.currentData);
 }
 
-/* --- CHANNEL PAGE SYSTEM --- */
+/* =========================
+   CHANNEL VIEW (Step 4 Fix)
+========================= */
 async function openChannelView(channelId, channelName) {
     state.currentPage = 'channel';
     closePanels();
+    updateActiveNav(null);
     const header = document.getElementById("page-header");
     const grid = document.getElementById("main-grid");
     const loader = document.getElementById("main-loader");
@@ -245,15 +283,14 @@ async function openChannelView(channelId, channelName) {
                 <img src="${channelLogo}" class="channel-logo-lg">
                 <div>
                     <h2 style="margin:0">${channelName}</h2>
-                    <p style="color:var(--muted); font-size:0.8rem;">${data.counts.videos} Videos • ${data.counts.shorts} Shorts</p>
+                    <p style="color:var(--muted); font-size:0.9rem; margin-top:4px;">${data.counts.videos} Videos • ${data.counts.shorts} Shorts</p>
                 </div>
             </div>
             <div class="tab-container">
                 <div class="tab active" onclick="switchTab(this, 'videos')">Videos</div>
                 <div class="tab" onclick="switchTab(this, 'shorts')">Shorts</div>
                 <div class="tab" onclick="switchTab(this, 'playlists')">Playlists</div>
-            </div>
-        `;
+            </div>`;
         renderGrid(data.videos);
     } catch (e) { loader.classList.add("hidden"); }
 }
@@ -264,12 +301,13 @@ function switchTab(el, type) {
     renderGrid(state.currentChannelData[type] || []);
 }
 
-/* --- PLAYLIST SYSTEM --- */
+/* =========================
+   PLAYLIST LOGIC
+========================= */
 function createPlaylist() {
     const input = document.getElementById("plistInput");
     const name = input.value.trim();
     if (!name || state.playlists[name]) return;
-    
     state.playlists[name] = [];
     localStorage.setItem("playlists", JSON.stringify(state.playlists));
     input.value = "";
@@ -279,39 +317,41 @@ function createPlaylist() {
 function renderPlaylistList() {
     const list = document.getElementById("plist-list");
     list.innerHTML = Object.keys(state.playlists).map(name => `
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);">
-            <div onclick="showPage('playlist-view', '${name}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
-                <span>📁</span>
-                <span>${name}</span>
-                <span style="font-size:0.7rem; color:var(--muted)">(${state.playlists[name].length})</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:14px; border-bottom:1px solid var(--border); transition:0.2s;" class="plist-item">
+            <div onclick="showPage('playlist-view', '${name}')" style="cursor:pointer; display:flex; align-items:center; gap:12px; flex:1;">
+                <span style="font-size:1.2rem;">📁</span>
+                <div>
+                    <div style="font-weight:600;">${name}</div>
+                    <div style="font-size:0.75rem; color:var(--muted);">${state.playlists[name].length} videos</div>
+                </div>
             </div>
-            <span onclick="deletePlaylist('${name}')" style="color:var(--accent); cursor:pointer;">✕</span>
-        </div>
-    `).join("");
+            <span onclick="deletePlaylist('${name}')" style="color:var(--accent); cursor:pointer; padding:5px;">✕</span>
+        </div>`).join("");
 }
 
 function deletePlaylist(name) {
-    delete state.playlists[name];
-    localStorage.setItem("playlists", JSON.stringify(state.playlists));
-    renderPlaylistList();
+    if(confirm(`Delete "${name}"?`)) {
+        delete state.playlists[name];
+        localStorage.setItem("playlists", JSON.stringify(state.playlists));
+        renderPlaylistList();
+    }
 }
 
-function promptAddToPlaylist(vId, title, thumb, channelId) {
-    event.stopPropagation();
+function promptAddToPlaylist(e, vId, title, thumb, channelId) {
+    e.stopPropagation();
     state.pendingVideo = { id: vId, title: decodeURIComponent(title), thumb, channelId };
-    document.getElementById("plist-video-title").innerText = `Add to Playlist: ${state.pendingVideo.title}`;
+    document.getElementById("plist-video-title").innerText = state.pendingVideo.title;
     
     const list = document.getElementById("plist-selection-list");
-    const pNames = Object.keys(state.playlists);
+    const names = Object.keys(state.playlists);
     
-    if (pNames.length === 0) {
-        list.innerHTML = "<p style='text-align:center; padding:10px;'>No playlists created. Go to 📁 to create one.</p>";
+    if (names.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:20px; color:var(--muted);">No playlists found.<br><button onclick="togglePanel('plist-panel')" style="margin-top:10px;">Create One</button></div>`;
     } else {
-        list.innerHTML = pNames.map(name => `
-            <div onclick="addToPlaylist('${name}')" style="padding:12px; cursor:pointer; border-bottom:1px solid var(--border); hover:background:rgba(255,255,255,0.05)">
-                ${name}
-            </div>
-        `).join("");
+        list.innerHTML = names.map(name => `
+            <div onclick="addToPlaylist('${name}')" style="padding:16px; cursor:pointer; border-bottom:1px solid var(--border); font-weight:500;">
+                + Add to ${name}
+            </div>`).join("");
     }
     
     document.getElementById("overlay").style.display = "block";
@@ -323,31 +363,40 @@ function addToPlaylist(name) {
     if (!exists) {
         state.playlists[name].push(state.pendingVideo);
         localStorage.setItem("playlists", JSON.stringify(state.playlists));
-        alert(`Added to ${name}`);
+        alert("Saved successfully!");
     } else {
-        alert("Already in playlist");
+        alert("Already in this collection.");
     }
     closePanels();
 }
 
-/* --- RENDERING --- */
+/* =========================
+   RENDERING UTILS
+========================= */
 function renderGrid(data) {
     const grid = document.getElementById("main-grid");
-    grid.innerHTML = data.map(v => `
-        <div class="card" onclick="openVideo('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId || ''}')">
-            <button class="add-to-plist" onclick="promptAddToPlaylist('${v.id}', '${encodeURIComponent(v.title)}', '${v.thumb}', '${v.channelId || ''}')">+</button>
+    if (data.length === 0) {
+        grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);">Nothing to show here.</p>`;
+        return;
+    }
+    grid.innerHTML = data.map((v, index) => `
+        <div class="card" style="animation-delay: ${index * 0.05}s" onclick="openVideo('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId || ''}')">
+            <button class="add-to-plist" onclick="promptAddToPlaylist(event, '${v.id}', '${encodeURIComponent(v.title)}', '${v.thumb}', '${v.channelId || ''}')">＋</button>
             <div class="thumb-container">
                 <img class="thumb" src="${v.thumb}" loading="lazy">
             </div>
             <div class="v-info">
-                <div class="v-title">${v.title}</div>
-                <div class="v-meta">${v.date || ''} ${v.channelName ? '• ' + v.channelName : ''}</div>
+                <div style="flex:1;">
+                    <div class="v-title">${v.title}</div>
+                    <div class="v-meta">${v.date || ''} ${v.channelName ? '• ' + v.channelName : ''}</div>
+                </div>
             </div>
-        </div>
-    `).join("");
+        </div>`).join("");
 }
 
-/* --- UTILS --- */
+/* =========================
+   SEARCH & CHANNELS
+========================= */
 async function runSearch() {
     const q = document.getElementById("searchInput").value.trim();
     if (!q) return;
@@ -361,11 +410,10 @@ async function runSearch() {
         loader.classList.add("hidden");
         resultsBox.innerHTML = data.map(v => `
             <div class="card" onclick="openVideo('${v.id}', '${encodeURIComponent(v.title)}', '${v.channelId || ''}')">
-                <button class="add-to-plist" onclick="promptAddToPlaylist('${v.id}', '${encodeURIComponent(v.title)}', '${v.thumb}', '${v.channelId || ''}')">+</button>
+                <button class="add-to-plist" onclick="promptAddToPlaylist(event, '${v.id}', '${encodeURIComponent(v.title)}', '${v.thumb}', '${v.channelId || ''}')">＋</button>
                 <div class="thumb-container"><img class="thumb" src="${v.thumb}"></div>
-                <div class="v-title" style="font-size:0.8rem;">${v.title}</div>
-            </div>
-        `).join("");
+                <div class="v-title" style="font-size:0.9rem;">${v.title}</div>
+            </div>`).join("");
     } catch (e) { loader.classList.add("hidden"); }
 }
 
@@ -373,36 +421,44 @@ async function addChannel() {
     const input = document.getElementById("chanInput");
     const val = input.value.trim();
     if (!val) return;
+    const btn = event.target; btn.disabled = true;
     let url = val.includes("@") ? `${API}?handle=${val.replace("@","")}` : `${API}?id=${val}`;
-    const res = await fetch(url);
-    const d = await res.json();
-    if (d.channelId) {
-        state.channels.unshift({ channelId: d.channelId, name: d.name, logo: d.logo });
-        localStorage.setItem("channels", JSON.stringify(state.channels));
-        renderSubsList();
-        input.value = "";
-    }
+    try {
+        const res = await fetch(url);
+        const d = await res.json();
+        if (d.channelId) {
+            state.channels.unshift({ channelId: d.channelId, name: d.name, logo: d.logo });
+            localStorage.setItem("channels", JSON.stringify(state.channels));
+            renderSubsList();
+            input.value = "";
+        } else { alert("Not found."); }
+    } catch (e) { alert("API Error."); }
+    btn.disabled = false;
 }
 
 function renderSubsList() {
     const list = document.getElementById("subs-list");
     list.innerHTML = state.channels.map((c, i) => `
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border);">
-            <div onclick="openChannelView('${c.channelId}', '${c.name}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
-                <img src="${c.logo}" style="width:30px; height:30px; border-radius:50%;">
-                <span>${c.name}</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border);">
+            <div onclick="openChannelView('${c.channelId}', '${c.name}')" style="cursor:pointer; display:flex; align-items:center; gap:12px;">
+                <img src="${c.logo}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">
+                <span style="font-weight:500;">${c.name}</span>
             </div>
-            <span onclick="removeChannel(${i})" style="color:var(--accent); cursor:pointer;">✕</span>
-        </div>
-    `).join("");
+            <span onclick="removeChannel(${i})" style="color:var(--accent); cursor:pointer; padding:5px;">✕</span>
+        </div>`).join("");
 }
 
 function removeChannel(i) {
-    state.channels.splice(i, 1);
-    localStorage.setItem("channels", JSON.stringify(state.channels));
-    renderSubsList();
+    if(confirm("Unsubscribe?")) {
+        state.channels.splice(i, 1);
+        localStorage.setItem("channels", JSON.stringify(state.channels));
+        renderSubsList();
+    }
 }
 
+/* =========================
+   UI CORE
+========================= */
 function openVideo(id, title, channelId) {
     const video = { id, title: decodeURIComponent(title), thumb: `https://i.ytimg.com/vi/${id}/mqdefault.jpg`, channelId };
     state.history = [video, ...state.history.filter(x => x.id !== id)].slice(0, 50);
@@ -419,12 +475,14 @@ function togglePanel(id) {
         document.getElementById("overlay").style.display = "block";
         if (id === 'subs-panel') renderSubsList();
         if (id === 'plist-panel') renderPlaylistList();
+        updateActiveNav(id.replace('-panel', ''));
     }
 }
 
 function closePanels() {
     document.querySelectorAll('.floating-panel').forEach(p => p.classList.remove('open'));
     document.getElementById("overlay").style.display = "none";
+    updateActiveNav(state.currentPage === 'home' ? null : state.currentPage);
 }
 
 function toggleTheme() {
@@ -437,14 +495,11 @@ function handleAuth(type) {
     const p = document.getElementById("passIn").value;
     let users = JSON.parse(localStorage.getItem("users") || "{}");
     if (type === 'reg') {
-        users[u] = p;
-        localStorage.setItem("users", JSON.stringify(users));
-        alert("Account Created");
+        if(!u || !p) return alert("Fill all fields");
+        users[u] = p; localStorage.setItem("users", JSON.stringify(users)); alert("Account Ready!");
     } else {
-        if (users[u] === p) {
-            localStorage.setItem("login", u);
-            location.reload();
-        } else alert("Error");
+        if (users[u] === p) { localStorage.setItem("login", u); location.reload(); }
+        else alert("Invalid login");
     }
 }
 
